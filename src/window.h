@@ -10,8 +10,10 @@ namespace Window{
 	Window(uint32_t width, uint32_t height, const char* title);
 	~Window();
 
-	Window(const Window&) = delete;
-	Window& operator=(const Window&) = delete;
+        Window(const Window &) = delete; // Copy constructor        
+	Window(Window&&) = delete; //Move Constructor
+        Window &operator=(const Window &) = delete; // Copy Assignment
+	Window &operator=(Window&&) = delete;//Move Assignment
 
 	GLFWwindow* getWindow() const { return window; }
 	bool shouldClose() const;
