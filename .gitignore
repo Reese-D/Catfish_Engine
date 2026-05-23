@@ -1,0 +1,29 @@
+# Build artifacts
+catfish_engine
+bin/
+*.o
+*.a
+*.so
+*.dylib
+
+# IDE files
+*.swp
+*.swo
+*.backup
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*.tmp
+*.temp
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
