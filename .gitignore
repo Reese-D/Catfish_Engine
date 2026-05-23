@@ -5,6 +5,7 @@ bin/
 *.a
 *.so
 *.dylib
+compile_commands.json
 
 # IDE files
 *.swp
