@@ -44,9 +44,9 @@ private:
 	    .engineVersion = VK_MAKE_VERSION(1, 0, 0),
 	    .apiVersion = vk::ApiVersion14};
 
-	// Get the required instance extensions from GLFW.
-	uint32_t glfwExtensionCount = 0;
-	auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	// Get the required instance extensions from the window.
+	auto glfwExtensions = window->getRequiredInstanceExtensions();
+	uint32_t glfwExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
 
 	// Check if the required GLFW extensions are supported by the Vulkan implementation.
 	auto extensionProperties = context.enumerateInstanceExtensionProperties();
@@ -63,7 +63,7 @@ private:
 	vk::InstanceCreateInfo createInfo{
 	    .pApplicationInfo = &appInfo,
 	    .enabledExtensionCount = glfwExtensionCount,
-	    .ppEnabledExtensionNames = glfwExtensions};
+	    .ppEnabledExtensionNames = glfwExtensions.data()};
 	instance = vk::raii::Instance(context, createInfo);
     }    
 

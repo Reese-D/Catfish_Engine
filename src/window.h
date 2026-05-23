@@ -3,6 +3,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdint>
+#include <vector>
 
 namespace Window{
     class Window {
@@ -22,6 +23,8 @@ namespace Window{
 
 	uint32_t getWidth() const { return width; }
 	uint32_t getHeight() const { return height; }
+
+	std::vector<const char*> getRequiredInstanceExtensions() const;
 
     private:
 	GLFWwindow* window;

@@ -1,6 +1,7 @@
 #include "window.h"
 #include <stdexcept>
 #include <iostream>
+#include <vector>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -40,5 +41,11 @@ namespace Window{
 
     void Window::waitEvents() const {
 	glfwWaitEvents();
+    }
+
+    std::vector<const char*> Window::getRequiredInstanceExtensions() const {
+	uint32_t extensionCount = 0;
+	const char** extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+	return std::vector<const char*>(extensions, extensions + extensionCount);
     }
 }
