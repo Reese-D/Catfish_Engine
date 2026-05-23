@@ -1,0 +1,30 @@
+#ifndef WINDOW_H
+#define WINDOW_H
+
+#include <GLFW/glfw3.h>
+#include <cstdint>
+
+namespace Window{
+    class Window {
+    public:
+	Window(uint32_t width, uint32_t height, const char* title);
+	~Window();
+
+	Window(const Window&) = delete;
+	Window& operator=(const Window&) = delete;
+
+	GLFWwindow* getWindow() const { return window; }
+	bool shouldClose() const;
+	void pollEvents() const;
+	void waitEvents() const;
+
+	uint32_t getWidth() const { return width; }
+	uint32_t getHeight() const { return height; }
+
+    private:
+	GLFWwindow* window;
+	uint32_t width;
+	uint32_t height;
+    };
+}
+#endif // WINDOW_H

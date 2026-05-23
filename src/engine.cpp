@@ -1,14 +1,16 @@
+// Vulkan
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
+//Standard library
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
-
+#include <memory> //smart pointers
+                  // 
+//Local
+#include "window.h"
 
 class HelloTriangleApplication {
 public:
@@ -16,43 +18,23 @@ public:
 	initWindow();    
         initVulkan();
         mainLoop();
-        cleanup();
     }
 
 private:
-    void initWindow() {
-	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	window = glfwCreateWindow(800, 600, "Vulkan", nullptr, nullptr);      
+  void initWindow() {
+      window = std::make_unique<Window::Window>(800, 600, "Vulkan");
     }    
     void initVulkan() {
 	
     }
 
     void mainLoop() {
-	while (!glfwWindowShouldClose(window)) {
-	    glfwPollEvents();
+	while (!window->shouldClose()) {
+	    window->pollEvents();
 	}      
-	// constexpr vk::ApplicationInfo appInfo{.pApplicationName   = "Hello Triangle",
-	// 							   .applicationVersion = VK_MAKE_VERSION( 1, 0, 0 ),
-	// 							   .pEngineName        = "No Engine",
-	// 							   .engineVersion      = VK_MAKE_VERSION( 1, 0, 0 ),
-	// 							   .apiVersion         = vk::ApiVersion14};
-	// 	vk::InstanceCreateInfo createInfo{
-	// 	    .pApplicationInfo = &appInfo
-	// 	};
-	// 	vk::raii::Context context;
-	// 	auto instance = vk::raii::Instance(context, createInfo);
     }
 
-    void cleanup() {
-	glfwDestroyWindow(window);
-
-	glfwTerminate();
-      }
-
-    GLFWwindow* window;    
+    std::unique_ptr<Window::Window> window;    
 };
 
 int main()
