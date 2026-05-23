@@ -10,7 +10,7 @@ CXXFLAGS = -std=c++23 -Wall -Wextra -O2
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
