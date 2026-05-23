@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 // Local
+#include "validation_layers.h"
 #include "vulkan_instance.h"
 #include "window.h"
 
@@ -19,41 +20,39 @@ class HelloTriangleApplication {
 
         initWindow();
         initVulkan();
-        // enableValidationLayers(true);
+        enableValidationLayers(true);
         mainLoop();
     }
 
   private:
     void enableValidationLayers(bool enableValidationLayers) {
+        std::cout << "Enabling validation layers..." << std::endl;
+        // Create validation layers object
+        VulkanHelpers::ValidationLayers validationLayers;
+
         // Get the required layers
         std::vector<char const *> requiredLayers;
         if (enableValidationLayers) {
-            requiredLayers.assign(validationLayers.begin(), validationLayers.end());
+            requiredLayers = validationLayers.getRequiredLayers();
         }
 
         // Check if the required layers are supported by the Vulkan
         // implementation.
         auto context = vulkanInstance->getContext();
-        auto layerProperties = context->enumerateInstanceLayerProperties();
-        auto unsupportedLayerIt = std::ranges::find_if(requiredLayers, [&layerProperties](auto const &requiredLayer) {
-            return std::ranges::none_of(layerProperties, [requiredLayer](auto const &layerProperty) { return strcmp(layerProperty.layerName, requiredLayer) == 0; });
-        });
-        if (unsupportedLayerIt != requiredLayers.end()) {
-            throw std::runtime_error("Required layer not supported: " + std::string(*unsupportedLayerIt));
+        if (enableValidationLayers) {
+            if (!validationLayers.areValidationLayersSupported(requiredLayers, *context)) {
+                throw std::runtime_error("Required layer not supported");
+            }
         }
 
         // Get the required extensions.
         auto requiredExtensions = window->getRequiredInstanceExtensions();
 
         // Check if the required extensions are supported by the Vulkan implementation.
-        auto extensionProperties = context->enumerateInstanceExtensionProperties();
-        auto unsupportedPropertyIt = std::ranges::find_if(requiredExtensions, [&extensionProperties](auto const &requiredExtension) {
-            return std::ranges::none_of(extensionProperties, [requiredExtension](auto const &extensionProperty) {
-                return strcmp(extensionProperty.extensionName, requiredExtension) == 0;
-            });
-        });
-        if (unsupportedPropertyIt != requiredExtensions.end()) {
-            throw std::runtime_error("Required extension not supported: " + std::string(*unsupportedPropertyIt));
+        if (enableValidationLayers) {
+            if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context)) {
+                throw std::runtime_error("Required extension not supported");
+            }
         }
     }
     void initWindow() {
@@ -72,7 +71,6 @@ class HelloTriangleApplication {
     }
     std::shared_ptr<VulkanHelpers::Window> window;
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
-    const std::vector<char const *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 };
 
 int main() {
