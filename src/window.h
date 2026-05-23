@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace Window{
+namespace VulkanHelpers{
     class Window {
     public:
 	Window(uint32_t width, uint32_t height, const char* title);
