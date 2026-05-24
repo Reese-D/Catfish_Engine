@@ -1,8 +1,8 @@
 #ifndef VALIDATION_LAYERS_H
 #define VALIDATION_LAYERS_H
 
-#include <string>
 #include <vector>
+#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -22,8 +22,10 @@ class ValidationLayers {
     // Get the required layers
     std::vector<const char *> getRequiredLayers() const;
 
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> createDebugMessenger(const vk::raii::Instance &instance,  vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback);
   private:
     std::vector<const char *> validationLayers;
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
 };
 
 } // namespace VulkanHelpers

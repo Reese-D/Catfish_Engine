@@ -5,6 +5,8 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#include <vulkan/vulkan.hpp>
 namespace VulkanHelpers {
 Window::Window(uint32_t width, uint32_t height, const char *title) : width(width), height(height) {
 
@@ -39,6 +41,9 @@ void Window::waitEvents() const { glfwWaitEvents(); }
 std::vector<const char *> Window::getRequiredInstanceExtensions() const {
     uint32_t extensionCount = 0;
     const char **extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
-    return std::vector<const char *>(extensions, extensions + extensionCount);
+    auto extension_vec = std::vector<const char *>(extensions, extensions + extensionCount);
+    extension_vec.push_back(vk::EXTDebugUtilsExtensionName);
+
+    return extension_vec;
 }
 } // namespace VulkanHelpers

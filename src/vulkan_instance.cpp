@@ -1,6 +1,5 @@
 #include "vulkan_instance.h"
 #include <iostream>
-#include <ranges>
 #include <stdexcept>
 #include <vulkan/vulkan_raii.hpp>
 

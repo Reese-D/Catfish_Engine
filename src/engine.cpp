@@ -34,25 +34,24 @@ class HelloTriangleApplication {
         std::vector<char const *> requiredLayers;
         if (enableValidationLayers) {
             requiredLayers = validationLayers.getRequiredLayers();
-        }
 
-        // Check if the required layers are supported by the Vulkan
-        // implementation.
-        auto context = vulkanInstance->getContext();
-        if (enableValidationLayers) {
+            // Check if the required layers are supported by the Vulkan
+            // implementation.
+            auto context = vulkanInstance->getContext();
+
             if (!validationLayers.areValidationLayersSupported(requiredLayers, *context)) {
                 throw std::runtime_error("Required layer not supported");
             }
-        }
 
-        // Get the required extensions.
-        auto requiredExtensions = window->getRequiredInstanceExtensions();
+            // Get the required extensions.
+            auto requiredExtensions = window->getRequiredInstanceExtensions();
 
-        // Check if the required extensions are supported by the Vulkan implementation.
-        if (enableValidationLayers) {
+            // Check if the required extensions are supported by the Vulkan implementation.
             if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context)) {
                 throw std::runtime_error("Required extension not supported");
             }
+
+            debugMessenger = validationLayers.createDebugMessenger(*vulkanInstance->getInstance(), &debugCallback);
         }
     }
     void initWindow() {
@@ -64,6 +63,15 @@ class HelloTriangleApplication {
         vulkanInstance = std::make_shared<VulkanHelpers::Instance>(window);
     }
 
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL
+    debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
+        if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError || severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
+            std::cerr << "validation layer: type " << to_string(type) << " msg: " << pCallbackData->pMessage << std::endl;
+        }
+
+        return vk::False;
+    }
+
     void mainLoop() {
         while (!window->shouldClose()) {
             window->pollEvents();
@@ -71,6 +79,7 @@ class HelloTriangleApplication {
     }
     std::shared_ptr<VulkanHelpers::Window> window;
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
 };
 
 int main() {

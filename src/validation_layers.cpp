@@ -1,7 +1,6 @@
 #include "validation_layers.h"
 #include <algorithm>
 #include <cstring>
-#include <stdexcept>
 
 namespace VulkanHelpers {
 
@@ -45,6 +44,19 @@ bool ValidationLayers::areRequiredExtensionsSupported(const std::vector<const ch
     }
 
     return true;
+}
+
+std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> ValidationLayers::createDebugMessenger(const vk::raii::Instance &instance, vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback) {
+    vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
+        vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+    );
+
+    vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{.messageSeverity = severityFlags, .messageType = messageTypeFlags, .pfnUserCallback = debugCallback};
+
+    debugMessenger = std::make_shared<vk::raii::DebugUtilsMessengerEXT>(instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT));
+
+    return debugMessenger;
 }
 
 } // namespace VulkanHelpers
