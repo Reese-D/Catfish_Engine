@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 // Local
+#include "physical_device.h"
 #include "validation_layers.h"
 #include "vulkan_instance.h"
 #include "window.h"
@@ -21,6 +22,7 @@ class HelloTriangleApplication {
         initWindow();
         initVulkan();
         enableValidationLayers(true);
+        initPhysicalDevice();
         mainLoop();
     }
 
@@ -62,6 +64,10 @@ class HelloTriangleApplication {
         std::cout << "creating vulkan instance..." << std::endl;
         vulkanInstance = std::make_shared<VulkanHelpers::Instance>(window);
     }
+    void initPhysicalDevice() {
+        std::cout << "selecting physical device..." << std::endl;
+        physicalDevice = std::make_shared<VulkanHelpers::PhysicalDevice>(*vulkanInstance->getInstance());
+    }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
     debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
@@ -80,6 +86,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::Window> window;
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
+    std::shared_ptr<VulkanHelpers::PhysicalDevice> physicalDevice;
 };
 
 int main() {
