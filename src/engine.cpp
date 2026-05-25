@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 // Local
+#include "logical_device.h"
 #include "physical_device.h"
 #include "validation_layers.h"
 #include "vulkan_instance.h"
@@ -23,6 +24,7 @@ class HelloTriangleApplication {
         initVulkan();
         enableValidationLayers(true);
         initPhysicalDevice();
+        initLogicalDevice();
         mainLoop();
     }
 
@@ -68,6 +70,10 @@ class HelloTriangleApplication {
         std::cout << "selecting physical device..." << std::endl;
         physicalDevice = std::make_shared<VulkanHelpers::PhysicalDevice>(*vulkanInstance->getInstance());
     }
+    void initLogicalDevice() {
+        std::cout << "creating logical device..." << std::endl;
+        logicalDevice = std::make_shared<VulkanHelpers::LogicalDevice>(*physicalDevice->getPhysicalDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
+    }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
     debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
@@ -87,6 +93,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
     std::shared_ptr<VulkanHelpers::PhysicalDevice> physicalDevice;
+    std::shared_ptr<VulkanHelpers::LogicalDevice> logicalDevice;
 };
 
 int main() {

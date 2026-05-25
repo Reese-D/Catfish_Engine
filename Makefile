@@ -11,7 +11,7 @@ LDFLAGS = -lvulkan
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
