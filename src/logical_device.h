@@ -10,7 +10,7 @@ namespace VulkanHelpers {
 
 class LogicalDevice {
   public:
-    LogicalDevice(const vk::raii::PhysicalDevice &physicalDevice, uint32_t graphicsQueueFamilyIndex);
+    LogicalDevice(const vk::raii::PhysicalDevice &physicalDevice, uint32_t graphicsFamily, uint32_t presentFamily);
     ~LogicalDevice() = default;
 
     LogicalDevice(const LogicalDevice &) = delete;
@@ -18,10 +18,12 @@ class LogicalDevice {
 
     std::shared_ptr<vk::raii::Device> getDevice() const { return device; }
     std::shared_ptr<vk::raii::Queue> getGraphicsQueue() const { return graphicsQueue; }
+    std::shared_ptr<vk::raii::Queue> getPresentQueue() const { return presentQueue; }
 
   private:
     std::shared_ptr<vk::raii::Device> device;
     std::shared_ptr<vk::raii::Queue> graphicsQueue;
+    std::shared_ptr<vk::raii::Queue> presentQueue;
 };
 
 } // namespace VulkanHelpers

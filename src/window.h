@@ -23,6 +23,7 @@ class Window {
 
     uint32_t getWidth() const { return width; }
     uint32_t getHeight() const { return height; }
+    std::pair<int, int> getFramebufferSize() const;
 
     std::vector<const char *> getRequiredInstanceExtensions() const;
 

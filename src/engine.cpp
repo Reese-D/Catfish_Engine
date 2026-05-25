@@ -10,8 +10,12 @@
 #include <stdexcept>
 
 // Local
+#include "graphics_pipeline.h"
 #include "logical_device.h"
 #include "physical_device.h"
+#include "renderer.h"
+#include "surface.h"
+#include "swap_chain.h"
 #include "validation_layers.h"
 #include "vulkan_instance.h"
 #include "window.h"
@@ -19,38 +23,35 @@
 class HelloTriangleApplication {
   public:
     void run() {
-
         initWindow();
         initVulkan();
         enableValidationLayers(true);
+        initSurface();
         initPhysicalDevice();
         initLogicalDevice();
+        initSwapChain();
+        initGraphicsPipeline();
+        initRenderer();
         mainLoop();
     }
 
   private:
     void enableValidationLayers(bool enableValidationLayers) {
         std::cout << "Enabling validation layers..." << std::endl;
-        // Create validation layers object
         VulkanHelpers::ValidationLayers validationLayers;
 
-        // Get the required layers
         std::vector<char const *> requiredLayers;
         if (enableValidationLayers) {
             requiredLayers = validationLayers.getRequiredLayers();
 
-            // Check if the required layers are supported by the Vulkan
-            // implementation.
             auto context = vulkanInstance->getContext();
 
             if (!validationLayers.areValidationLayersSupported(requiredLayers, *context)) {
                 throw std::runtime_error("Required layer not supported");
             }
 
-            // Get the required extensions.
             auto requiredExtensions = window->getRequiredInstanceExtensions();
 
-            // Check if the required extensions are supported by the Vulkan implementation.
             if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context)) {
                 throw std::runtime_error("Required extension not supported");
             }
@@ -66,13 +67,47 @@ class HelloTriangleApplication {
         std::cout << "creating vulkan instance..." << std::endl;
         vulkanInstance = std::make_shared<VulkanHelpers::Instance>(window);
     }
+    void initSurface() {
+        std::cout << "creating window surface..." << std::endl;
+        surface = std::make_shared<VulkanHelpers::Surface>(*vulkanInstance->getInstance(), *window);
+    }
     void initPhysicalDevice() {
         std::cout << "selecting physical device..." << std::endl;
-        physicalDevice = std::make_shared<VulkanHelpers::PhysicalDevice>(*vulkanInstance->getInstance());
+        physicalDevice = std::make_shared<VulkanHelpers::PhysicalDevice>(*vulkanInstance->getInstance(), *surface->getSurface());
     }
     void initLogicalDevice() {
         std::cout << "creating logical device..." << std::endl;
-        logicalDevice = std::make_shared<VulkanHelpers::LogicalDevice>(*physicalDevice->getPhysicalDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
+        logicalDevice = std::make_shared<VulkanHelpers::LogicalDevice>(
+            *physicalDevice->getPhysicalDevice(), physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex()
+        );
+    }
+    void initSwapChain() {
+        std::cout << "creating swap chain..." << std::endl;
+        swapChain = std::make_shared<VulkanHelpers::SwapChain>(
+            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
+            physicalDevice->getPresentQueueFamilyIndex(), *window
+        );
+    }
+    void initGraphicsPipeline() {
+        std::cout << "creating graphics pipeline..." << std::endl;
+        graphicsPipeline = std::make_shared<VulkanHelpers::GraphicsPipeline>(*logicalDevice->getDevice(), swapChain->getFormat());
+    }
+    void initRenderer() {
+        std::cout << "creating renderer..." << std::endl;
+        renderer = std::make_shared<VulkanHelpers::Renderer>(*logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
+    }
+
+    void recreateSwapChain() {
+        auto [width, height] = window->getFramebufferSize();
+        while (width == 0 || height == 0) {
+            window->waitEvents();
+            std::tie(width, height) = window->getFramebufferSize();
+        }
+        logicalDevice->getDevice()->waitIdle();
+        swapChain->recreate(
+            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
+            physicalDevice->getPresentQueueFamilyIndex(), *window
+        );
     }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
@@ -87,13 +122,24 @@ class HelloTriangleApplication {
     void mainLoop() {
         while (!window->shouldClose()) {
             window->pollEvents();
+            if (renderer->drawFrame(*logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue())) {
+                recreateSwapChain();
+		std::cout << "Recreating swapchain" << std::endl;
+            }
+	    std::cout << ".";
         }
+        logicalDevice->getDevice()->waitIdle();
     }
+
     std::shared_ptr<VulkanHelpers::Window> window;
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
+    std::shared_ptr<VulkanHelpers::Surface> surface;
     std::shared_ptr<VulkanHelpers::PhysicalDevice> physicalDevice;
     std::shared_ptr<VulkanHelpers::LogicalDevice> logicalDevice;
+    std::shared_ptr<VulkanHelpers::SwapChain> swapChain;
+    std::shared_ptr<VulkanHelpers::GraphicsPipeline> graphicsPipeline;
+    std::shared_ptr<VulkanHelpers::Renderer> renderer;
 };
 
 int main() {

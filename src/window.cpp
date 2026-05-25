@@ -15,7 +15,7 @@ Window::Window(uint32_t width, uint32_t height, const char *title) : width(width
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
@@ -30,6 +30,12 @@ Window::~Window() {
         glfwDestroyWindow(window);
     }
     glfwTerminate();
+}
+
+std::pair<int, int> Window::getFramebufferSize() const {
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    return {width, height};
 }
 
 bool Window::shouldClose() const { return glfwWindowShouldClose(window); }

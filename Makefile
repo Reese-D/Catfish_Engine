@@ -4,20 +4,32 @@
 CXX = clang++
 
 # Compiler flags
-CXXFLAGS = -std=c++23 -Wall -Wextra -O2
+CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb
 LDFLAGS = -lvulkan
 
 # Target executable name
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
 
+VERT_SPV = shaders/vert.spv
+FRAG_SPV = shaders/frag.spv
+
 # Default target
-all: $(TARGET)
+all: shaders $(TARGET)
+
+# Compile GLSL shaders to SPIR-V
+shaders: $(VERT_SPV) $(FRAG_SPV)
+
+$(VERT_SPV): shaders/shader.vert
+	glslc $< -o $@
+
+$(FRAG_SPV): shaders/shader.frag
+	glslc $< -o $@
 
 # Link object files to create executable
 $(TARGET): $(OBJECTS)
@@ -29,7 +41,7 @@ $(TARGET): $(OBJECTS)
 
 # Clean build files
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f $(OBJECTS) $(TARGET) $(VERT_SPV) $(FRAG_SPV)
 
 # Install target (optional)
 install: $(TARGET)
@@ -49,7 +61,7 @@ local-uninstall:
 
 # Format source files with clang-format
 format:
-	clang-format -i $(SOURCES)
+	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h
 
 # Phony targets
-.PHONY: all clean format install uninstall local-install local-uninstall
+.PHONY: all clean format shaders install uninstall local-install local-uninstall
