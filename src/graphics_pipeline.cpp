@@ -7,10 +7,25 @@
 #include <stdexcept>
 
 #include "graphics_pipeline.h"
+#include "vertex_buffer.h"
 
 namespace VulkanHelpers {
 
 GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat) {
+    // Descriptor set layout: binding 0 = UBO, vertex stage
+    auto uboBinding = vk::DescriptorSetLayoutBinding{
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    };
+    descriptorSetLayout = std::make_shared<vk::raii::DescriptorSetLayout>(
+        device, vk::DescriptorSetLayoutCreateInfo{
+                    .bindingCount = 1,
+                    .pBindings = &uboBinding,
+                }
+    );
+
     auto vertCode = readShaderFile("shaders/vert.spv");
     auto fragCode = readShaderFile("shaders/frag.spv");
     auto vertModule = createShaderModule(device, vertCode);
@@ -29,7 +44,14 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         },
     };
 
-    auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo{};
+    auto bindingDesc = Vertex::getBindingDescription();
+    auto attrDescs = Vertex::getAttributeDescriptions();
+    auto vertexInputInfo = vk::PipelineVertexInputStateCreateInfo{
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDesc,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attrDescs.size()),
+        .pVertexAttributeDescriptions = attrDescs.data(),
+    };
 
     auto inputAssemblyInfo = vk::PipelineInputAssemblyStateCreateInfo{
         .topology = vk::PrimitiveTopology::eTriangleList,
@@ -46,7 +68,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .rasterizerDiscardEnable = vk::False,
         .polygonMode = vk::PolygonMode::eFill,
         .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eClockwise,
+        .frontFace = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable = vk::False,
         .lineWidth = 1.0f,
     };
@@ -73,7 +95,13 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .pDynamicStates = dynamicStates.data(),
     };
 
-    pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(device, vk::PipelineLayoutCreateInfo{});
+    vk::DescriptorSetLayout rawLayout = **descriptorSetLayout;
+    pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(
+        device, vk::PipelineLayoutCreateInfo{
+                    .setLayoutCount = 1,
+                    .pSetLayouts = &rawLayout,
+                }
+    );
 
     auto pipelineChain = vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo>{
         vk::GraphicsPipelineCreateInfo{

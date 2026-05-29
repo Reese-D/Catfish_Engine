@@ -33,7 +33,9 @@ Renderer::Renderer(const vk::raii::Device &device, uint32_t graphicsQueueFamilyI
 }
 
 bool Renderer::drawFrame(
-    const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue
+    const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
+    const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
+    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, UniformBuffer &uniformBuffer
 ) {
     (void)device.waitForFences(**inFlightFence, vk::True, UINT64_MAX);
 
@@ -46,13 +48,17 @@ bool Renderer::drawFrame(
             needsRecreate = true;
         }
     } catch (const vk::OutOfDateKHRError &) {
-        return true; // fence still signaled — safe to return early
+        return true;
     }
 
     device.resetFences(**inFlightFence);
 
+    auto now = std::chrono::steady_clock::now();
+    float elapsed = std::chrono::duration<float>(now - startTime).count();
+    uniformBuffer.update(elapsed, swapChain.getExtent());
+
     commandBuffer->reset();
-    recordCommandBuffer(imageIndex, swapChain, pipeline);
+    recordCommandBuffer(imageIndex, swapChain, pipeline, vertexBuffer, indexBuffer, uniformBuffer.getDescriptorSet());
 
     vk::Semaphore waitSem = **imageAvailableSemaphore;
     vk::Semaphore signalSem = **renderFinishedSemaphore;
@@ -87,7 +93,10 @@ bool Renderer::drawFrame(
     }
 }
 
-void Renderer::recordCommandBuffer(uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline) {
+void Renderer::recordCommandBuffer(
+    uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
+    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, vk::DescriptorSet descriptorSet
+) {
     commandBuffer->begin(vk::CommandBufferBeginInfo{});
 
     auto image = swapChain.getImages()[imageIndex];
@@ -147,7 +156,11 @@ void Renderer::recordCommandBuffer(uint32_t imageIndex, const SwapChain &swapCha
     );
     commandBuffer->setScissor(0, vk::Rect2D{.offset = {0, 0}, .extent = ex});
 
-    commandBuffer->draw(3, 1, 0, 0);
+    commandBuffer->bindVertexBuffers(0, {**vertexBuffer.getBuffer()}, {vk::DeviceSize{0}});
+    commandBuffer->bindIndexBuffer(**indexBuffer.getBuffer(), 0, vk::IndexType::eUint32);
+    commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **pipeline.getPipelineLayout(), 0, {descriptorSet}, {});
+
+    commandBuffer->drawIndexed(indexBuffer.getIndexCount(), 1, 0, 0, 0);
     commandBuffer->endRendering();
 
     auto toPresent = vk::ImageMemoryBarrier2{

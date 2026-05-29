@@ -11,14 +11,26 @@
 
 // Local
 #include "graphics_pipeline.h"
+#include "index_buffer.h"
 #include "logical_device.h"
 #include "physical_device.h"
 #include "renderer.h"
 #include "surface.h"
 #include "swap_chain.h"
+#include "uniform_buffer.h"
 #include "validation_layers.h"
+#include "vertex_buffer.h"
 #include "vulkan_instance.h"
 #include "window.h"
+
+const std::vector<VulkanHelpers::Vertex> VERTICES = {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+};
+
+const std::vector<uint32_t> INDICES = {0, 1, 2, 2, 3, 0};
 
 class HelloTriangleApplication {
   public:
@@ -32,6 +44,9 @@ class HelloTriangleApplication {
         initSwapChain();
         initGraphicsPipeline();
         initRenderer();
+        initVertexBuffer();
+        initIndexBuffer();
+        initUniformBuffer();
         mainLoop();
     }
 
@@ -96,6 +111,26 @@ class HelloTriangleApplication {
         std::cout << "creating renderer..." << std::endl;
         renderer = std::make_shared<VulkanHelpers::Renderer>(*logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
     }
+    void initVertexBuffer() {
+        std::cout << "creating vertex buffer..." << std::endl;
+        vertexBuffer = std::make_shared<VulkanHelpers::VertexBuffer>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(), VERTICES
+        );
+    }
+    void initIndexBuffer() {
+        std::cout << "creating index buffer..." << std::endl;
+        indexBuffer = std::make_shared<VulkanHelpers::IndexBuffer>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(), INDICES
+        );
+    }
+    void initUniformBuffer() {
+        std::cout << "creating uniform buffer..." << std::endl;
+        uniformBuffer = std::make_shared<VulkanHelpers::UniformBuffer>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), *graphicsPipeline->getDescriptorSetLayout()
+        );
+    }
 
     void recreateSwapChain() {
         auto [width, height] = window->getFramebufferSize();
@@ -122,11 +157,13 @@ class HelloTriangleApplication {
     void mainLoop() {
         while (!window->shouldClose()) {
             window->pollEvents();
-            if (renderer->drawFrame(*logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue())) {
+            if (renderer->drawFrame(
+                    *logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
+                    *vertexBuffer, *indexBuffer, *uniformBuffer
+                )) {
                 recreateSwapChain();
-		std::cout << "Recreating swapchain" << std::endl;
+                std::cout << "Recreating swapchain" << std::endl;
             }
-	    std::cout << ".";
         }
         logicalDevice->getDevice()->waitIdle();
     }
@@ -140,6 +177,9 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::SwapChain> swapChain;
     std::shared_ptr<VulkanHelpers::GraphicsPipeline> graphicsPipeline;
     std::shared_ptr<VulkanHelpers::Renderer> renderer;
+    std::shared_ptr<VulkanHelpers::VertexBuffer> vertexBuffer;
+    std::shared_ptr<VulkanHelpers::IndexBuffer> indexBuffer;
+    std::shared_ptr<VulkanHelpers::UniformBuffer> uniformBuffer;
 };
 
 int main() {

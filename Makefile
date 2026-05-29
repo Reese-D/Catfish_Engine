@@ -11,7 +11,7 @@ LDFLAGS = -lvulkan
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -61,7 +61,7 @@ local-uninstall:
 
 # Format source files with clang-format
 format:
-	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h
+	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h src/vertex_buffer.h src/index_buffer.h src/uniform_buffer.h src/vulkan_utils.h
 
 # Phony targets
 .PHONY: all clean format shaders install uninstall local-install local-uninstall
