@@ -6,6 +6,7 @@ bin/
 *.so
 *.dylib
 compile_commands.json
+shaders/*.spv
 
 # IDE files
 *.swp

@@ -16,20 +16,22 @@ SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_l
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
 
+SHADER_SRC = shaders/shader.slang
 VERT_SPV = shaders/vert.spv
 FRAG_SPV = shaders/frag.spv
+SLANGC_FLAGS = -target spirv -matrix-layout-column-major
 
 # Default target
 all: shaders $(TARGET)
 
-# Compile GLSL shaders to SPIR-V
+# Compile Slang shaders to SPIR-V
 shaders: $(VERT_SPV) $(FRAG_SPV)
 
-$(VERT_SPV): shaders/shader.vert
-	glslc $< -o $@
+$(VERT_SPV): $(SHADER_SRC)
+	slangc $(SLANGC_FLAGS) -entry vertexMain $< -o $@
 
-$(FRAG_SPV): shaders/shader.frag
-	glslc $< -o $@
+$(FRAG_SPV): $(SHADER_SRC)
+	slangc $(SLANGC_FLAGS) -entry fragmentMain $< -o $@
 
 # Link object files to create executable
 $(TARGET): $(OBJECTS)
