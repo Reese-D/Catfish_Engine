@@ -29,4 +29,19 @@ std::vector<VulkanHelpers::DrawCall> collectDrawCalls(entt::registry &registry) 
     return result;
 }
 
+void appendSelectionRings(
+    entt::registry &registry,
+    std::vector<VulkanHelpers::DrawCall> &draws,
+    const VulkanHelpers::Model &ringModel
+) {
+    vk::DescriptorSet matSet = ringModel.getMaterial().getDescriptorSet();
+
+    for (auto entity : registry.view<Components::Selected, Components::Transform>()) {
+        const auto &t = registry.get<Components::Transform>(entity);
+        // Place ring flat on the ground at the unit's XY, just above terrain
+        auto m = glm::translate(glm::mat4(1.0f), glm::vec3(t.position.x, t.position.y, 0.02f));
+        draws.push_back({&ringModel, matSet, m});
+    }
+}
+
 } // namespace Systems

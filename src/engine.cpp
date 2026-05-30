@@ -30,6 +30,7 @@
 #include "physical_device.h"
 #include "render_system.h"
 #include "renderer.h"
+#include "selection_ring.h"
 #include "selection_system.h"
 #include "spatial_grid.h"
 #include "surface.h"
@@ -56,6 +57,7 @@ class HelloTriangleApplication {
         initModel();
         initTerrain();
         initUniformBuffer();
+        initSelectionRing();
         initScene();
         mainLoop();
     }
@@ -144,39 +146,51 @@ class HelloTriangleApplication {
             *graphicsPipeline->getUboLayout()
         );
     }
+    void initSelectionRing() {
+        std::cout << "creating selection ring..." << std::endl;
+        selectionRingModel = VulkanHelpers::createSelectionRingModel(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
+            *graphicsPipeline->getTextureLayout()
+        );
+    }
+
+    entt::entity spawnUnit(glm::vec3 position) {
+        auto e = registry.create();
+        registry.emplace<Components::Transform>(e, Components::Transform{
+            .position = position,
+            .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+            .scale    = {1.0f, 1.0f, 1.0f},
+        });
+        registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{model});
+        registry.emplace<Components::Selectable>(e);
+        registry.emplace<Components::MovementSpeed>(e);
+        registry.emplace<Components::OrderQueue>(e);
+        return e;
+    }
+
     void initScene() {
         std::cout << "initialising scene..." << std::endl;
 
         auto camEntity = registry.create();
         registry.emplace<Components::Camera>(camEntity, Components::Camera{
-            .position = {5.0f, 5.0f, 8.0f},
-            .target   = {0.0f, 0.0f, 0.0f},
-            .fov      = 45.0f,
+            .position = {0.0f, -12.0f, 14.0f},
+            .target   = {0.0f,  0.0f,  0.0f},
+            .fov      = 50.0f,
             .near_    = 0.1f,
             .far_     = 200.0f,
         });
 
-        // Terrain entity — no physics/selection, just rendered
         auto terrainEntity = registry.create();
         registry.emplace<Components::Transform>(terrainEntity);
         registry.emplace<Components::RenderMesh>(terrainEntity,
             Components::RenderMesh{terrain->getModelPtr()});
 
-        // Goblin unit
-        auto goblin = registry.create();
-        registry.emplace<Components::Transform>(goblin, Components::Transform{
-            .position = {0.0f, 0.0f, 0.0f},
-            .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
-            .scale    = {1.0f, 1.0f, 1.0f},
-        });
-        registry.emplace<Components::RenderMesh>(goblin, Components::RenderMesh{model});
-        registry.emplace<Components::Selectable>(goblin);
-        registry.emplace<Components::MovementSpeed>(goblin);
-
-        auto &queue = registry.emplace<Components::OrderQueue>(goblin);
-        queue.enqueue(Orders::MoveOrder{{3.0f, 0.0f, 0.0f}});
-        queue.enqueue(Orders::MoveOrder{{0.0f, 3.0f, 0.0f}});
-        queue.enqueue(Orders::MoveOrder{{0.0f, 0.0f, 0.0f}});
+        // 2×2 formation of goblins
+        spawnUnit({-1.5f, -1.5f, 0.0f});
+        spawnUnit({ 1.5f, -1.5f, 0.0f});
+        spawnUnit({-1.5f,  1.5f, 0.0f});
+        spawnUnit({ 1.5f,  1.5f, 0.0f});
     }
 
     void recreateSwapChain() {
@@ -215,6 +229,7 @@ class HelloTriangleApplication {
             Systems::updateSelection(registry, *window, swapChain->getExtent());
             spatialGrid.update(registry);
             auto draws = Systems::collectDrawCalls(registry);
+            Systems::appendSelectionRings(registry, draws, *selectionRingModel);
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
                     *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
@@ -240,6 +255,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::DepthBuffer>     depthBuffer;
     std::shared_ptr<VulkanHelpers::Model>           model;
     std::shared_ptr<VulkanHelpers::Terrain>         terrain;
+    std::shared_ptr<VulkanHelpers::Model>           selectionRingModel;
     std::shared_ptr<VulkanHelpers::UniformBuffer>   uniformBuffer;
 
     // ECS
