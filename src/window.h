@@ -3,6 +3,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace VulkanHelpers {
@@ -11,10 +12,10 @@ class Window {
     Window(uint32_t width, uint32_t height, const char *title);
     ~Window();
 
-    Window(const Window &) = delete;            // Copy constructor
-    Window(Window &&) = delete;                 // Move Constructor
-    Window &operator=(const Window &) = delete; // Copy Assignment
-    Window &operator=(Window &&) = delete;      // Move Assignment
+    Window(const Window &) = delete;
+    Window(Window &&) = delete;
+    Window &operator=(const Window &) = delete;
+    Window &operator=(Window &&) = delete;
 
     GLFWwindow *getWindow() const { return window; }
     bool shouldClose() const;
@@ -27,10 +28,19 @@ class Window {
 
     std::vector<const char *> getRequiredInstanceExtensions() const;
 
+    // Input queries
+    bool isKeyPressed(int key) const;
+    bool isMouseButtonPressed(int button) const;
+    std::pair<double, double> getMousePosition() const;
+    float consumeScrollDelta(); // returns accumulated scroll since last call and resets it
+
   private:
+    static void scrollCallback(GLFWwindow *win, double xoffset, double yoffset);
+
     GLFWwindow *window;
     uint32_t width;
     uint32_t height;
+    float scrollDelta{0.0f};
 };
 } // namespace VulkanHelpers
 #endif // WINDOW_H

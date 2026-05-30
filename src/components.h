@@ -28,6 +28,9 @@ struct Camera {
     float fov{45.0f};
     float near_{0.1f};
     float far_{100.0f};
+    // Populated by CameraSystem each frame — read by SelectionSystem for ray casting
+    glm::mat4 view{1.0f};
+    glm::mat4 proj{1.0f};
 };
 
 struct Selectable {};

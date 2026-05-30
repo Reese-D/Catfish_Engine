@@ -16,8 +16,10 @@
 // Local
 #include "camera_system.h"
 #include "components.h"
+#include "input_system.h"
 #include "order_system.h"
 #include "orders.h"
+#include "selection_system.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
 #include "logical_device.h"
@@ -186,8 +188,10 @@ class HelloTriangleApplication {
             lastTime = now;
 
             window->pollEvents();
+            Systems::updateCameraInput(registry, *window, deltaTime);
             Systems::processOrders(registry, deltaTime);
             Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
+            Systems::updateSelection(registry, *window, swapChain->getExtent());
             auto draws = Systems::collectDrawCalls(registry);
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
