@@ -4,14 +4,14 @@
 CXX = clang++
 
 # Compiler flags
-CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb -Ithird_party
+CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb -Ithird_party -Ithird_party/fastgltf/include
 LDFLAGS = -lvulkan
 
 # Target executable name
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp src/texture_image.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp src/model.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -35,7 +35,7 @@ $(FRAG_SPV): $(SHADER_SRC)
 
 # Link object files to create executable
 $(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS) -lglfw
+	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS) -lglfw third_party/fastgltf/libfastgltf.a -lsimdjson
 
 # Compile source files to object files
 %.o: %.cpp
@@ -63,7 +63,7 @@ local-uninstall:
 
 # Format source files with clang-format
 format:
-	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h src/vertex_buffer.h src/index_buffer.h src/uniform_buffer.h src/vulkan_utils.h src/texture_image.h
+	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h src/vertex_buffer.h src/index_buffer.h src/uniform_buffer.h src/vulkan_utils.h src/texture_image.h src/depth_buffer.h src/model.h
 
 # Phony targets
 .PHONY: all clean format shaders install uninstall local-install local-uninstall

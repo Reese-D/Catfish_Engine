@@ -10,28 +10,18 @@
 #include <stdexcept>
 
 // Local
+#include "depth_buffer.h"
 #include "graphics_pipeline.h"
-#include "index_buffer.h"
 #include "logical_device.h"
+#include "model.h"
 #include "physical_device.h"
 #include "renderer.h"
 #include "surface.h"
 #include "swap_chain.h"
-#include "texture_image.h"
 #include "uniform_buffer.h"
 #include "validation_layers.h"
-#include "vertex_buffer.h"
 #include "vulkan_instance.h"
 #include "window.h"
-
-const std::vector<VulkanHelpers::Vertex> VERTICES = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-};
-
-const std::vector<uint32_t> INDICES = {0, 1, 2, 2, 3, 0};
 
 class HelloTriangleApplication {
   public:
@@ -43,11 +33,10 @@ class HelloTriangleApplication {
         initPhysicalDevice();
         initLogicalDevice();
         initSwapChain();
+        initDepthBuffer();
         initGraphicsPipeline();
         initRenderer();
-        initTextureImage();
-        initVertexBuffer();
-        initIndexBuffer();
+        initModel();
         initUniformBuffer();
         mainLoop();
     }
@@ -105,34 +94,28 @@ class HelloTriangleApplication {
             physicalDevice->getPresentQueueFamilyIndex(), *window
         );
     }
+    void initDepthBuffer() {
+        std::cout << "creating depth buffer..." << std::endl;
+        depthBuffer = std::make_shared<VulkanHelpers::DepthBuffer>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent()
+        );
+    }
     void initGraphicsPipeline() {
         std::cout << "creating graphics pipeline..." << std::endl;
-        graphicsPipeline = std::make_shared<VulkanHelpers::GraphicsPipeline>(*logicalDevice->getDevice(), swapChain->getFormat());
+        graphicsPipeline = std::make_shared<VulkanHelpers::GraphicsPipeline>(
+            *logicalDevice->getDevice(), swapChain->getFormat(), depthBuffer->getFormat()
+        );
     }
     void initRenderer() {
         std::cout << "creating renderer..." << std::endl;
         renderer = std::make_shared<VulkanHelpers::Renderer>(*logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
     }
-    void initVertexBuffer() {
-        std::cout << "creating vertex buffer..." << std::endl;
-        vertexBuffer = std::make_shared<VulkanHelpers::VertexBuffer>(
-            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
-            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(), VERTICES
-        );
-    }
-    void initIndexBuffer() {
-        std::cout << "creating index buffer..." << std::endl;
-        indexBuffer = std::make_shared<VulkanHelpers::IndexBuffer>(
-            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
-            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(), INDICES
-        );
-    }
-    void initTextureImage() {
-        std::cout << "creating texture image..." << std::endl;
-        textureImage = std::make_shared<VulkanHelpers::TextureImage>(
+    void initModel() {
+        std::cout << "loading model..." << std::endl;
+        model = std::make_shared<VulkanHelpers::Model>(
             *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
             renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
-            "Images/652234-statue-1275469_1920.jpg"
+            "models/goblin.glb"
         );
     }
     void initUniformBuffer() {
@@ -140,7 +123,7 @@ class HelloTriangleApplication {
         uniformBuffer = std::make_shared<VulkanHelpers::UniformBuffer>(
             *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
             *graphicsPipeline->getDescriptorSetLayout(),
-            textureImage->getImageView(), textureImage->getSampler()
+            model->getTextureImage().getImageView(), model->getTextureImage().getSampler()
         );
     }
 
@@ -155,6 +138,7 @@ class HelloTriangleApplication {
             *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
             physicalDevice->getPresentQueueFamilyIndex(), *window
         );
+        depthBuffer->recreate(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent());
     }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
@@ -171,7 +155,7 @@ class HelloTriangleApplication {
             window->pollEvents();
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
-                    *vertexBuffer, *indexBuffer, *uniformBuffer
+                    model->getVertexBuffer(), model->getIndexBuffer(), *uniformBuffer, *depthBuffer
                 )) {
                 recreateSwapChain();
                 std::cout << "Recreating swapchain" << std::endl;
@@ -189,9 +173,8 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::SwapChain> swapChain;
     std::shared_ptr<VulkanHelpers::GraphicsPipeline> graphicsPipeline;
     std::shared_ptr<VulkanHelpers::Renderer> renderer;
-    std::shared_ptr<VulkanHelpers::TextureImage> textureImage;
-    std::shared_ptr<VulkanHelpers::VertexBuffer> vertexBuffer;
-    std::shared_ptr<VulkanHelpers::IndexBuffer> indexBuffer;
+    std::shared_ptr<VulkanHelpers::DepthBuffer> depthBuffer;
+    std::shared_ptr<VulkanHelpers::Model> model;
     std::shared_ptr<VulkanHelpers::UniformBuffer> uniformBuffer;
 };
 

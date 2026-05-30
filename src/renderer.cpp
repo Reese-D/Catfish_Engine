@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "depth_buffer.h"
 #include "renderer.h"
 
 namespace VulkanHelpers {
@@ -35,7 +36,8 @@ Renderer::Renderer(const vk::raii::Device &device, uint32_t graphicsQueueFamilyI
 bool Renderer::drawFrame(
     const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
     const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
-    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, UniformBuffer &uniformBuffer
+    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, UniformBuffer &uniformBuffer,
+    const DepthBuffer &depthBuffer
 ) {
     (void)device.waitForFences(**inFlightFence, vk::True, UINT64_MAX);
 
@@ -58,7 +60,7 @@ bool Renderer::drawFrame(
     uniformBuffer.update(elapsed, swapChain.getExtent());
 
     commandBuffer->reset();
-    recordCommandBuffer(imageIndex, swapChain, pipeline, vertexBuffer, indexBuffer, uniformBuffer.getDescriptorSet());
+    recordCommandBuffer(imageIndex, swapChain, pipeline, vertexBuffer, indexBuffer, uniformBuffer.getDescriptorSet(), depthBuffer);
 
     vk::Semaphore waitSem = **imageAvailableSemaphore;
     vk::Semaphore signalSem = **renderFinishedSemaphore;
@@ -95,7 +97,8 @@ bool Renderer::drawFrame(
 
 void Renderer::recordCommandBuffer(
     uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, vk::DescriptorSet descriptorSet
+    const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, vk::DescriptorSet descriptorSet,
+    const DepthBuffer &depthBuffer
 ) {
     commandBuffer->begin(vk::CommandBufferBeginInfo{});
 
@@ -117,20 +120,45 @@ void Renderer::recordCommandBuffer(
             .layerCount = 1,
         },
     };
+    auto toDepthAttachment = vk::ImageMemoryBarrier2{
+        .srcStageMask = vk::PipelineStageFlagBits2::eTopOfPipe,
+        .srcAccessMask = vk::AccessFlagBits2::eNone,
+        .dstStageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests,
+        .dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        .image = depthBuffer.getImage(),
+        .subresourceRange = vk::ImageSubresourceRange{
+            .aspectMask = vk::ImageAspectFlagBits::eDepth,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    };
+    std::array<vk::ImageMemoryBarrier2, 2> startBarriers = {toColorAttachment, toDepthAttachment};
     commandBuffer->pipelineBarrier2(
         vk::DependencyInfo{
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &toColorAttachment,
+            .imageMemoryBarrierCount = static_cast<uint32_t>(startBarriers.size()),
+            .pImageMemoryBarriers = startBarriers.data(),
         }
     );
 
-    auto clearValue = vk::ClearValue{vk::ClearColorValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}}};
+    auto clearColor = vk::ClearValue{vk::ClearColorValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}}};
     auto colorAttachment = vk::RenderingAttachmentInfo{
         .imageView = *swapChain.getImageViews()[imageIndex],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = clearValue,
+        .clearValue = clearColor,
+    };
+    auto clearDepth = vk::ClearValue{vk::ClearDepthStencilValue{.depth = 1.0f, .stencil = 0}};
+    auto depthAttachment = vk::RenderingAttachmentInfo{
+        .imageView = depthBuffer.getImageView(),
+        .imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .clearValue = clearDepth,
     };
     commandBuffer->beginRendering(
         vk::RenderingInfo{
@@ -138,6 +166,7 @@ void Renderer::recordCommandBuffer(
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &colorAttachment,
+            .pDepthAttachment = &depthAttachment,
         }
     );
 

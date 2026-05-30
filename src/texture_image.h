@@ -2,7 +2,9 @@
 #define TEXTURE_IMAGE_H
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+#include <cstddef>
 #include <memory>
+#include <span>
 #include <string>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
@@ -16,6 +18,11 @@ class TextureImage {
         const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const std::string &imagePath
     );
+    TextureImage(
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        std::span<const std::byte> encodedBytes
+    );
     ~TextureImage() = default;
 
     TextureImage(const TextureImage &) = delete;
@@ -25,6 +32,12 @@ class TextureImage {
     vk::Sampler getSampler() const { return **sampler; }
 
   private:
+    void upload(
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const unsigned char *pixels, int texWidth, int texHeight
+    );
+
     std::shared_ptr<vk::raii::Image> image;
     std::shared_ptr<vk::raii::DeviceMemory> imageMemory;
     std::shared_ptr<vk::raii::ImageView> imageView;

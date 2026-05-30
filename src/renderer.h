@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "depth_buffer.h"
 #include "graphics_pipeline.h"
 #include "index_buffer.h"
 #include "swap_chain.h"
@@ -28,13 +29,15 @@ class Renderer {
     bool drawFrame(
         const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
         const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
-        const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, UniformBuffer &uniformBuffer
+        const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, UniformBuffer &uniformBuffer,
+        const DepthBuffer &depthBuffer
     );
 
   private:
     void recordCommandBuffer(
         uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-        const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, vk::DescriptorSet descriptorSet
+        const VertexBuffer &vertexBuffer, const IndexBuffer &indexBuffer, vk::DescriptorSet descriptorSet,
+        const DepthBuffer &depthBuffer
     );
 
     std::shared_ptr<vk::raii::CommandPool> commandPool;

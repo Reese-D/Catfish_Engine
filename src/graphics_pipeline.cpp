@@ -11,7 +11,7 @@
 
 namespace VulkanHelpers {
 
-GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat) {
+GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat, vk::Format depthFormat) {
     std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
         vk::DescriptorSetLayoutBinding{
             .binding = 0,
@@ -85,6 +85,16 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .sampleShadingEnable = vk::False,
     };
 
+    auto depthStencilInfo = vk::PipelineDepthStencilStateCreateInfo{
+        .depthTestEnable = vk::True,
+        .depthWriteEnable = vk::True,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable = vk::False,
+        .minDepthBounds = 0.0f,
+        .maxDepthBounds = 1.0f,
+    };
+
     auto colorBlendAttachment = vk::PipelineColorBlendAttachmentState{
         .blendEnable = vk::False,
         .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
@@ -119,6 +129,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
             .pViewportState = &viewportStateInfo,
             .pRasterizationState = &rasterizerInfo,
             .pMultisampleState = &multisampleInfo,
+            .pDepthStencilState = &depthStencilInfo,
             .pColorBlendState = &colorBlendInfo,
             .pDynamicState = &dynamicStateInfo,
             .layout = **pipelineLayout,
@@ -126,6 +137,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         vk::PipelineRenderingCreateInfo{
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &swapChainFormat,
+            .depthAttachmentFormat = depthFormat,
         },
     };
 

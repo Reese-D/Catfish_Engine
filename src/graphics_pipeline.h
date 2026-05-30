@@ -12,7 +12,7 @@ namespace VulkanHelpers {
 
 class GraphicsPipeline {
   public:
-    GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat);
+    GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat, vk::Format depthFormat);
     ~GraphicsPipeline() = default;
 
     GraphicsPipeline(const GraphicsPipeline &) = delete;

@@ -10,7 +10,7 @@
 namespace VulkanHelpers {
 
 struct Vertex {
-    float pos[2];
+    float pos[3];
     float color[3];
     float texCoord[2];
 

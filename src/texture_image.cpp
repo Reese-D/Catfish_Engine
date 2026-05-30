@@ -23,6 +23,33 @@ TextureImage::TextureImage(
     if (!pixels) {
         throw std::runtime_error("Failed to load texture: " + imagePath);
     }
+    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
+    stbi_image_free(pixels);
+}
+
+TextureImage::TextureImage(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    std::span<const std::byte> encodedBytes
+) {
+    int texWidth, texHeight, texChannels;
+    stbi_uc *pixels = stbi_load_from_memory(
+        reinterpret_cast<const stbi_uc *>(encodedBytes.data()),
+        static_cast<int>(encodedBytes.size()),
+        &texWidth, &texHeight, &texChannels, STBI_rgb_alpha
+    );
+    if (!pixels) {
+        throw std::runtime_error("Failed to decode embedded texture");
+    }
+    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
+    stbi_image_free(pixels);
+}
+
+void TextureImage::upload(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const unsigned char *pixels, int texWidth, int texHeight
+) {
     vk::DeviceSize imageSize = static_cast<vk::DeviceSize>(texWidth) * texHeight * 4;
 
     auto stagingBuffer = vk::raii::Buffer{
@@ -46,7 +73,6 @@ TextureImage::TextureImage(
     void *mapped = stagingMemory.mapMemory(0, imageSize);
     std::memcpy(mapped, pixels, static_cast<size_t>(imageSize));
     stagingMemory.unmapMemory();
-    stbi_image_free(pixels);
 
     image = std::make_shared<vk::raii::Image>(
         device, vk::ImageCreateInfo{
@@ -83,7 +109,6 @@ TextureImage::TextureImage(
         .layerCount = 1,
     };
 
-    // Transition: undefined → transfer_dst
     {
         auto cmd = beginSingleTimeCommands(device, commandPool);
         auto barrier = vk::ImageMemoryBarrier2{
@@ -100,7 +125,6 @@ TextureImage::TextureImage(
         endSingleTimeCommands(cmd, graphicsQueue);
     }
 
-    // Copy staging buffer → image
     {
         auto cmd = beginSingleTimeCommands(device, commandPool);
         auto region = vk::BufferImageCopy{
@@ -120,7 +144,6 @@ TextureImage::TextureImage(
         endSingleTimeCommands(cmd, graphicsQueue);
     }
 
-    // Transition: transfer_dst → shader_read_only
     {
         auto cmd = beginSingleTimeCommands(device, commandPool);
         auto barrier = vk::ImageMemoryBarrier2{
