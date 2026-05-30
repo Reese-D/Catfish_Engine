@@ -6,11 +6,17 @@
 
 #include <entt/entt.hpp>
 
+#include "spatial_grid.h"
 #include "window.h"
 
 namespace Systems {
 
-void updateSelection(entt::registry &registry, const VulkanHelpers::Window &window, vk::Extent2D extent);
+void updateSelection(
+    entt::registry &registry,
+    const VulkanHelpers::Window &window,
+    vk::Extent2D extent,
+    const VulkanHelpers::SpatialGrid &grid
+);
 
 } // namespace Systems
 

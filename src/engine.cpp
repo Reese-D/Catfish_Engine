@@ -19,6 +19,7 @@
 
 // Local
 #include "camera_system.h"
+#include "combat_system.h"
 #include "components.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
@@ -155,7 +156,7 @@ class HelloTriangleApplication {
         );
     }
 
-    entt::entity spawnUnit(glm::vec3 position) {
+    entt::entity spawnUnit(glm::vec3 position, Components::FactionId faction = Components::FactionId::Player) {
         auto e = registry.create();
         registry.emplace<Components::Transform>(e, Components::Transform{
             .position = position,
@@ -166,6 +167,9 @@ class HelloTriangleApplication {
         registry.emplace<Components::Selectable>(e);
         registry.emplace<Components::MovementSpeed>(e);
         registry.emplace<Components::OrderQueue>(e);
+        registry.emplace<Components::Faction>(e, Components::Faction{faction});
+        registry.emplace<Components::Health>(e);
+        registry.emplace<Components::Combat>(e);
         return e;
     }
 
@@ -186,11 +190,19 @@ class HelloTriangleApplication {
         registry.emplace<Components::RenderMesh>(terrainEntity,
             Components::RenderMesh{terrain->getModelPtr()});
 
-        // 2×2 formation of goblins
-        spawnUnit({-1.5f, -1.5f, 0.0f});
-        spawnUnit({ 1.5f, -1.5f, 0.0f});
-        spawnUnit({-1.5f,  1.5f, 0.0f});
-        spawnUnit({ 1.5f,  1.5f, 0.0f});
+        // 2×2 player formation
+        auto p0 = spawnUnit({-1.5f, -1.5f, 0.0f}, Components::FactionId::Player);
+        auto p1 = spawnUnit({ 1.5f, -1.5f, 0.0f}, Components::FactionId::Player);
+        spawnUnit({-1.5f,  1.5f, 0.0f}, Components::FactionId::Player);
+        spawnUnit({ 1.5f,  1.5f, 0.0f}, Components::FactionId::Player);
+
+        // 2 enemy units approaching from the side
+        auto e0 = spawnUnit({6.0f, -0.5f, 0.0f}, Components::FactionId::Enemy);
+        auto e1 = spawnUnit({6.0f,  0.5f, 0.0f}, Components::FactionId::Enemy);
+
+        // Enemies immediately attack the nearest player units
+        registry.get<Components::OrderQueue>(e0).enqueue(Orders::AttackOrder{p0});
+        registry.get<Components::OrderQueue>(e1).enqueue(Orders::AttackOrder{p1});
     }
 
     void recreateSwapChain() {
@@ -224,9 +236,10 @@ class HelloTriangleApplication {
 
             window->pollEvents();
             Systems::updateCameraInput(registry, *window, deltaTime);
+            Systems::processCombat(registry, deltaTime);
             Systems::processOrders(registry, deltaTime);
             Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
-            Systems::updateSelection(registry, *window, swapChain->getExtent());
+            Systems::updateSelection(registry, *window, swapChain->getExtent(), spatialGrid);
             spatialGrid.update(registry);
             auto draws = Systems::collectDrawCalls(registry);
             Systems::appendSelectionRings(registry, draws, *selectionRingModel);

@@ -36,6 +36,24 @@ struct Camera {
 struct Selectable {};
 struct Selected {};
 
+enum class FactionId : uint8_t { Player = 0, Enemy = 1 };
+
+struct Faction {
+    FactionId id{FactionId::Player};
+};
+
+struct Health {
+    float current{100.0f};
+    float max{100.0f};
+};
+
+struct Combat {
+    float damage{10.0f};
+    float range{1.5f};
+    float cooldown{1.0f};
+    float timer{1.0f}; // start ready to attack
+};
+
 struct MovementSpeed {
     float speed{3.0f}; // units per second
 };
