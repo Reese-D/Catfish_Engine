@@ -19,8 +19,7 @@ class UniformBuffer {
   public:
     UniformBuffer(
         const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::DescriptorSetLayout &descriptorSetLayout,
-        vk::ImageView textureImageView, vk::Sampler textureSampler
+        const vk::raii::DescriptorSetLayout &uboLayout
     );
     ~UniformBuffer() = default;
 

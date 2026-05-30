@@ -182,9 +182,13 @@ void Renderer::recordCommandBuffer(
            }
     );
     commandBuffer->setScissor(0, vk::Rect2D{.offset = {0, 0}, .extent = ex});
+    // Bind the global UBO (set 0) once per frame
     commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **pipeline.getPipelineLayout(), 0, {descriptorSet}, {});
 
     for (const auto &draw : drawCalls) {
+        // Bind per-draw material (set 1 — texture)
+        commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **pipeline.getPipelineLayout(), 1, {draw.materialSet}, {});
+
         commandBuffer->pushConstants(
             **pipeline.getPipelineLayout(),
             vk::ShaderStageFlagBits::eVertex,

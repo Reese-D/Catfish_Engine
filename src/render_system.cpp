@@ -19,7 +19,11 @@ std::vector<VulkanHelpers::DrawCall> collectDrawCalls(entt::registry &registry) 
         modelMatrix = modelMatrix * glm::mat4_cast(transform.rotation);
         modelMatrix = glm::scale(modelMatrix, transform.scale);
 
-        result.push_back(VulkanHelpers::DrawCall{mesh.model.get(), modelMatrix});
+        result.push_back(VulkanHelpers::DrawCall{
+            mesh.model.get(),
+            mesh.model->getMaterial().getDescriptorSet(),
+            modelMatrix,
+        });
     }
 
     return result;

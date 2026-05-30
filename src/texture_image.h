@@ -23,6 +23,12 @@ class TextureImage {
         const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         std::span<const std::byte> encodedBytes
     );
+    // Construct from raw RGBA pixels (no image decoding step)
+    TextureImage(
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const unsigned char *pixels, int width, int height
+    );
     ~TextureImage() = default;
 
     TextureImage(const TextureImage &) = delete;

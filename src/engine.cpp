@@ -20,19 +20,21 @@
 // Local
 #include "camera_system.h"
 #include "components.h"
-#include "input_system.h"
-#include "order_system.h"
-#include "orders.h"
-#include "selection_system.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
+#include "input_system.h"
 #include "logical_device.h"
 #include "model.h"
+#include "order_system.h"
+#include "orders.h"
 #include "physical_device.h"
 #include "render_system.h"
 #include "renderer.h"
+#include "selection_system.h"
+#include "spatial_grid.h"
 #include "surface.h"
 #include "swap_chain.h"
+#include "terrain.h"
 #include "uniform_buffer.h"
 #include "validation_layers.h"
 #include "vulkan_instance.h"
@@ -52,6 +54,7 @@ class HelloTriangleApplication {
         initGraphicsPipeline();
         initRenderer();
         initModel();
+        initTerrain();
         initUniformBuffer();
         initScene();
         mainLoop();
@@ -61,18 +64,14 @@ class HelloTriangleApplication {
     void enableValidationLayers(bool enable) {
         std::cout << "Enabling validation layers..." << std::endl;
         VulkanHelpers::ValidationLayers validationLayers;
-
         if (enable) {
             auto requiredLayers = validationLayers.getRequiredLayers();
-            auto context = vulkanInstance->getContext();
-
-            if (!validationLayers.areValidationLayersSupported(requiredLayers, *context)) {
+            auto context        = vulkanInstance->getContext();
+            if (!validationLayers.areValidationLayersSupported(requiredLayers, *context))
                 throw std::runtime_error("Required layer not supported");
-            }
             auto requiredExtensions = window->getRequiredInstanceExtensions();
-            if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context)) {
+            if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context))
                 throw std::runtime_error("Required extension not supported");
-            }
             debugMessenger = validationLayers.createDebugMessenger(*vulkanInstance->getInstance(), &debugCallback);
         }
     }
@@ -126,15 +125,23 @@ class HelloTriangleApplication {
         model = std::make_shared<VulkanHelpers::Model>(
             *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
             renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
+            *graphicsPipeline->getTextureLayout(),
             "models/goblin.glb"
+        );
+    }
+    void initTerrain() {
+        std::cout << "building terrain..." << std::endl;
+        terrain = std::make_shared<VulkanHelpers::Terrain>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
+            *graphicsPipeline->getTextureLayout()
         );
     }
     void initUniformBuffer() {
         std::cout << "creating uniform buffer..." << std::endl;
         uniformBuffer = std::make_shared<VulkanHelpers::UniformBuffer>(
             *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
-            *graphicsPipeline->getDescriptorSetLayout(),
-            model->getTextureImage().getImageView(), model->getTextureImage().getSampler()
+            *graphicsPipeline->getUboLayout()
         );
     }
     void initScene() {
@@ -142,15 +149,21 @@ class HelloTriangleApplication {
 
         auto camEntity = registry.create();
         registry.emplace<Components::Camera>(camEntity, Components::Camera{
-            .position = {2.0f, 2.0f, 2.0f},
+            .position = {5.0f, 5.0f, 8.0f},
             .target   = {0.0f, 0.0f, 0.0f},
             .fov      = 45.0f,
             .near_    = 0.1f,
-            .far_     = 100.0f,
+            .far_     = 200.0f,
         });
 
+        // Terrain entity — no physics/selection, just rendered
+        auto terrainEntity = registry.create();
+        registry.emplace<Components::Transform>(terrainEntity);
+        registry.emplace<Components::RenderMesh>(terrainEntity,
+            Components::RenderMesh{terrain->getModelPtr()});
+
+        // Goblin unit
         auto goblin = registry.create();
-        // glTF models are Y-up; rotate +90° around X to stand in our Z-up world
         registry.emplace<Components::Transform>(goblin, Components::Transform{
             .position = {0.0f, 0.0f, 0.0f},
             .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
@@ -161,8 +174,8 @@ class HelloTriangleApplication {
         registry.emplace<Components::MovementSpeed>(goblin);
 
         auto &queue = registry.emplace<Components::OrderQueue>(goblin);
-        queue.enqueue(Orders::MoveOrder{{1.0f, 0.0f, 0.0f}});
-        queue.enqueue(Orders::MoveOrder{{0.0f, 1.0f, 0.0f}});
+        queue.enqueue(Orders::MoveOrder{{3.0f, 0.0f, 0.0f}});
+        queue.enqueue(Orders::MoveOrder{{0.0f, 3.0f, 0.0f}});
         queue.enqueue(Orders::MoveOrder{{0.0f, 0.0f, 0.0f}});
     }
 
@@ -182,9 +195,8 @@ class HelloTriangleApplication {
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
     debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
-        if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError || severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
+        if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError || severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning)
             std::cerr << "validation layer: type " << to_string(type) << " msg: " << pCallbackData->pMessage << std::endl;
-        }
         return vk::False;
     }
 
@@ -192,15 +204,16 @@ class HelloTriangleApplication {
         auto lastTime = std::chrono::steady_clock::now();
 
         while (!window->shouldClose()) {
-            auto now = std::chrono::steady_clock::now();
+            auto  now       = std::chrono::steady_clock::now();
             float deltaTime = std::chrono::duration<float>(now - lastTime).count();
-            lastTime = now;
+            lastTime        = now;
 
             window->pollEvents();
             Systems::updateCameraInput(registry, *window, deltaTime);
             Systems::processOrders(registry, deltaTime);
             Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
             Systems::updateSelection(registry, *window, swapChain->getExtent());
+            spatialGrid.update(registry);
             auto draws = Systems::collectDrawCalls(registry);
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
@@ -215,21 +228,23 @@ class HelloTriangleApplication {
     }
 
     // Vulkan
-    std::shared_ptr<VulkanHelpers::Window> window;
-    std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
+    std::shared_ptr<VulkanHelpers::Window>          window;
+    std::shared_ptr<VulkanHelpers::Instance>        vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
-    std::shared_ptr<VulkanHelpers::Surface> surface;
-    std::shared_ptr<VulkanHelpers::PhysicalDevice> physicalDevice;
-    std::shared_ptr<VulkanHelpers::LogicalDevice> logicalDevice;
-    std::shared_ptr<VulkanHelpers::SwapChain> swapChain;
+    std::shared_ptr<VulkanHelpers::Surface>         surface;
+    std::shared_ptr<VulkanHelpers::PhysicalDevice>  physicalDevice;
+    std::shared_ptr<VulkanHelpers::LogicalDevice>   logicalDevice;
+    std::shared_ptr<VulkanHelpers::SwapChain>       swapChain;
     std::shared_ptr<VulkanHelpers::GraphicsPipeline> graphicsPipeline;
-    std::shared_ptr<VulkanHelpers::Renderer> renderer;
-    std::shared_ptr<VulkanHelpers::DepthBuffer> depthBuffer;
-    std::shared_ptr<VulkanHelpers::Model> model;
-    std::shared_ptr<VulkanHelpers::UniformBuffer> uniformBuffer;
+    std::shared_ptr<VulkanHelpers::Renderer>        renderer;
+    std::shared_ptr<VulkanHelpers::DepthBuffer>     depthBuffer;
+    std::shared_ptr<VulkanHelpers::Model>           model;
+    std::shared_ptr<VulkanHelpers::Terrain>         terrain;
+    std::shared_ptr<VulkanHelpers::UniformBuffer>   uniformBuffer;
 
     // ECS
-    entt::registry registry;
+    entt::registry              registry;
+    VulkanHelpers::SpatialGrid  spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
 };
 
 int main() {

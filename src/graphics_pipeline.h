@@ -20,13 +20,15 @@ class GraphicsPipeline {
 
     std::shared_ptr<vk::raii::Pipeline> getPipeline() const { return pipeline; }
     std::shared_ptr<vk::raii::PipelineLayout> getPipelineLayout() const { return pipelineLayout; }
-    std::shared_ptr<vk::raii::DescriptorSetLayout> getDescriptorSetLayout() const { return descriptorSetLayout; }
+    std::shared_ptr<vk::raii::DescriptorSetLayout> getUboLayout() const { return uboLayout; }
+    std::shared_ptr<vk::raii::DescriptorSetLayout> getTextureLayout() const { return textureLayout; }
 
   private:
     static std::vector<char> readShaderFile(const std::string &filename);
     static vk::raii::ShaderModule createShaderModule(const vk::raii::Device &device, const std::vector<char> &code);
 
-    std::shared_ptr<vk::raii::DescriptorSetLayout> descriptorSetLayout;
+    std::shared_ptr<vk::raii::DescriptorSetLayout> uboLayout;
+    std::shared_ptr<vk::raii::DescriptorSetLayout> textureLayout;
     std::shared_ptr<vk::raii::PipelineLayout> pipelineLayout;
     std::shared_ptr<vk::raii::Pipeline> pipeline;
 };

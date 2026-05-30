@@ -6,7 +6,7 @@ struct UniformBufferObject {
 [[vk::binding(0, 0)]]
 ConstantBuffer<UniformBufferObject> ubo;
 
-[[vk::binding(1, 0)]]
+[[vk::binding(0, 1)]]
 Sampler2D texSampler;
 
 struct PushConstants {

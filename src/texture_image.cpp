@@ -45,6 +45,14 @@ TextureImage::TextureImage(
     stbi_image_free(pixels);
 }
 
+TextureImage::TextureImage(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const unsigned char *pixels, int width, int height
+) {
+    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, width, height);
+}
+
 void TextureImage::upload(
     const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
     const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
