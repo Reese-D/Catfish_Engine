@@ -26,6 +26,7 @@
 #include "input_system.h"
 #include "logical_device.h"
 #include "model.h"
+#include "movement_system.h"
 #include "order_system.h"
 #include "orders.h"
 #include "physical_device.h"
@@ -238,6 +239,7 @@ class HelloTriangleApplication {
             Systems::updateCameraInput(registry, *window, deltaTime);
             Systems::processCombat(registry, deltaTime);
             Systems::processOrders(registry, deltaTime);
+            Systems::applySeparation(registry);
             Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
             Systems::updateSelection(registry, *window, swapChain->getExtent(), spatialGrid);
             spatialGrid.update(registry);
