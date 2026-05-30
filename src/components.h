@@ -4,9 +4,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <deque>
 #include <memory>
 
 #include "model.h"
+#include "orders.h"
 
 namespace Components {
 
@@ -30,6 +32,24 @@ struct Camera {
 
 struct Selectable {};
 struct Selected {};
+
+struct MovementSpeed {
+    float speed{3.0f}; // units per second
+};
+
+struct OrderQueue {
+    std::deque<Orders::Order> orders;
+
+    void enqueue(Orders::Order order) { orders.push_back(std::move(order)); }
+
+    // Clears pending orders and issues a new one immediately
+    void enqueueImmediate(Orders::Order order) {
+        orders.clear();
+        orders.push_back(std::move(order));
+    }
+
+    bool empty() const { return orders.empty(); }
+};
 
 } // namespace Components
 

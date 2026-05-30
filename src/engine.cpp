@@ -4,6 +4,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 // Standard library
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -15,6 +16,8 @@
 // Local
 #include "camera_system.h"
 #include "components.h"
+#include "order_system.h"
+#include "orders.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
 #include "logical_device.h"
@@ -144,6 +147,12 @@ class HelloTriangleApplication {
         registry.emplace<Components::Transform>(goblin);
         registry.emplace<Components::RenderMesh>(goblin, Components::RenderMesh{model});
         registry.emplace<Components::Selectable>(goblin);
+        registry.emplace<Components::MovementSpeed>(goblin);
+
+        auto &queue = registry.emplace<Components::OrderQueue>(goblin);
+        queue.enqueue(Orders::MoveOrder{{1.0f, 0.0f, 0.0f}});
+        queue.enqueue(Orders::MoveOrder{{0.0f, 1.0f, 0.0f}});
+        queue.enqueue(Orders::MoveOrder{{0.0f, 0.0f, 0.0f}});
     }
 
     void recreateSwapChain() {
@@ -169,8 +178,15 @@ class HelloTriangleApplication {
     }
 
     void mainLoop() {
+        auto lastTime = std::chrono::steady_clock::now();
+
         while (!window->shouldClose()) {
+            auto now = std::chrono::steady_clock::now();
+            float deltaTime = std::chrono::duration<float>(now - lastTime).count();
+            lastTime = now;
+
             window->pollEvents();
+            Systems::processOrders(registry, deltaTime);
             Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
             auto draws = Systems::collectDrawCalls(registry);
             if (renderer->drawFrame(
