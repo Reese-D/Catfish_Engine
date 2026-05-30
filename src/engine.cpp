@@ -20,6 +20,7 @@
 // Local
 #include "camera_system.h"
 #include "combat_system.h"
+#include "hud_system.h"
 #include "components.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
@@ -59,6 +60,7 @@ class HelloTriangleApplication {
         initModel();
         initTerrain();
         initUniformBuffer();
+        initHud();
         initSelectionRing();
         initScene();
         mainLoop();
@@ -146,6 +148,14 @@ class HelloTriangleApplication {
         uniformBuffer = std::make_shared<VulkanHelpers::UniformBuffer>(
             *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
             *graphicsPipeline->getUboLayout()
+        );
+    }
+    void initHud() {
+        std::cout << "creating HUD resources..." << std::endl;
+        hudResources = VulkanHelpers::createHudResources(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
+            *graphicsPipeline->getTextureLayout()
         );
     }
     void initSelectionRing() {
@@ -245,6 +255,7 @@ class HelloTriangleApplication {
             spatialGrid.update(registry);
             auto draws = Systems::collectDrawCalls(registry);
             Systems::appendSelectionRings(registry, draws, *selectionRingModel);
+            Systems::appendHealthBars(registry, draws, hudResources);
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
                     *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
@@ -271,6 +282,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::Model>           model;
     std::shared_ptr<VulkanHelpers::Terrain>         terrain;
     std::shared_ptr<VulkanHelpers::Model>           selectionRingModel;
+    VulkanHelpers::HudResources                     hudResources;
     std::shared_ptr<VulkanHelpers::UniformBuffer>   uniformBuffer;
 
     // ECS

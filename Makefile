@@ -11,7 +11,7 @@ LDFLAGS = -lvulkan
 TARGET = catfish_engine
 
 # Source files
-SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp src/model.cpp src/material.cpp src/terrain.cpp src/selection_ring.cpp src/camera_system.cpp src/render_system.cpp src/order_system.cpp src/input_system.cpp src/selection_system.cpp src/spatial_grid.cpp src/combat_system.cpp src/movement_system.cpp
+SOURCES = src/engine.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp src/model.cpp src/material.cpp src/terrain.cpp src/selection_ring.cpp src/camera_system.cpp src/render_system.cpp src/order_system.cpp src/input_system.cpp src/selection_system.cpp src/spatial_grid.cpp src/combat_system.cpp src/movement_system.cpp src/hud_system.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -63,7 +63,7 @@ local-uninstall:
 
 # Format source files with clang-format
 format:
-	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h src/vertex_buffer.h src/index_buffer.h src/uniform_buffer.h src/vulkan_utils.h src/texture_image.h src/depth_buffer.h src/model.h src/material.h src/terrain.h src/selection_ring.h src/draw_call.h src/components.h src/camera_system.h src/render_system.h src/orders.h src/order_system.h src/input_system.h src/selection_system.h src/spatial_grid.h src/combat_system.h src/movement_system.h
+	clang-format -i $(SOURCES) src/surface.h src/swap_chain.h src/graphics_pipeline.h src/renderer.h src/vertex_buffer.h src/index_buffer.h src/uniform_buffer.h src/vulkan_utils.h src/texture_image.h src/depth_buffer.h src/model.h src/material.h src/terrain.h src/selection_ring.h src/draw_call.h src/components.h src/camera_system.h src/render_system.h src/orders.h src/order_system.h src/input_system.h src/selection_system.h src/spatial_grid.h src/combat_system.h src/movement_system.h src/hud_system.h
 
 # Phony targets
 .PHONY: all clean format shaders install uninstall local-install local-uninstall
