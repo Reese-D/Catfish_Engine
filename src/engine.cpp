@@ -10,6 +10,10 @@
 #include <memory>
 #include <stdexcept>
 
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 // ECS
 #include <entt/entt.hpp>
 
@@ -146,7 +150,12 @@ class HelloTriangleApplication {
         });
 
         auto goblin = registry.create();
-        registry.emplace<Components::Transform>(goblin);
+        // glTF models are Y-up; rotate +90° around X to stand in our Z-up world
+        registry.emplace<Components::Transform>(goblin, Components::Transform{
+            .position = {0.0f, 0.0f, 0.0f},
+            .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+            .scale    = {1.0f, 1.0f, 1.0f},
+        });
         registry.emplace<Components::RenderMesh>(goblin, Components::RenderMesh{model});
         registry.emplace<Components::Selectable>(goblin);
         registry.emplace<Components::MovementSpeed>(goblin);

@@ -11,14 +11,18 @@
 namespace {
 
 glm::vec3 screenToRayDir(glm::vec2 mousePos, glm::vec2 screenSize, const glm::mat4 &view, const glm::mat4 &proj) {
+    // Vulkan NDC: X in [-1,1] left→right, Y in [-1,1] top→bottom, depth Z in [0,1]
     float ndcX = (2.0f * mousePos.x) / screenSize.x - 1.0f;
-    float ndcY = 1.0f - (2.0f * mousePos.y) / screenSize.y;
+    float ndcY = (2.0f * mousePos.y) / screenSize.y - 1.0f;
 
-    glm::vec4 rayClip{ndcX, ndcY, -1.0f, 1.0f};
-    glm::vec4 rayEye = glm::inverse(proj) * rayClip;
-    rayEye = {rayEye.x, rayEye.y, -1.0f, 0.0f};
+    // Unproject two points on the ray (near Z=0, far Z=1) directly into world space
+    glm::mat4 invVP = glm::inverse(proj * view);
+    glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
+    glm::vec4 farW  = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+    nearW /= nearW.w;
+    farW  /= farW.w;
 
-    return glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
+    return glm::normalize(glm::vec3(farW) - glm::vec3(nearW));
 }
 
 std::optional<glm::vec3> rayGroundIntersect(glm::vec3 origin, glm::vec3 dir) {
