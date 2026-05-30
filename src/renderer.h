@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+#include <functional>
 #include <memory>
 #include <vector>
 #include <vulkan/vulkan.hpp>
@@ -29,14 +30,14 @@ class Renderer {
         const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
         const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
         const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer,
-        const DepthBuffer &depthBuffer
+        const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi = {}
     );
 
   private:
     void recordCommandBuffer(
         uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
         const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
-        const DepthBuffer &depthBuffer
+        const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
     );
 
     std::shared_ptr<vk::raii::CommandPool> commandPool;

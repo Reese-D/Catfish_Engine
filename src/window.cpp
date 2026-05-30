@@ -43,6 +43,8 @@ std::pair<int, int> Window::getFramebufferSize() const {
 
 bool Window::shouldClose() const { return glfwWindowShouldClose(window); }
 
+void Window::requestClose() const { glfwSetWindowShouldClose(window, GLFW_TRUE); }
+
 void Window::pollEvents() const { glfwPollEvents(); }
 
 void Window::waitEvents() const { glfwWaitEvents(); }

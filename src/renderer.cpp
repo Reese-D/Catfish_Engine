@@ -39,7 +39,7 @@ bool Renderer::drawFrame(
     const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
     const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
     const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer,
-    const DepthBuffer &depthBuffer
+    const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     (void)device.waitForFences(**inFlightFence, vk::True, UINT64_MAX);
 
@@ -58,7 +58,7 @@ bool Renderer::drawFrame(
     device.resetFences(**inFlightFence);
 
     commandBuffer->reset();
-    recordCommandBuffer(imageIndex, swapChain, pipeline, drawCalls, uniformBuffer.getDescriptorSet(), depthBuffer);
+    recordCommandBuffer(imageIndex, swapChain, pipeline, drawCalls, uniformBuffer.getDescriptorSet(), depthBuffer, drawUi);
 
     vk::Semaphore waitSem = **imageAvailableSemaphore;
     vk::Semaphore signalSem = **renderFinishedSemaphore;
@@ -96,7 +96,7 @@ bool Renderer::drawFrame(
 void Renderer::recordCommandBuffer(
     uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
     const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
-    const DepthBuffer &depthBuffer
+    const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     commandBuffer->begin(vk::CommandBufferBeginInfo{});
 
@@ -199,6 +199,10 @@ void Renderer::recordCommandBuffer(
         commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});
         commandBuffer->bindIndexBuffer(**draw.model->getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
         commandBuffer->drawIndexed(draw.model->getIndexBuffer().getIndexCount(), 1, 0, 0, 0);
+    }
+
+    if (drawUi) {
+        drawUi(**commandBuffer);
     }
 
     commandBuffer->endRendering();

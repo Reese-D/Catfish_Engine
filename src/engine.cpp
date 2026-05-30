@@ -26,6 +26,7 @@
 #include "graphics_pipeline.h"
 #include "input_system.h"
 #include "logical_device.h"
+#include "menu_system.h"
 #include "model.h"
 #include "movement_system.h"
 #include "order_system.h"
@@ -61,6 +62,7 @@ class HelloTriangleApplication {
         initTerrain();
         initUniformBuffer();
         initHud();
+        initMenu();
         initSelectionRing();
         initScene();
         mainLoop();
@@ -158,6 +160,14 @@ class HelloTriangleApplication {
             *graphicsPipeline->getTextureLayout()
         );
     }
+    void initMenu() {
+        std::cout << "creating menu UI..." << std::endl;
+        menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
+            *window, *vulkanInstance->getInstance(), *physicalDevice->getPhysicalDevice(),
+            *logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex(),
+            *logicalDevice->getGraphicsQueue(), *swapChain, depthBuffer->getFormat()
+        );
+    }
     void initSelectionRing() {
         std::cout << "creating selection ring..." << std::endl;
         selectionRingModel = VulkanHelpers::createSelectionRingModel(
@@ -228,6 +238,9 @@ class HelloTriangleApplication {
             physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex(), *window
         );
         depthBuffer->recreate(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent());
+        if (menuSystem) {
+            menuSystem->onSwapChainRecreated(*swapChain);
+        }
     }
 
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
@@ -246,20 +259,36 @@ class HelloTriangleApplication {
             lastTime        = now;
 
             window->pollEvents();
-            Systems::updateCameraInput(registry, *window, deltaTime);
-            Systems::processCombat(registry, deltaTime);
-            Systems::processOrders(registry, deltaTime);
-            Systems::applySeparation(registry);
-            Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
-            Systems::updateSelection(registry, *window, swapChain->getExtent(), spatialGrid);
-            spatialGrid.update(registry);
-            auto draws = Systems::collectDrawCalls(registry);
-            Systems::appendSelectionRings(registry, draws, *selectionRingModel);
-            Systems::appendHealthBars(registry, draws, hudResources);
+            menuSystem->beginFrame();
+
+            std::vector<VulkanHelpers::DrawCall> draws;
+            if (menuSystem->isGameplayStarted()) {
+                if (!menuSystem->wantsKeyboard()) {
+                    Systems::updateCameraInput(registry, *window, deltaTime);
+                }
+                Systems::processCombat(registry, deltaTime);
+                Systems::processOrders(registry, deltaTime);
+                Systems::applySeparation(registry);
+                Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
+                if (!menuSystem->wantsMouse()) {
+                    Systems::updateSelection(registry, *window, swapChain->getExtent(), spatialGrid);
+                }
+                spatialGrid.update(registry);
+                draws = Systems::collectDrawCalls(registry);
+                Systems::appendSelectionRings(registry, draws, *selectionRingModel);
+                Systems::appendHealthBars(registry, draws, hudResources);
+                menuSystem->drawOverlay(deltaTime);
+            } else if (menuSystem->drawMainMenu(swapChain->getExtent()) == VulkanHelpers::MenuAction::Exit) {
+                window->requestClose();
+            }
+
             if (renderer->drawFrame(
                     *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
                     *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
-                    draws, *uniformBuffer, *depthBuffer
+                    draws, *uniformBuffer, *depthBuffer,
+                    [this](vk::CommandBuffer commandBuffer) {
+                        menuSystem->render(commandBuffer);
+                    }
                 )) {
                 recreateSwapChain();
                 std::cout << "Recreating swapchain" << std::endl;
@@ -284,6 +313,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::Model>           selectionRingModel;
     VulkanHelpers::HudResources                     hudResources;
     std::shared_ptr<VulkanHelpers::UniformBuffer>   uniformBuffer;
+    std::shared_ptr<VulkanHelpers::MenuSystem>      menuSystem;
 
     // ECS
     entt::registry              registry;

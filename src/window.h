@@ -19,6 +19,7 @@ class Window {
 
     GLFWwindow *getWindow() const { return window; }
     bool shouldClose() const;
+    void requestClose() const;
     void pollEvents() const;
     void waitEvents() const;
 
