@@ -12,6 +12,7 @@ namespace VulkanHelpers {
 struct Vertex {
     float pos[2];
     float color[3];
+    float texCoord[2];
 
     static vk::VertexInputBindingDescription getBindingDescription();
     static std::vector<vk::VertexInputAttributeDescription> getAttributeDescriptions();

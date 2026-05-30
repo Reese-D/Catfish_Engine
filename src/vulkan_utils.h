@@ -9,6 +9,9 @@ namespace VulkanHelpers {
 
 uint32_t findMemoryType(const vk::raii::PhysicalDevice &physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
+vk::raii::CommandBuffer beginSingleTimeCommands(const vk::raii::Device &device, const vk::raii::CommandPool &commandPool);
+void endSingleTimeCommands(vk::raii::CommandBuffer &cmd, const vk::raii::Queue &queue);
+
 } // namespace VulkanHelpers
 
 #endif // VULKAN_UTILS_H

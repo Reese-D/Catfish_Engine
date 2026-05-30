@@ -17,6 +17,7 @@
 #include "renderer.h"
 #include "surface.h"
 #include "swap_chain.h"
+#include "texture_image.h"
 #include "uniform_buffer.h"
 #include "validation_layers.h"
 #include "vertex_buffer.h"
@@ -24,10 +25,10 @@
 #include "window.h"
 
 const std::vector<VulkanHelpers::Vertex> VERTICES = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
 };
 
 const std::vector<uint32_t> INDICES = {0, 1, 2, 2, 3, 0};
@@ -44,6 +45,7 @@ class HelloTriangleApplication {
         initSwapChain();
         initGraphicsPipeline();
         initRenderer();
+        initTextureImage();
         initVertexBuffer();
         initIndexBuffer();
         initUniformBuffer();
@@ -125,10 +127,20 @@ class HelloTriangleApplication {
             renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(), INDICES
         );
     }
+    void initTextureImage() {
+        std::cout << "creating texture image..." << std::endl;
+        textureImage = std::make_shared<VulkanHelpers::TextureImage>(
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            renderer->getCommandPool(), *logicalDevice->getGraphicsQueue(),
+            "Images/652234-statue-1275469_1920.jpg"
+        );
+    }
     void initUniformBuffer() {
         std::cout << "creating uniform buffer..." << std::endl;
         uniformBuffer = std::make_shared<VulkanHelpers::UniformBuffer>(
-            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), *graphicsPipeline->getDescriptorSetLayout()
+            *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
+            *graphicsPipeline->getDescriptorSetLayout(),
+            textureImage->getImageView(), textureImage->getSampler()
         );
     }
 
@@ -177,6 +189,7 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::SwapChain> swapChain;
     std::shared_ptr<VulkanHelpers::GraphicsPipeline> graphicsPipeline;
     std::shared_ptr<VulkanHelpers::Renderer> renderer;
+    std::shared_ptr<VulkanHelpers::TextureImage> textureImage;
     std::shared_ptr<VulkanHelpers::VertexBuffer> vertexBuffer;
     std::shared_ptr<VulkanHelpers::IndexBuffer> indexBuffer;
     std::shared_ptr<VulkanHelpers::UniformBuffer> uniformBuffer;

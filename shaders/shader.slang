@@ -7,14 +7,19 @@ struct UniformBufferObject {
 [[vk::binding(0, 0)]]
 ConstantBuffer<UniformBufferObject> ubo;
 
+[[vk::binding(1, 0)]]
+Sampler2D texSampler;
+
 struct VertexInput {
     [[vk::location(0)]] float2 inPosition;
     [[vk::location(1)]] float3 inColor;
+    [[vk::location(2)]] float2 inTexCoord;
 };
 
 struct VertexOutput {
     float4 position : SV_Position;
     [[vk::location(0)]] float3 fragColor;
+    [[vk::location(1)]] float2 fragTexCoord;
 };
 
 [shader("vertex")]
@@ -22,10 +27,11 @@ VertexOutput vertexMain(VertexInput input) {
     VertexOutput output;
     output.position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 0.0, 1.0))));
     output.fragColor = input.inColor;
+    output.fragTexCoord = input.inTexCoord;
     return output;
 }
 
 [shader("fragment")]
-float4 fragmentMain([[vk::location(0)]] float3 fragColor) : SV_Target {
-    return float4(fragColor, 1.0);
+float4 fragmentMain([[vk::location(0)]] float3 fragColor, [[vk::location(1)]] float2 fragTexCoord) : SV_Target {
+    return texSampler.Sample(fragTexCoord);
 }

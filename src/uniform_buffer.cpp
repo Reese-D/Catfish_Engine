@@ -13,7 +13,11 @@
 
 namespace VulkanHelpers {
 
-UniformBuffer::UniformBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::DescriptorSetLayout &descriptorSetLayout) {
+UniformBuffer::UniformBuffer(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
+    const vk::raii::DescriptorSetLayout &descriptorSetLayout,
+    vk::ImageView textureImageView, vk::Sampler textureSampler
+) {
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
     buffer = std::make_shared<vk::raii::Buffer>(
@@ -36,21 +40,19 @@ UniformBuffer::UniformBuffer(const vk::raii::Device &device, const vk::raii::Phy
     // Persistently mapped — left mapped for the lifetime of this object
     mappedData = bufferMemory->mapMemory(0, bufferSize);
 
-    // Descriptor pool
-    auto poolSize = vk::DescriptorPoolSize{
-        .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
+    std::array<vk::DescriptorPoolSize, 2> poolSizes = {
+        vk::DescriptorPoolSize{.type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1},
+        vk::DescriptorPoolSize{.type = vk::DescriptorType::eCombinedImageSampler, .descriptorCount = 1},
     };
     descriptorPool = std::make_shared<vk::raii::DescriptorPool>(
         device, vk::DescriptorPoolCreateInfo{
                     .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
                     .maxSets = 1,
-                    .poolSizeCount = 1,
-                    .pPoolSizes = &poolSize,
+                    .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+                    .pPoolSizes = poolSizes.data(),
                 }
     );
 
-    // Descriptor set allocation
     vk::DescriptorSetLayout rawLayout = *descriptorSetLayout;
     auto sets = device.allocateDescriptorSets(vk::DescriptorSetAllocateInfo{
         .descriptorPool = **descriptorPool,
@@ -59,13 +61,17 @@ UniformBuffer::UniformBuffer(const vk::raii::Device &device, const vk::raii::Phy
     });
     descriptorSet = std::make_shared<vk::raii::DescriptorSet>(std::move(sets[0]));
 
-    // Point the descriptor set at the UBO buffer
     auto bufferInfo = vk::DescriptorBufferInfo{
         .buffer = **buffer,
         .offset = 0,
         .range = sizeof(UniformBufferObject),
     };
-    device.updateDescriptorSets(
+    auto imageInfo = vk::DescriptorImageInfo{
+        .sampler = textureSampler,
+        .imageView = textureImageView,
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+    };
+    std::array<vk::WriteDescriptorSet, 2> writes = {
         vk::WriteDescriptorSet{
             .dstSet = **descriptorSet,
             .dstBinding = 0,
@@ -74,8 +80,16 @@ UniformBuffer::UniformBuffer(const vk::raii::Device &device, const vk::raii::Phy
             .descriptorType = vk::DescriptorType::eUniformBuffer,
             .pBufferInfo = &bufferInfo,
         },
-        {}
-    );
+        vk::WriteDescriptorSet{
+            .dstSet = **descriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .pImageInfo = &imageInfo,
+        },
+    };
+    device.updateDescriptorSets(writes, {});
 }
 
 void UniformBuffer::update(float elapsedSeconds, vk::Extent2D extent) {

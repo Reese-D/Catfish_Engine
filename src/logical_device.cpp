@@ -30,6 +30,9 @@ LogicalDevice::LogicalDevice(const vk::raii::PhysicalDevice &physicalDevice, uin
     };
     auto features2 = vk::PhysicalDeviceFeatures2{
         .pNext = &vulkan13Features,
+        .features = vk::PhysicalDeviceFeatures{
+            .samplerAnisotropy = vk::True,
+        },
     };
 
     std::array<const char *, 1> deviceExtensions = {vk::KHRSwapchainExtensionName};

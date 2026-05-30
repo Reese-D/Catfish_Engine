@@ -12,17 +12,24 @@
 namespace VulkanHelpers {
 
 GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat) {
-    // Descriptor set layout: binding 0 = UBO, vertex stage
-    auto uboBinding = vk::DescriptorSetLayoutBinding{
-        .binding = 0,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+    std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
+        vk::DescriptorSetLayoutBinding{
+            .binding = 0,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        },
+        vk::DescriptorSetLayoutBinding{
+            .binding = 1,
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        },
     };
     descriptorSetLayout = std::make_shared<vk::raii::DescriptorSetLayout>(
         device, vk::DescriptorSetLayoutCreateInfo{
-                    .bindingCount = 1,
-                    .pBindings = &uboBinding,
+                    .bindingCount = static_cast<uint32_t>(bindings.size()),
+                    .pBindings = bindings.data(),
                 }
     );
 
