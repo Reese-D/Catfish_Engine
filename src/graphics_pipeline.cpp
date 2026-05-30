@@ -6,6 +6,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include <glm/glm.hpp>
+
 #include "graphics_pipeline.h"
 #include "vertex_buffer.h"
 
@@ -112,11 +114,18 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .pDynamicStates = dynamicStates.data(),
     };
 
+    auto pushConstantRange = vk::PushConstantRange{
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .offset = 0,
+        .size = sizeof(glm::mat4),
+    };
     vk::DescriptorSetLayout rawLayout = **descriptorSetLayout;
     pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(
         device, vk::PipelineLayoutCreateInfo{
                     .setLayoutCount = 1,
                     .pSetLayouts = &rawLayout,
+                    .pushConstantRangeCount = 1,
+                    .pPushConstantRanges = &pushConstantRange,
                 }
     );
 

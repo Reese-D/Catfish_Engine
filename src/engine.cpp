@@ -1,20 +1,26 @@
 // Vulkan
-#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS // allows for designated initializers introduced in C++20
+#define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 // Standard library
 #include <cstdlib>
 #include <iostream>
-#include <memory> //smart pointers
+#include <memory>
 #include <stdexcept>
 
+// ECS
+#include <entt/entt.hpp>
+
 // Local
+#include "camera_system.h"
+#include "components.h"
 #include "depth_buffer.h"
 #include "graphics_pipeline.h"
 #include "logical_device.h"
 #include "model.h"
 #include "physical_device.h"
+#include "render_system.h"
 #include "renderer.h"
 #include "surface.h"
 #include "swap_chain.h"
@@ -38,36 +44,32 @@ class HelloTriangleApplication {
         initRenderer();
         initModel();
         initUniformBuffer();
+        initScene();
         mainLoop();
     }
 
   private:
-    void enableValidationLayers(bool enableValidationLayers) {
+    void enableValidationLayers(bool enable) {
         std::cout << "Enabling validation layers..." << std::endl;
         VulkanHelpers::ValidationLayers validationLayers;
 
-        std::vector<char const *> requiredLayers;
-        if (enableValidationLayers) {
-            requiredLayers = validationLayers.getRequiredLayers();
-
+        if (enable) {
+            auto requiredLayers = validationLayers.getRequiredLayers();
             auto context = vulkanInstance->getContext();
 
             if (!validationLayers.areValidationLayersSupported(requiredLayers, *context)) {
                 throw std::runtime_error("Required layer not supported");
             }
-
             auto requiredExtensions = window->getRequiredInstanceExtensions();
-
             if (!validationLayers.areRequiredExtensionsSupported(requiredExtensions, *context)) {
                 throw std::runtime_error("Required extension not supported");
             }
-
             debugMessenger = validationLayers.createDebugMessenger(*vulkanInstance->getInstance(), &debugCallback);
         }
     }
     void initWindow() {
         std::cout << "creating window..." << std::endl;
-        window = std::make_shared<VulkanHelpers::Window>(800, 600, "Vulkan");
+        window = std::make_shared<VulkanHelpers::Window>(800, 600, "Catfish Engine");
     }
     void initVulkan() {
         std::cout << "creating vulkan instance..." << std::endl;
@@ -90,8 +92,8 @@ class HelloTriangleApplication {
     void initSwapChain() {
         std::cout << "creating swap chain..." << std::endl;
         swapChain = std::make_shared<VulkanHelpers::SwapChain>(
-            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
-            physicalDevice->getPresentQueueFamilyIndex(), *window
+            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(),
+            physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex(), *window
         );
     }
     void initDepthBuffer() {
@@ -126,6 +128,23 @@ class HelloTriangleApplication {
             model->getTextureImage().getImageView(), model->getTextureImage().getSampler()
         );
     }
+    void initScene() {
+        std::cout << "initialising scene..." << std::endl;
+
+        auto camEntity = registry.create();
+        registry.emplace<Components::Camera>(camEntity, Components::Camera{
+            .position = {2.0f, 2.0f, 2.0f},
+            .target   = {0.0f, 0.0f, 0.0f},
+            .fov      = 45.0f,
+            .near_    = 0.1f,
+            .far_     = 100.0f,
+        });
+
+        auto goblin = registry.create();
+        registry.emplace<Components::Transform>(goblin);
+        registry.emplace<Components::RenderMesh>(goblin, Components::RenderMesh{model});
+        registry.emplace<Components::Selectable>(goblin);
+    }
 
     void recreateSwapChain() {
         auto [width, height] = window->getFramebufferSize();
@@ -135,8 +154,8 @@ class HelloTriangleApplication {
         }
         logicalDevice->getDevice()->waitIdle();
         swapChain->recreate(
-            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
-            physicalDevice->getPresentQueueFamilyIndex(), *window
+            *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(),
+            physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex(), *window
         );
         depthBuffer->recreate(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent());
     }
@@ -146,16 +165,18 @@ class HelloTriangleApplication {
         if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError || severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
             std::cerr << "validation layer: type " << to_string(type) << " msg: " << pCallbackData->pMessage << std::endl;
         }
-
         return vk::False;
     }
 
     void mainLoop() {
         while (!window->shouldClose()) {
             window->pollEvents();
+            Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
+            auto draws = Systems::collectDrawCalls(registry);
             if (renderer->drawFrame(
-                    *logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
-                    model->getVertexBuffer(), model->getIndexBuffer(), *uniformBuffer, *depthBuffer
+                    *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
+                    *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
+                    draws, *uniformBuffer, *depthBuffer
                 )) {
                 recreateSwapChain();
                 std::cout << "Recreating swapchain" << std::endl;
@@ -164,6 +185,7 @@ class HelloTriangleApplication {
         logicalDevice->getDevice()->waitIdle();
     }
 
+    // Vulkan
     std::shared_ptr<VulkanHelpers::Window> window;
     std::shared_ptr<VulkanHelpers::Instance> vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
@@ -176,6 +198,9 @@ class HelloTriangleApplication {
     std::shared_ptr<VulkanHelpers::DepthBuffer> depthBuffer;
     std::shared_ptr<VulkanHelpers::Model> model;
     std::shared_ptr<VulkanHelpers::UniformBuffer> uniformBuffer;
+
+    // ECS
+    entt::registry registry;
 };
 
 int main() {

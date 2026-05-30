@@ -92,12 +92,10 @@ UniformBuffer::UniformBuffer(
     device.updateDescriptorSets(writes, {});
 }
 
-void UniformBuffer::update(float elapsedSeconds, vk::Extent2D extent) {
+void UniformBuffer::update(const glm::mat4 &view, const glm::mat4 &proj) {
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), elapsedSeconds * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(extent.width) / static_cast<float>(extent.height), 0.1f, 10.0f);
-    ubo.proj[1][1] *= -1; // Flip Y: GLM uses OpenGL convention, Vulkan Y is inverted
+    ubo.view = view;
+    ubo.proj = proj;
     std::memcpy(mappedData, &ubo, sizeof(ubo));
 }
 

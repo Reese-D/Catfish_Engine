@@ -13,7 +13,6 @@
 namespace VulkanHelpers {
 
 struct UniformBufferObject {
-    alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
 };
@@ -30,7 +29,7 @@ class UniformBuffer {
     UniformBuffer(const UniformBuffer &) = delete;
     UniformBuffer &operator=(const UniformBuffer &) = delete;
 
-    void update(float elapsedSeconds, vk::Extent2D extent);
+    void update(const glm::mat4 &view, const glm::mat4 &proj);
 
     vk::DescriptorSet getDescriptorSet() const { return **descriptorSet; }
 
