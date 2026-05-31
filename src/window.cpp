@@ -26,6 +26,7 @@ Window::Window(uint32_t width, uint32_t height, const char *title) : width(width
 
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, scrollCallback);
+    glfwSetWindowSizeCallback(window, windowSizeCallback);
 }
 
 Window::~Window() {
@@ -68,6 +69,12 @@ float Window::consumeScrollDelta() {
 void Window::scrollCallback(GLFWwindow *win, double /*xoffset*/, double yoffset) {
     auto *self = static_cast<Window *>(glfwGetWindowUserPointer(win));
     self->scrollDelta += static_cast<float>(yoffset);
+}
+
+void Window::windowSizeCallback(GLFWwindow *win, int w, int h) {
+    auto *self = static_cast<Window *>(glfwGetWindowUserPointer(win));
+    self->width  = static_cast<uint32_t>(w);
+    self->height = static_cast<uint32_t>(h);
 }
 
 std::vector<const char *> Window::getRequiredInstanceExtensions() const {

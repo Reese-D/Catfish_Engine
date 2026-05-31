@@ -37,6 +37,7 @@ class Window {
 
   private:
     static void scrollCallback(GLFWwindow *win, double xoffset, double yoffset);
+    static void windowSizeCallback(GLFWwindow *win, int width, int height);
 
     GLFWwindow *window;
     uint32_t width;

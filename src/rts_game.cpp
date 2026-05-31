@@ -77,6 +77,7 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         Systems::processCombat(registry, dt);
         Systems::processOrders(registry, dt, pathfinder ? &*pathfinder : nullptr);
         Systems::applySeparation(registry);
+        Systems::clampToBounds(registry, {-20.0f, -20.0f}, {20.0f, 20.0f});
         Systems::updateCamera(registry, extent);
 
         if (!menuSystem->wantsMouse())

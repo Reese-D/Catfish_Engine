@@ -42,4 +42,12 @@ void applySeparation(entt::registry &registry) {
     }
 }
 
+void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax) {
+    for (auto entity : registry.view<Components::Transform, Components::MovementSpeed>()) {
+        auto &t    = registry.get<Components::Transform>(entity);
+        t.position.x = glm::clamp(t.position.x, worldMin.x, worldMax.x);
+        t.position.y = glm::clamp(t.position.y, worldMin.y, worldMax.y);
+    }
+}
+
 } // namespace Systems
