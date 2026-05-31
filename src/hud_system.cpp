@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "components.h"
+#include "fog_of_war.h"
 #include "hud_system.h"
 #include "texture_image.h"
 #include "vertex_buffer.h"
@@ -89,12 +90,21 @@ namespace Systems {
 void appendHealthBars(
     entt::registry &registry,
     std::vector<VulkanHelpers::DrawCall> &draws,
-    const VulkanHelpers::HudResources &hud
+    const VulkanHelpers::HudResources &hud,
+    const FogOfWar *fog
 ) {
     constexpr float barWidth = 0.80f;
     constexpr float barZ     = 1.60f; // world units above ground
 
     for (auto entity : registry.view<Components::Health, Components::Transform>()) {
+        if (fog) {
+            const auto *faction = registry.try_get<Components::Faction>(entity);
+            if (faction && faction->id != Components::FactionId::Player) {
+                const auto &t = registry.get<Components::Transform>(entity);
+                if (!fog->isVisible({t.position.x, t.position.y})) continue;
+            }
+        }
+
         const auto &t      = registry.get<Components::Transform>(entity);
         const auto &health = registry.get<Components::Health>(entity);
 

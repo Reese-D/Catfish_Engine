@@ -20,6 +20,8 @@
 // Local
 #include "camera_system.h"
 #include "combat_system.h"
+#include "fog_of_war.h"
+#include "fog_system.h"
 #include "hud_system.h"
 #include "components.h"
 #include "depth_buffer.h"
@@ -275,10 +277,12 @@ class HelloTriangleApplication {
                     Systems::updateSelection(registry, *window, swapChain->getExtent(), spatialGrid);
                 }
                 spatialGrid.update(registry);
-                draws = Systems::collectDrawCalls(registry);
-                Systems::appendSelectionRings(registry, draws, *selectionRingModel);
-                Systems::appendHealthBars(registry, draws, hudResources);
+                fogOfWar.update(registry);
+                draws = Systems::collectDrawCalls(registry, &fogOfWar);
+                Systems::appendSelectionRings(registry, draws, *selectionRingModel, &fogOfWar);
+                Systems::appendHealthBars(registry, draws, hudResources, &fogOfWar);
                 menuSystem->drawOverlay(deltaTime);
+                Systems::drawFogOverlay(fogOfWar, registry, swapChain->getExtent());
             } else if (menuSystem->drawMainMenu(swapChain->getExtent()) == VulkanHelpers::MenuAction::Exit) {
                 window->requestClose();
             }
@@ -320,6 +324,7 @@ class HelloTriangleApplication {
     entt::registry              registry;
     VulkanHelpers::SpatialGrid  spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
     Systems::Pathfinder         pathfinder{{-20.0f, -20.0f}, {20.0f, 20.0f}, 0.5f};
+    Systems::FogOfWar           fogOfWar{{-20.0f, -20.0f}, {20.0f, 20.0f}, 1.0f, 5.0f};
 };
 
 int main() {

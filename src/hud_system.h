@@ -10,6 +10,7 @@
 #include <entt/entt.hpp>
 
 #include "draw_call.h"
+#include "fog_of_war.h"
 #include "model.h"
 
 namespace VulkanHelpers {
@@ -32,10 +33,12 @@ HudResources createHudResources(
 namespace Systems {
 
 // Appends background + foreground bar draw calls for every entity with Health.
+// fog may be nullptr to disable culling.
 void appendHealthBars(
     entt::registry &registry,
     std::vector<VulkanHelpers::DrawCall> &draws,
-    const VulkanHelpers::HudResources &hud
+    const VulkanHelpers::HudResources &hud,
+    const FogOfWar *fog = nullptr
 );
 
 } // namespace Systems
