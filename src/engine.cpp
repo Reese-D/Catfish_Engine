@@ -30,6 +30,7 @@
 #include "model.h"
 #include "movement_system.h"
 #include "order_system.h"
+#include "pathfinder.h"
 #include "orders.h"
 #include "physical_device.h"
 #include "render_system.h"
@@ -267,7 +268,7 @@ class HelloTriangleApplication {
                     Systems::updateCameraInput(registry, *window, deltaTime);
                 }
                 Systems::processCombat(registry, deltaTime);
-                Systems::processOrders(registry, deltaTime);
+                Systems::processOrders(registry, deltaTime, pathfinder);
                 Systems::applySeparation(registry);
                 Systems::updateCamera(registry, *uniformBuffer, swapChain->getExtent());
                 if (!menuSystem->wantsMouse()) {
@@ -318,6 +319,7 @@ class HelloTriangleApplication {
     // ECS
     entt::registry              registry;
     VulkanHelpers::SpatialGrid  spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
+    Systems::Pathfinder         pathfinder{{-20.0f, -20.0f}, {20.0f, 20.0f}, 0.5f};
 };
 
 int main() {

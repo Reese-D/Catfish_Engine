@@ -3,9 +3,11 @@
 
 #include <entt/entt.hpp>
 
+#include "pathfinder.h"
+
 namespace Systems {
 
-void processOrders(entt::registry &registry, float deltaTime);
+void processOrders(entt::registry &registry, float deltaTime, const Pathfinder &pathfinder);
 
 } // namespace Systems
 
