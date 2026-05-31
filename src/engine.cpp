@@ -29,6 +29,7 @@
 #include "input_system.h"
 #include "logical_device.h"
 #include "menu_system.h"
+#include "minimap_system.h"
 #include "model.h"
 #include "movement_system.h"
 #include "order_system.h"
@@ -283,6 +284,7 @@ class HelloTriangleApplication {
                 Systems::appendHealthBars(registry, draws, hudResources, &fogOfWar);
                 menuSystem->drawOverlay(deltaTime);
                 Systems::drawFogOverlay(fogOfWar, registry, swapChain->getExtent());
+                Systems::drawMinimap(fogOfWar, registry, swapChain->getExtent());
             } else if (menuSystem->drawMainMenu(swapChain->getExtent()) == VulkanHelpers::MenuAction::Exit) {
                 window->requestClose();
             }
