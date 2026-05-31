@@ -7,7 +7,7 @@
 
 namespace Systems {
 
-void processOrders(entt::registry &registry, float deltaTime, const Pathfinder &pathfinder) {
+void processOrders(entt::registry &registry, float deltaTime, const Pathfinder *pathfinder) {
     auto view = registry.view<Components::OrderQueue, Components::Transform, Components::MovementSpeed>();
 
     for (auto entity : view) {
@@ -21,10 +21,12 @@ void processOrders(entt::registry &registry, float deltaTime, const Pathfinder &
             Orders::overloaded{
                 [&](Orders::MoveOrder &move) {
                     if (move.path.empty()) {
-                        move.path = pathfinder.findPath(
-                            {transform.position.x, transform.position.y},
-                            {move.destination.x, move.destination.y}
-                        );
+                        if (pathfinder) {
+                            move.path = pathfinder->findPath(
+                                {transform.position.x, transform.position.y},
+                                {move.destination.x, move.destination.y}
+                            );
+                        }
                         move.pathIndex = 0;
                         if (move.path.empty())
                             move.path.push_back(move.destination);

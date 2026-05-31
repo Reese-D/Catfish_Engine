@@ -6,7 +6,7 @@
 
 namespace Systems {
 
-void updateCamera(entt::registry &registry, VulkanHelpers::UniformBuffer &uniformBuffer, vk::Extent2D extent) {
+void updateCamera(entt::registry &registry, vk::Extent2D extent) {
     auto view = registry.view<Components::Camera>();
     for (auto entity : view) {
         auto &cam = view.get<Components::Camera>(entity);
@@ -18,8 +18,6 @@ void updateCamera(entt::registry &registry, VulkanHelpers::UniformBuffer &unifor
             cam.near_, cam.far_
         );
         cam.proj[1][1] *= -1; // Vulkan Y-flip
-
-        uniformBuffer.update(cam.view, cam.proj);
         return;
     }
 }

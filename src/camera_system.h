@@ -6,11 +6,9 @@
 
 #include <entt/entt.hpp>
 
-#include "uniform_buffer.h"
-
 namespace Systems {
 
-void updateCamera(entt::registry &registry, VulkanHelpers::UniformBuffer &uniformBuffer, vk::Extent2D extent);
+void updateCamera(entt::registry &registry, vk::Extent2D extent);
 
 } // namespace Systems
 

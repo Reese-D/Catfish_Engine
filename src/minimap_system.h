@@ -11,8 +11,9 @@
 namespace Systems {
 
 // Draws a fixed minimap overlay in the bottom-right corner.
+// fog may be nullptr; fog layer is skipped and all units are shown when it is.
 // Modifies Camera component on click-to-pan.
-void drawMinimap(const FogOfWar &fog, entt::registry &registry, vk::Extent2D extent);
+void drawMinimap(const FogOfWar *fog, entt::registry &registry, vk::Extent2D extent);
 
 } // namespace Systems
 

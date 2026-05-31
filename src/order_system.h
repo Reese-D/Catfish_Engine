@@ -7,7 +7,8 @@
 
 namespace Systems {
 
-void processOrders(entt::registry &registry, float deltaTime, const Pathfinder &pathfinder);
+// pathfinder may be nullptr; units fall back to direct movement when it is.
+void processOrders(entt::registry &registry, float deltaTime, const Pathfinder *pathfinder);
 
 } // namespace Systems
 
