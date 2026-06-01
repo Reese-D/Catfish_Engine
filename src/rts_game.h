@@ -11,6 +11,7 @@
 #include "engine.h"
 #include "fog_of_war.h"
 #include "hud_system.h"
+#include "lava_zone.h"
 #include "menu_system.h"
 #include "model.h"
 #include "pathfinder.h"
@@ -56,14 +57,18 @@ class RtsGame : public VulkanHelpers::IGame {
     entt::registry             registry;
     VulkanHelpers::SpatialGrid spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
 
-    // Projectile shared model (created in init)
+    // Shared models created in init
     std::shared_ptr<VulkanHelpers::Model> projectileModel;
+    std::shared_ptr<VulkanHelpers::Model> lavaTileModel;
 
     // Optional features
     std::optional<Systems::Pathfinder> pathfinder;
     std::optional<Systems::FogOfWar>   fogOfWar;
     bool                               minimapEnabled{false};
     bool                               combatEnabled{false};
+
+    // Lava zone — always active; shrinks the safe play area over time
+    Systems::LavaZone lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
 
     bool closeRequested{false};
 };

@@ -13,6 +13,7 @@
 #include "input_system.h"
 #include "minimap_system.h"
 #include "movement_system.h"
+#include "lava_system.h"
 #include "order_system.h"
 #include "projectile_system.h"
 #include "render_system.h"
@@ -65,6 +66,10 @@ void RtsGame::init(const VulkanHelpers::ResourceContext &ctx) {
         ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout
     );
 
+    lavaTileModel = Systems::createLavaTileModel(
+        ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout
+    );
+
     menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
         ctx.window, ctx.instance, ctx.physicalDevice, ctx.device,
         ctx.graphicsQueueFamilyIndex, ctx.graphicsQueue, ctx.swapChain, ctx.depthFormat
@@ -82,6 +87,8 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         if (!menuSystem->wantsKeyboard())
             Systems::updateCameraInput(registry, *window, dt);
 
+        lavaZone.update(dt);
+        Systems::applyLavaDamage(lavaZone, registry, dt);
         if (combatEnabled) Systems::processCombat(registry, dt);
         Systems::tickAbilities(registry, dt);
         Systems::updateProjectiles(registry, dt);
@@ -102,6 +109,7 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         if (fogOfWar) fogOfWar->update(registry);
 
         out.draws = Systems::collectDrawCalls(registry, fog);
+        Systems::appendLavaDrawCalls(lavaZone, out.draws, *lavaTileModel);
         Systems::appendSelectionRings(registry, out.draws, *selectionRingModel, fog);
         Systems::appendHealthBars(registry, out.draws, hudResources, fog);
 
@@ -171,7 +179,10 @@ void RtsGame::initScene() {
     registry.emplace<Components::Transform>(terrainEntity);
     registry.emplace<Components::RenderMesh>(terrainEntity, Components::RenderMesh{terrain->getModelPtr()});
 
-    spawnUnit({-3.0f, 0.0f, 0.0f}, Components::FactionId::Player);
+    auto player = spawnUnit({-3.0f, 0.0f, 0.0f}, Components::FactionId::Player);
+    registry.emplace<Components::AlwaysSelected>(player);
+    registry.emplace<Components::Selected>(player);
+
     spawnUnit({ 3.0f, 0.0f, 0.0f}, Components::FactionId::Enemy);
 }
 

@@ -80,15 +80,20 @@ void updateSelection(
 
         std::vector<entt::entity> toDeselect;
         for (auto entity : registry.view<Components::Selected>()) {
-            toDeselect.push_back(entity);
+            if (!registry.all_of<Components::AlwaysSelected>(entity))
+                toDeselect.push_back(entity);
         }
-        for (auto entity : toDeselect) {
+        for (auto entity : toDeselect)
             registry.remove<Components::Selected>(entity);
-        }
 
-        if (nearest != entt::null) {
+        if (nearest != entt::null && !registry.all_of<Components::Selected>(nearest))
             registry.emplace<Components::Selected>(nearest);
-        }
+    }
+
+    // Re-enforce AlwaysSelected — these units are never without Selected.
+    for (auto entity : registry.view<Components::AlwaysSelected>()) {
+        if (!registry.all_of<Components::Selected>(entity))
+            registry.emplace<Components::Selected>(entity);
     }
 
     // Right click — MoveOrder to ground position

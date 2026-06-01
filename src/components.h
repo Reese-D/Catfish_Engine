@@ -35,6 +35,7 @@ struct Camera {
 
 struct Selectable {};
 struct Selected {};
+struct AlwaysSelected {}; // entity keeps Selected every frame regardless of clicks
 
 enum class FactionId : uint8_t { Player = 0, Enemy = 1 };
 
