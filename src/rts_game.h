@@ -32,6 +32,10 @@ class RtsGame : public VulkanHelpers::IGame {
 
     // IGame interface
     void        init(const VulkanHelpers::ResourceContext &ctx) override;
+
+    // Creates a fresh unit for the given faction at position.
+    // Not called during normal gameplay yet — reserved for the round system.
+    entt::entity respawnUnit(Components::FactionId faction, glm::vec3 position);
     VulkanHelpers::FrameOutput update(float dt, vk::Extent2D extent) override;
     void        renderImGui(vk::CommandBuffer cmd) override;
     void        onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) override;

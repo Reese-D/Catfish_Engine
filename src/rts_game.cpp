@@ -13,6 +13,7 @@
 #include "input_system.h"
 #include "minimap_system.h"
 #include "movement_system.h"
+#include "death_system.h"
 #include "lava_system.h"
 #include "order_system.h"
 #include "projectile_system.h"
@@ -90,6 +91,7 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         lavaZone.update(dt);
         Systems::applyLavaDamage(lavaZone, registry, dt);
         if (combatEnabled) Systems::processCombat(registry, dt);
+        Systems::processDeath(registry);
         Systems::tickAbilities(registry, dt);
         Systems::updateProjectiles(registry, dt);
         Systems::processOrders(registry, dt, pathfinder ? &*pathfinder : nullptr);
@@ -145,6 +147,15 @@ bool RtsGame::wantsKeyboard() const { return menuSystem && menuSystem->wantsKeyb
 bool RtsGame::wantsClose()    const { return closeRequested; }
 
 // --- Private helpers ---
+
+entt::entity RtsGame::respawnUnit(Components::FactionId faction, glm::vec3 position) {
+    auto e = spawnUnit(position, faction);
+    if (faction == Components::FactionId::Player) {
+        registry.emplace<Components::AlwaysSelected>(e);
+        registry.emplace<Components::Selected>(e);
+    }
+    return e;
+}
 
 entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId faction) {
     auto e = registry.create();
