@@ -42,6 +42,21 @@ void applySeparation(entt::registry &registry) {
     }
 }
 
+void applyKnockback(entt::registry &registry, float dt) {
+    std::vector<entt::entity> toClear;
+    for (auto entity : registry.view<Components::Knockback, Components::Transform>()) {
+        auto &kb = registry.get<Components::Knockback>(entity);
+        auto &t  = registry.get<Components::Transform>(entity);
+        t.position.x += kb.force.x * dt;
+        t.position.y += kb.force.y * dt;
+        kb.force -= kb.force * (kb.decay * dt);
+        if (glm::length(kb.force) < 0.01f)
+            toClear.push_back(entity);
+    }
+    for (auto e : toClear)
+        registry.remove<Components::Knockback>(e);
+}
+
 void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax) {
     for (auto entity : registry.view<Components::Transform, Components::MovementSpeed>()) {
         auto &t    = registry.get<Components::Transform>(entity);

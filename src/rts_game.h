@@ -26,7 +26,8 @@ class RtsGame : public VulkanHelpers::IGame {
     void enablePathfinding(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20}, float cellSize = 0.5f);
     void enableFogOfWar(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20},
                         float cellSize = 1.0f, float sightRadius = 5.0f);
-    void enableMinimap(); // requires fog to be meaningful; works without it too
+    void enableMinimap();   // works without fog too
+    void enableCombat();    // re-enables melee combat system; off by default
 
     // IGame interface
     void        init(const VulkanHelpers::ResourceContext &ctx) override;
@@ -55,10 +56,14 @@ class RtsGame : public VulkanHelpers::IGame {
     entt::registry             registry;
     VulkanHelpers::SpatialGrid spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
 
+    // Projectile shared model (created in init)
+    std::shared_ptr<VulkanHelpers::Model> projectileModel;
+
     // Optional features
     std::optional<Systems::Pathfinder> pathfinder;
     std::optional<Systems::FogOfWar>   fogOfWar;
     bool                               minimapEnabled{false};
+    bool                               combatEnabled{false};
 
     bool closeRequested{false};
 };

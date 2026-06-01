@@ -12,6 +12,9 @@ void applySeparation(entt::registry &registry);
 // Clamps all unit positions (entities with MovementSpeed) to [worldMin, worldMax] on XY.
 void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax);
 
+// Applies and decays Knockback forces on all affected entities.
+void applyKnockback(entt::registry &registry, float dt);
+
 } // namespace Systems
 
 #endif // MOVEMENT_SYSTEM_H

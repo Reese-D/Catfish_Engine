@@ -14,7 +14,7 @@
 #include "minimap_system.h"
 #include "movement_system.h"
 #include "order_system.h"
-#include "orders.h"
+#include "projectile_system.h"
 #include "render_system.h"
 #include "rts_game.h"
 #include "selection_system.h"
@@ -33,6 +33,10 @@ void RtsGame::enableFogOfWar(glm::vec2 worldMin, glm::vec2 worldMax, float cellS
 
 void RtsGame::enableMinimap() {
     minimapEnabled = true;
+}
+
+void RtsGame::enableCombat() {
+    combatEnabled = true;
 }
 
 // --- IGame interface ---
@@ -57,6 +61,10 @@ void RtsGame::init(const VulkanHelpers::ResourceContext &ctx) {
         ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout
     );
 
+    projectileModel = Systems::createProjectileModel(
+        ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout
+    );
+
     menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
         ctx.window, ctx.instance, ctx.physicalDevice, ctx.device,
         ctx.graphicsQueueFamilyIndex, ctx.graphicsQueue, ctx.swapChain, ctx.depthFormat
@@ -74,14 +82,19 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         if (!menuSystem->wantsKeyboard())
             Systems::updateCameraInput(registry, *window, dt);
 
-        Systems::processCombat(registry, dt);
+        if (combatEnabled) Systems::processCombat(registry, dt);
+        Systems::tickAbilities(registry, dt);
+        Systems::updateProjectiles(registry, dt);
         Systems::processOrders(registry, dt, pathfinder ? &*pathfinder : nullptr);
+        Systems::applyKnockback(registry, dt);
         Systems::applySeparation(registry);
         Systems::clampToBounds(registry, {-20.0f, -20.0f}, {20.0f, 20.0f});
         Systems::updateCamera(registry, extent);
 
-        if (!menuSystem->wantsMouse())
-            Systems::updateSelection(registry, *window, extent, spatialGrid);
+        if (!menuSystem->wantsMouse()) {
+            Systems::updateSelection(registry, *window, extent);
+            Systems::processAbilityInput(registry, *window, extent, projectileModel);
+        }
 
         spatialGrid.update(registry);
 
@@ -138,7 +151,9 @@ entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId factio
     registry.emplace<Components::OrderQueue>(e);
     registry.emplace<Components::Faction>(e, Components::Faction{faction});
     registry.emplace<Components::Health>(e);
-    registry.emplace<Components::Combat>(e);
+    registry.emplace<Components::Ability>(e);
+    if (combatEnabled)
+        registry.emplace<Components::Combat>(e);
     return e;
 }
 
@@ -156,17 +171,8 @@ void RtsGame::initScene() {
     registry.emplace<Components::Transform>(terrainEntity);
     registry.emplace<Components::RenderMesh>(terrainEntity, Components::RenderMesh{terrain->getModelPtr()});
 
-    // 2×2 player formation
-    auto p0 = spawnUnit({-1.5f, -1.5f, 0.0f}, Components::FactionId::Player);
-    auto p1 = spawnUnit({ 1.5f, -1.5f, 0.0f}, Components::FactionId::Player);
-    spawnUnit({-1.5f,  1.5f, 0.0f}, Components::FactionId::Player);
-    spawnUnit({ 1.5f,  1.5f, 0.0f}, Components::FactionId::Player);
-
-    // 2 enemies approaching from the side
-    auto e0 = spawnUnit({6.0f, -0.5f, 0.0f}, Components::FactionId::Enemy);
-    auto e1 = spawnUnit({6.0f,  0.5f, 0.0f}, Components::FactionId::Enemy);
-    registry.get<Components::OrderQueue>(e0).enqueue(Orders::AttackOrder{p0});
-    registry.get<Components::OrderQueue>(e1).enqueue(Orders::AttackOrder{p1});
+    spawnUnit({-3.0f, 0.0f, 0.0f}, Components::FactionId::Player);
+    spawnUnit({ 3.0f, 0.0f, 0.0f}, Components::FactionId::Enemy);
 }
 
 } // namespace Game

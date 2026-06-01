@@ -37,8 +37,7 @@ namespace Systems {
 void updateSelection(
     entt::registry &registry,
     const VulkanHelpers::Window &window,
-    vk::Extent2D extent,
-    const VulkanHelpers::SpatialGrid &grid
+    vk::Extent2D extent
 ) {
     static bool prevLeft  = false;
     static bool prevRight = false;
@@ -92,44 +91,15 @@ void updateSelection(
         }
     }
 
-    // Right click — MoveOrder to ground, or AttackOrder if clicking an enemy
+    // Right click — MoveOrder to ground position
     if (rightJust) {
         auto groundHit = rayGroundIntersect(cam->position, rayDir);
         if (!groundHit) return;
 
-        // Determine the faction of the selected units
-        Components::FactionId myFaction = Components::FactionId::Player;
-        for (auto entity : registry.view<Components::Selected, Components::Faction>()) {
-            myFaction = registry.get<Components::Faction>(entity).id;
-            break;
-        }
-
-        // Check if a hostile unit is near the click point
-        constexpr float clickRadius = 0.8f;
-        entt::entity    clickedEnemy = entt::null;
-
-        auto candidates = grid.queryRadius({groundHit->x, groundHit->y}, clickRadius);
-        for (auto candidate : candidates) {
-            if (!registry.valid(candidate)) continue;
-            if (!registry.all_of<Components::Faction, Components::Health, Components::Selectable>(candidate)) continue;
-            if (registry.get<Components::Faction>(candidate).id == myFaction) continue;
-
-            const auto &t    = registry.get<Components::Transform>(candidate);
-            float        dist = glm::length(glm::vec2(t.position.x - groundHit->x,
-                                                      t.position.y - groundHit->y));
-            if (dist < clickRadius) {
-                clickedEnemy = candidate;
-                break;
-            }
-        }
-
         for (auto entity : registry.view<Components::Selected, Components::OrderQueue>()) {
-            auto &queue = registry.get<Components::OrderQueue>(entity);
-            if (clickedEnemy != entt::null) {
-                queue.enqueueImmediate(Orders::AttackOrder{clickedEnemy});
-            } else {
-                queue.enqueueImmediate(Orders::MoveOrder{*groundHit});
-            }
+            registry.get<Components::OrderQueue>(entity).enqueueImmediate(
+                Orders::MoveOrder{.destination = *groundHit, .path = {}, .pathIndex = 0}
+            );
         }
     }
 }
