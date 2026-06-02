@@ -14,9 +14,9 @@ namespace Systems {
 
 namespace {
 
-constexpr float WORLD_MIN = -20.0f;
-constexpr float WORLD_MAX = 20.0f;
-constexpr float WORLD_SIZE = 40.0f;
+constexpr float WORLD_MIN  = WorldBounds::kMin;
+constexpr float WORLD_MAX  = WorldBounds::kMax;
+constexpr float WORLD_SIZE = WorldBounds::kMax - WorldBounds::kMin;
 constexpr float MM_SIZE = 180.0f;
 constexpr float MM_PADDING = 10.0f;
 

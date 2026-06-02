@@ -184,7 +184,7 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         Systems::processOrders(registry, dt, pathfinder ? &*pathfinder : nullptr);
         Systems::applyKnockback(registry, dt);
         Systems::applySeparation(registry);
-        Systems::clampToBounds(registry, {-20.0f, -20.0f}, {20.0f, 20.0f});
+        Systems::clampToBounds(registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
 
         if (networkRole_ != NetworkRole::Server)
             Systems::updateCamera(registry, extent);
@@ -279,7 +279,9 @@ entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId factio
     registry.emplace<Components::Ability>(e);
     if (combatEnabled)
         registry.emplace<Components::Combat>(e);
-    registry.emplace<Components::NetworkId>(e, Components::NetworkId{nextNetworkId_++});
+    auto netId = nextNetworkId_++;
+    registry.emplace<Components::NetworkId>(e, Components::NetworkId{netId});
+    netIdToEntity_[netId] = e;
     return e;
 }
 
@@ -316,11 +318,11 @@ void RtsGame::onClientDisconnect(ENetPeer *peer) {
         return;
 
     uint32_t netId = it->second;
-    for (auto e : registry.view<Components::NetworkId>()) {
-        if (registry.get<Components::NetworkId>(e).id == netId) {
-            registry.destroy(e);
-            break;
-        }
+    auto entIt = netIdToEntity_.find(netId);
+    if (entIt != netIdToEntity_.end()) {
+        if (registry.valid(entIt->second))
+            registry.destroy(entIt->second);
+        netIdToEntity_.erase(entIt);
     }
     peerToNetId_.erase(it);
     std::cout << "[Server] Client disconnected, destroyed unit " << netId << "\n";
@@ -389,21 +391,16 @@ void RtsGame::serverHandleInput(const uint8_t *data, std::size_t size, ENetPeer 
     if (peerIt == peerToNetId_.end())
         return;
 
-    entt::entity clientEntity = entt::null;
-    for (auto e : registry.view<Components::NetworkId>()) {
-        if (registry.get<Components::NetworkId>(e).id == peerIt->second) {
-            clientEntity = e;
-            break;
-        }
-    }
-    if (clientEntity == entt::null)
+    auto entIt = netIdToEntity_.find(peerIt->second);
+    if (entIt == netIdToEntity_.end() || !registry.valid(entIt->second))
         return;
+    entt::entity clientEntity = entIt->second;
 
-    if ((pkt.flags & 0x01) && registry.all_of<Components::OrderQueue>(clientEntity)) {
+    if ((pkt.flags & InputFlags::MoveOrder) && registry.all_of<Components::OrderQueue>(clientEntity)) {
         registry.get<Components::OrderQueue>(clientEntity).enqueueImmediate(Orders::MoveOrder{.destination = {pkt.moveX, pkt.moveY, pkt.moveZ}, .path = {}, .pathIndex = 0});
     }
 
-    if ((pkt.flags & 0x02) && registry.all_of<Components::Ability, Components::Transform, Components::Faction>(clientEntity)) {
+    if ((pkt.flags & InputFlags::FireAbility) && registry.all_of<Components::Ability, Components::Transform, Components::Faction>(clientEntity)) {
         auto &ab = registry.get<Components::Ability>(clientEntity);
         if (ab.timer >= ab.cooldown) {
             const auto &t = registry.get<Components::Transform>(clientEntity);
@@ -412,8 +409,10 @@ void RtsGame::serverHandleInput(const uint8_t *data, std::size_t size, ENetPeer 
             delta.z = 0.0f;
             float len = glm::length(delta);
             if (len > 0.001f) {
-                auto proj = Systems::spawnProjectile(registry, projectileModel, t.position, (delta / len) * ab.projectileSpeed, f.id, ab.knockbackForce);
-                registry.emplace<Components::NetworkId>(proj, Components::NetworkId{nextNetworkId_++});
+                auto proj  = Systems::spawnProjectile(registry, projectileModel, t.position, (delta / len) * ab.projectileSpeed, f.id, ab.knockbackForce);
+                auto netId = nextNetworkId_++;
+                registry.emplace<Components::NetworkId>(proj, Components::NetworkId{netId});
+                netIdToEntity_[netId] = proj;
                 ab.timer = 0.0f;
             }
         }
@@ -447,6 +446,7 @@ void RtsGame::clientApplySnapshot(const uint8_t *data, std::size_t size) {
             auto faction = static_cast<Components::FactionId>(es.faction);
             auto e = registry.create();
             registry.emplace<Components::NetworkId>(e, Components::NetworkId{es.netId});
+            netIdToEntity_[es.netId] = e;
             registry.emplace<Components::Transform>(
                 e, Components::Transform{
                        .position = {es.x, es.y, es.z},
@@ -472,9 +472,12 @@ void RtsGame::clientApplySnapshot(const uint8_t *data, std::size_t size) {
             h.max = es.maxHealth;
         }
     }
-    for (auto &[nid, e] : knownUnits)
-        if (!seenUnits.count(nid) && registry.valid(e))
+    for (auto &[nid, e] : knownUnits) {
+        if (!seenUnits.count(nid) && registry.valid(e)) {
             registry.destroy(e);
+            netIdToEntity_.erase(nid);
+        }
+    }
 
     // ---- Projectiles -------------------------------------------------------
     std::unordered_map<uint32_t, entt::entity> knownProj;
@@ -492,6 +495,7 @@ void RtsGame::clientApplySnapshot(const uint8_t *data, std::size_t size) {
         if (it == knownProj.end()) {
             auto e = registry.create();
             registry.emplace<Components::NetworkId>(e, Components::NetworkId{ps.netId});
+            netIdToEntity_[ps.netId] = e;
             registry.emplace<Components::Transform>(
                 e, Components::Transform{
                        .position = {ps.x, ps.y, ps.z},
@@ -512,9 +516,12 @@ void RtsGame::clientApplySnapshot(const uint8_t *data, std::size_t size) {
             registry.get<Components::Projectile>(it->second).velocity = {ps.vx, ps.vy, ps.vz};
         }
     }
-    for (auto &[nid, e] : knownProj)
-        if (!seenProj.count(nid) && registry.valid(e))
+    for (auto &[nid, e] : knownProj) {
+        if (!seenProj.count(nid) && registry.valid(e)) {
             registry.destroy(e);
+            netIdToEntity_.erase(nid);
+        }
+    }
 }
 
 void RtsGame::clientHandleAssignment(const uint8_t *data, std::size_t size) {
@@ -543,14 +550,12 @@ void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {
     if (!networkManager_ || !networkManager_->isConnected())
         return;
 
-    static bool prevRight = false;
-    static bool prevQ = false;
     bool rightDown = window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
-    bool qDown = window->isKeyPressed(GLFW_KEY_Q);
-    bool rightJust = rightDown && !prevRight;
-    bool qJust = qDown && !prevQ;
-    prevRight = rightDown;
-    prevQ = qDown;
+    bool qDown     = window->isKeyPressed(GLFW_KEY_Q);
+    bool rightJust = rightDown && !prevMouseRight_;
+    bool qJust     = qDown     && !prevKeyQ_;
+    prevMouseRight_ = rightDown;
+    prevKeyQ_       = qDown;
 
     if (!rightJust && !qJust)
         return;
@@ -568,9 +573,9 @@ void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {
     float ndcY = (2.0f * static_cast<float>(my)) / static_cast<float>(extent.height) - 1.0f;
     glm::mat4 invVP = glm::inverse(cam->proj * cam->view);
     glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
-    glm::vec4 farW = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+    glm::vec4 farW  = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
     nearW /= nearW.w;
-    farW /= farW.w;
+    farW  /= farW.w;
     glm::vec3 dir = glm::normalize(glm::vec3(farW) - glm::vec3(nearW));
 
     if (std::abs(dir.z) < 1e-6f)
@@ -580,29 +585,24 @@ void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {
         return;
     glm::vec3 ground = glm::vec3(nearW) + t * dir;
 
-    if (rightJust) {
-        pendingInput_.hasMoveOrder = true;
-        pendingInput_.moveTarget = ground;
-    }
-    if (qJust) {
-        pendingInput_.fireAbility = true;
-        pendingInput_.abilityTarget = ground;
-    }
+    bool      hasMoveOrder = rightJust;
+    bool      fireAbility  = qJust;
+    glm::vec3 moveTarget   = rightJust ? ground : glm::vec3{};
+    glm::vec3 abilityTarget = qJust   ? ground : glm::vec3{};
 
     InputPacket pkt{};
-    pkt.msgType = static_cast<uint8_t>(MessageType::Input);
-    pkt.tick = tick_;
-    pkt.flags = (pendingInput_.hasMoveOrder ? 0x01 : 0) | (pendingInput_.fireAbility ? 0x02 : 0);
-    pkt.moveX = pendingInput_.moveTarget.x;
-    pkt.moveY = pendingInput_.moveTarget.y;
-    pkt.moveZ = pendingInput_.moveTarget.z;
-    pkt.abilityX = pendingInput_.abilityTarget.x;
-    pkt.abilityY = pendingInput_.abilityTarget.y;
-    pkt.abilityZ = pendingInput_.abilityTarget.z;
+    pkt.msgType  = static_cast<uint8_t>(MessageType::Input);
+    pkt.tick     = tick_;
+    pkt.flags    = (hasMoveOrder ? InputFlags::MoveOrder : 0) | (fireAbility ? InputFlags::FireAbility : 0);
+    pkt.moveX    = moveTarget.x;
+    pkt.moveY    = moveTarget.y;
+    pkt.moveZ    = moveTarget.z;
+    pkt.abilityX = abilityTarget.x;
+    pkt.abilityY = abilityTarget.y;
+    pkt.abilityZ = abilityTarget.z;
 
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
     networkManager_->sendToServerUnreliable({raw, raw + sizeof(pkt)});
-    pendingInput_ = {};
 }
 
 } // namespace Game

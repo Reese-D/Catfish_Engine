@@ -74,7 +74,7 @@ class RtsGame : public VulkanHelpers::IGame {
 
     // ECS
     entt::registry registry;
-    VulkanHelpers::SpatialGrid spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
+    VulkanHelpers::SpatialGrid spatialGrid{2.0f, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax}};
 
     // Optional features
     std::optional<Systems::Pathfinder> pathfinder;
@@ -94,18 +94,15 @@ class RtsGame : public VulkanHelpers::IGame {
     static constexpr float SNAPSHOT_INTERVAL = 0.05f; // 20 Hz
 
     // Server: maps each connected peer to the NetworkId of the unit they own.
-    std::unordered_map<ENetPeer *, uint32_t> peerToNetId_;
+    std::unordered_map<ENetPeer *, uint32_t>  peerToNetId_;
+    // Shared: reverse lookup NetworkId → entity (kept in sync by spawnUnit/destroy).
+    std::unordered_map<uint32_t, entt::entity> netIdToEntity_;
 
-    // Client: which entity this peer controls + pending input state
-    uint32_t myNetworkId_{0};
+    // Client: which entity this peer controls + input edge-detection state
+    uint32_t              myNetworkId_{0};
     Components::FactionId myFaction_{Components::FactionId::Player};
-    struct PendingInput {
-        bool hasMoveOrder{false};
-        glm::vec3 moveTarget{};
-        bool fireAbility{false};
-        glm::vec3 abilityTarget{};
-    };
-    PendingInput pendingInput_;
+    bool                  prevMouseRight_{false};
+    bool                  prevKeyQ_{false};
 
     bool closeRequested{false};
 };

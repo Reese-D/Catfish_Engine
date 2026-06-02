@@ -54,8 +54,8 @@ std::shared_ptr<VulkanHelpers::Model> createLavaTileModel(
 }
 
 void appendLavaDrawCalls(const LavaZone &lava, std::vector<VulkanHelpers::DrawCall> &draws, const VulkanHelpers::Model &tileModel) {
-    constexpr float WORLD_MIN = -20.0f;
-    constexpr float WORLD_MAX = 20.0f;
+    constexpr float WORLD_MIN = WorldBounds::kMin;
+    constexpr float WORLD_MAX = WorldBounds::kMax;
     constexpr float CELL = 1.0f;
     constexpr float Z = 0.02f; // above terrain, below unit bodies
 

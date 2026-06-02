@@ -43,12 +43,17 @@ struct SnapshotHeader {
     uint8_t projectileCount;
 };
 
+namespace InputFlags {
+    constexpr uint8_t MoveOrder   = 0x01;
+    constexpr uint8_t FireAbility = 0x02;
+}
+
 struct InputPacket {
-    uint8_t msgType; // MessageType::Input
+    uint8_t  msgType; // MessageType::Input
     uint32_t tick;
-    uint8_t flags; // bit 0: hasMoveOrder, bit 1: fireAbility
-    float moveX, moveY, moveZ;
-    float abilityX, abilityY, abilityZ;
+    uint8_t  flags;   // InputFlags bitmask
+    float    moveX, moveY, moveZ;
+    float    abilityX, abilityY, abilityZ;
 };
 
 struct PlayerAssignmentPacket {

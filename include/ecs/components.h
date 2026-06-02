@@ -10,6 +10,11 @@
 #include "model.h"
 #include "orders.h"
 
+namespace WorldBounds {
+    inline constexpr float kMin = -20.0f;
+    inline constexpr float kMax =  20.0f;
+}
+
 namespace Components {
 
 struct Transform {
