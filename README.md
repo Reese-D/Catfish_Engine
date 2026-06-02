@@ -86,7 +86,17 @@ The first client to connect is assigned the Player faction; the second gets Enem
 ## Project structure
 
 ```
-src/           C++ sources and headers
+include/
+  engine/      Vulkan backend headers (VulkanHelpers namespace)
+  ecs/         ECS component and system headers (Systems namespace)
+  game/        Game-specific headers (rts_game, menu_system)
+  network/     Networking headers (NetworkManager, message structs)
+src/
+  engine/      Vulkan backend sources
+  ecs/         ECS system sources
+  game/        Game logic sources
+  network/     Networking sources
+  main.cpp     Entry point
 shaders/       Slang shader source + compiled SPIR-V
 models/        GLB model assets
 third_party/   Vendored libraries (EnTT, ImGui, fastgltf, ENet, stb_image)

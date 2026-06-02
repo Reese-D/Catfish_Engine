@@ -6,6 +6,10 @@ CC  = clang
 
 # Compiler flags
 CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb \
+           -Iinclude/engine \
+           -Iinclude/ecs \
+           -Iinclude/game \
+           -Iinclude/network \
            -Ithird_party \
            -Ithird_party/fastgltf/include \
            -Ithird_party/entt \
@@ -23,22 +27,57 @@ TARGET = catfish_engine
 
 # C++ source files
 SOURCES = \
-  src/main.cpp src/engine.cpp src/rts_game.cpp \
-  src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp \
-  src/physical_device.cpp src/logical_device.cpp src/surface.cpp \
-  src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp \
-  src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp \
-  src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp \
-  src/model.cpp src/material.cpp src/terrain.cpp src/selection_ring.cpp \
-  src/camera_system.cpp src/render_system.cpp src/order_system.cpp \
-  src/input_system.cpp src/selection_system.cpp src/spatial_grid.cpp \
-  src/combat_system.cpp src/movement_system.cpp src/hud_system.cpp \
-  src/menu_system.cpp src/pathfinder.cpp \
-  src/fog_of_war.cpp src/fog_system.cpp src/minimap_system.cpp \
-  src/projectile_system.cpp src/lava_zone.cpp src/lava_system.cpp \
-  src/death_system.cpp src/network_manager.cpp src/headless_runner.cpp \
-  third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp \
-  third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp \
+  src/main.cpp \
+  \
+  src/engine/engine.cpp \
+  src/engine/headless_runner.cpp \
+  src/engine/window.cpp \
+  src/engine/vulkan_instance.cpp \
+  src/engine/validation_layers.cpp \
+  src/engine/physical_device.cpp \
+  src/engine/logical_device.cpp \
+  src/engine/surface.cpp \
+  src/engine/swap_chain.cpp \
+  src/engine/graphics_pipeline.cpp \
+  src/engine/renderer.cpp \
+  src/engine/vulkan_utils.cpp \
+  src/engine/vertex_buffer.cpp \
+  src/engine/index_buffer.cpp \
+  src/engine/uniform_buffer.cpp \
+  src/engine/texture_image.cpp \
+  src/engine/depth_buffer.cpp \
+  src/engine/model.cpp \
+  src/engine/material.cpp \
+  src/engine/terrain.cpp \
+  src/engine/selection_ring.cpp \
+  src/engine/spatial_grid.cpp \
+  \
+  src/ecs/camera_system.cpp \
+  src/ecs/render_system.cpp \
+  src/ecs/order_system.cpp \
+  src/ecs/input_system.cpp \
+  src/ecs/selection_system.cpp \
+  src/ecs/combat_system.cpp \
+  src/ecs/movement_system.cpp \
+  src/ecs/hud_system.cpp \
+  src/ecs/pathfinder.cpp \
+  src/ecs/fog_of_war.cpp \
+  src/ecs/fog_system.cpp \
+  src/ecs/minimap_system.cpp \
+  src/ecs/projectile_system.cpp \
+  src/ecs/lava_zone.cpp \
+  src/ecs/lava_system.cpp \
+  src/ecs/death_system.cpp \
+  \
+  src/game/menu_system.cpp \
+  src/game/rts_game.cpp \
+  \
+  src/network/network_manager.cpp \
+  \
+  third_party/imgui/imgui.cpp \
+  third_party/imgui/imgui_draw.cpp \
+  third_party/imgui/imgui_tables.cpp \
+  third_party/imgui/imgui_widgets.cpp \
   third_party/imgui/backends/imgui_impl_glfw.cpp \
   third_party/imgui/backends/imgui_impl_vulkan.cpp
 
@@ -56,9 +95,9 @@ ENET_SRCS = \
 OBJECTS      = $(SOURCES:.cpp=.o)
 ENET_OBJECTS = $(ENET_SRCS:.c=.o)
 
-SHADER_SRC  = shaders/shader.slang
-VERT_SPV    = shaders/vert.spv
-FRAG_SPV    = shaders/frag.spv
+SHADER_SRC   = shaders/shader.slang
+VERT_SPV     = shaders/vert.spv
+FRAG_SPV     = shaders/frag.spv
 SLANGC_FLAGS = -target spirv -matrix-layout-column-major
 
 # Default target
@@ -103,6 +142,6 @@ local-uninstall:
 	rm -f ./bin/$(TARGET)
 
 format:
-	clang-format -i src/*.cpp src/*.h
+	clang-format -i src/**/*.cpp include/**/*.h
 
 .PHONY: all clean format shaders install uninstall local-install local-uninstall
