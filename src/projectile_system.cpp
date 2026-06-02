@@ -70,7 +70,7 @@ std::shared_ptr<VulkanHelpers::Model> createProjectileModel(
 
 // ---- projectile spawning ---------------------------------------------------
 
-void spawnProjectile(
+entt::entity spawnProjectile(
     entt::registry &registry,
     std::shared_ptr<VulkanHelpers::Model> model,
     glm::vec3 origin,
@@ -94,6 +94,7 @@ void spawnProjectile(
         .hitRadius     = hitRadius,
         .lifetime      = lifetime,
     });
+    return e;
 }
 
 // ---- per-frame updates -----------------------------------------------------

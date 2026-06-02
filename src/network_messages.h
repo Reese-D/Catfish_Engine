@@ -1,0 +1,97 @@
+#ifndef NETWORK_MESSAGES_H
+#define NETWORK_MESSAGES_H
+
+#include <cstdint>
+#include <cstring>
+#include <vector>
+
+// All multi-byte fields are in native byte order (both peers are assumed to be
+// the same architecture for now; add bswap if cross-platform is needed later).
+
+enum class MessageType : uint8_t {
+    Snapshot         = 0x01, // server → client, unreliable
+    Input            = 0x02, // client → server, unreliable
+    PlayerAssignment = 0x03, // server → client, reliable, sent once on connect
+};
+
+// ---- Per-entity / per-projectile data inside a Snapshot --------------------
+
+#pragma pack(push, 1)
+
+struct EntitySnapshot {
+    uint32_t netId;
+    uint8_t  faction;   // 0 = Player, 1 = Enemy
+    float    x, y, z;
+    float    health;
+    float    maxHealth;
+};
+
+struct ProjectileSnapshot {
+    uint32_t netId;
+    uint8_t  faction;   // owner faction
+    float    x, y, z;
+    float    vx, vy, vz;
+};
+
+// Fixed-size header; followed by entityCount EntitySnapshots then
+// projectileCount ProjectileSnapshots in the raw packet buffer.
+struct SnapshotHeader {
+    uint8_t  msgType;         // MessageType::Snapshot
+    uint32_t tick;
+    float    lavaRadius;
+    uint8_t  entityCount;
+    uint8_t  projectileCount;
+};
+
+struct InputPacket {
+    uint8_t  msgType;         // MessageType::Input
+    uint32_t tick;
+    uint8_t  flags;           // bit 0: hasMoveOrder, bit 1: fireAbility
+    float    moveX, moveY, moveZ;
+    float    abilityX, abilityY, abilityZ;
+};
+
+struct PlayerAssignmentPacket {
+    uint8_t  msgType;         // MessageType::PlayerAssignment
+    uint32_t yourNetworkId;   // the NetworkId of the entity the client controls
+};
+
+#pragma pack(pop)
+
+// ---- Simple byte-buffer helpers --------------------------------------------
+
+class BufWriter {
+  public:
+    template <typename T>
+    void write(const T &v) {
+        const auto *p = reinterpret_cast<const uint8_t *>(&v);
+        buf_.insert(buf_.end(), p, p + sizeof(T));
+    }
+    const std::vector<uint8_t> &buf() const { return buf_; }
+
+  private:
+    std::vector<uint8_t> buf_;
+};
+
+class BufReader {
+  public:
+    BufReader(const uint8_t *data, std::size_t size) : data_(data), size_(size) {}
+
+    template <typename T>
+    bool read(T &v) {
+        if (pos_ + sizeof(T) > size_) return false;
+        std::memcpy(&v, data_ + pos_, sizeof(T));
+        pos_ += sizeof(T);
+        return true;
+    }
+
+    bool ok()  const { return pos_ <= size_; }
+    bool done() const { return pos_ == size_; }
+
+  private:
+    const uint8_t *data_;
+    std::size_t    size_;
+    std::size_t    pos_{0};
+};
+
+#endif // NETWORK_MESSAGES_H

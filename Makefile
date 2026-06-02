@@ -2,23 +2,63 @@
 
 # Compiler
 CXX = clang++
+CC  = clang
 
 # Compiler flags
-CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb -Ithird_party -Ithird_party/fastgltf/include -Ithird_party/entt -Ithird_party/imgui -Ithird_party/imgui/backends -DGLM_FORCE_RADIANS -DGLM_FORCE_DEPTH_ZERO_TO_ONE
+CXXFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb \
+           -Ithird_party \
+           -Ithird_party/fastgltf/include \
+           -Ithird_party/entt \
+           -Ithird_party/imgui \
+           -Ithird_party/imgui/backends \
+           -Ithird_party/enet/include \
+           -DGLM_FORCE_RADIANS -DGLM_FORCE_DEPTH_ZERO_TO_ONE
+
+CFLAGS = -O2 -Ithird_party/enet/include
+
 LDFLAGS = -lvulkan
 
 # Target executable name
 TARGET = catfish_engine
 
-# Source files
-SOURCES = src/main.cpp src/engine.cpp src/rts_game.cpp src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp src/physical_device.cpp src/logical_device.cpp src/surface.cpp src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp src/model.cpp src/material.cpp src/terrain.cpp src/selection_ring.cpp src/camera_system.cpp src/render_system.cpp src/order_system.cpp src/input_system.cpp src/selection_system.cpp src/spatial_grid.cpp src/combat_system.cpp src/movement_system.cpp src/hud_system.cpp src/menu_system.cpp src/pathfinder.cpp src/fog_of_war.cpp src/fog_system.cpp src/minimap_system.cpp src/projectile_system.cpp src/lava_zone.cpp src/lava_system.cpp src/death_system.cpp third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp third_party/imgui/backends/imgui_impl_glfw.cpp third_party/imgui/backends/imgui_impl_vulkan.cpp
+# C++ source files
+SOURCES = \
+  src/main.cpp src/engine.cpp src/rts_game.cpp \
+  src/window.cpp src/vulkan_instance.cpp src/validation_layers.cpp \
+  src/physical_device.cpp src/logical_device.cpp src/surface.cpp \
+  src/swap_chain.cpp src/graphics_pipeline.cpp src/renderer.cpp \
+  src/vulkan_utils.cpp src/vertex_buffer.cpp src/index_buffer.cpp \
+  src/uniform_buffer.cpp src/texture_image.cpp src/depth_buffer.cpp \
+  src/model.cpp src/material.cpp src/terrain.cpp src/selection_ring.cpp \
+  src/camera_system.cpp src/render_system.cpp src/order_system.cpp \
+  src/input_system.cpp src/selection_system.cpp src/spatial_grid.cpp \
+  src/combat_system.cpp src/movement_system.cpp src/hud_system.cpp \
+  src/menu_system.cpp src/pathfinder.cpp \
+  src/fog_of_war.cpp src/fog_system.cpp src/minimap_system.cpp \
+  src/projectile_system.cpp src/lava_zone.cpp src/lava_system.cpp \
+  src/death_system.cpp src/network_manager.cpp src/headless_runner.cpp \
+  third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp \
+  third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp \
+  third_party/imgui/backends/imgui_impl_glfw.cpp \
+  third_party/imgui/backends/imgui_impl_vulkan.cpp
 
-# Object files
-OBJECTS = $(SOURCES:.cpp=.o)
+# ENet C sources (compiled with CC, not CXX)
+ENET_SRCS = \
+  third_party/enet/callbacks.c \
+  third_party/enet/compress.c \
+  third_party/enet/host.c \
+  third_party/enet/list.c \
+  third_party/enet/packet.c \
+  third_party/enet/peer.c \
+  third_party/enet/protocol.c \
+  third_party/enet/unix.c
 
-SHADER_SRC = shaders/shader.slang
-VERT_SPV = shaders/vert.spv
-FRAG_SPV = shaders/frag.spv
+OBJECTS      = $(SOURCES:.cpp=.o)
+ENET_OBJECTS = $(ENET_SRCS:.c=.o)
+
+SHADER_SRC  = shaders/shader.slang
+VERT_SPV    = shaders/vert.spv
+FRAG_SPV    = shaders/frag.spv
 SLANGC_FLAGS = -target spirv -matrix-layout-column-major
 
 # Default target
@@ -33,37 +73,36 @@ $(VERT_SPV): $(SHADER_SRC)
 $(FRAG_SPV): $(SHADER_SRC)
 	slangc $(SLANGC_FLAGS) -entry fragmentMain $< -o $@
 
-# Link object files to create executable
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS) -lglfw third_party/fastgltf/libfastgltf.a -lsimdjson
+# Link
+$(TARGET): $(OBJECTS) $(ENET_OBJECTS)
+	$(CXX) $(OBJECTS) $(ENET_OBJECTS) -o $(TARGET) $(LDFLAGS) \
+	  -lglfw third_party/fastgltf/libfastgltf.a -lsimdjson
 
-# Compile source files to object files
+# Compile C++ sources
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean build files
-clean:
-	rm -f $(OBJECTS) $(TARGET) $(VERT_SPV) $(FRAG_SPV)
+# Compile ENet C sources
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Install target (optional)
+# Clean
+clean:
+	rm -f $(OBJECTS) $(ENET_OBJECTS) $(TARGET) $(VERT_SPV) $(FRAG_SPV)
+
 install: $(TARGET)
 	install -m 755 $(TARGET) /usr/local/bin/
 
-# Local install target for testing
 local-install: $(TARGET)
 	install -m 755 $(TARGET) ./bin/
 
-# Uninstall target (optional)
 uninstall:
 	rm -f /usr/local/bin/$(TARGET)
 
-# Local uninstall target
 local-uninstall:
 	rm -f ./bin/$(TARGET)
 
-# Format source files with clang-format
 format:
 	clang-format -i src/*.cpp src/*.h
 
-# Phony targets
 .PHONY: all clean format shaders install uninstall local-install local-uninstall

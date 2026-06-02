@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+#include "components.h"
+
 namespace Systems {
 
 enum class FogState : uint8_t { Hidden, Fogged, Visible };
@@ -13,8 +15,10 @@ class FogOfWar {
   public:
     FogOfWar(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize, float sightRadius);
 
-    // Resets current Visible→Fogged, then illuminates around all Player-faction units.
-    void update(entt::registry &registry);
+    // Resets current Visible→Fogged, then illuminates around units of viewerFaction.
+    // Pass the local player's faction so each client gets their own perspective.
+    void update(entt::registry &registry,
+                Components::FactionId viewerFaction = Components::FactionId::Player);
 
     FogState stateAt(glm::vec2 worldPos) const;
     FogState stateAt(glm::ivec2 cell) const;

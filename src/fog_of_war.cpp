@@ -57,7 +57,7 @@ bool FogOfWar::isVisible(glm::vec2 worldPos) const {
     return stateAt(worldPos) == FogState::Visible;
 }
 
-void FogOfWar::update(entt::registry &registry) {
+void FogOfWar::update(entt::registry &registry, Components::FactionId viewerFaction) {
     for (auto &cell : grid_) {
         if (cell == FogState::Visible)
             cell = FogState::Fogged;
@@ -67,7 +67,7 @@ void FogOfWar::update(entt::registry &registry) {
     float radiusSq   = sightRadius_ * sightRadius_;
 
     for (auto entity : registry.view<Components::Transform, Components::Faction>()) {
-        if (registry.get<Components::Faction>(entity).id != Components::FactionId::Player)
+        if (registry.get<Components::Faction>(entity).id != viewerFaction)
             continue;
 
         const auto &pos    = registry.get<Components::Transform>(entity).position;

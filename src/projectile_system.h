@@ -24,8 +24,8 @@ std::shared_ptr<VulkanHelpers::Model> createProjectileModel(
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
-// Spawns one projectile entity.
-void spawnProjectile(
+// Spawns one projectile entity and returns its handle.
+entt::entity spawnProjectile(
     entt::registry &registry,
     std::shared_ptr<VulkanHelpers::Model> model,
     glm::vec3 origin,

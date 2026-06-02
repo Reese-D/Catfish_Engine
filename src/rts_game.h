@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
@@ -14,8 +16,8 @@
 #include "lava_zone.h"
 #include "menu_system.h"
 #include "model.h"
+#include "network_manager.h"
 #include "pathfinder.h"
-#include "selection_ring.h"
 #include "spatial_grid.h"
 #include "terrain.h"
 
@@ -23,37 +25,51 @@ namespace Game {
 
 class RtsGame : public VulkanHelpers::IGame {
   public:
-    // Call any of these before init() to opt features in.
+    // Feature toggles — call before run.
     void enablePathfinding(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20}, float cellSize = 0.5f);
     void enableFogOfWar(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20},
                         float cellSize = 1.0f, float sightRadius = 5.0f);
-    void enableMinimap();   // works without fog too
-    void enableCombat();    // re-enables melee combat system; off by default
+    void enableMinimap();
+    void enableCombat();
+
+    // Network setup — call before run.
+    void setupAsServer(uint16_t port = 1234);
+    void setupAsClient(std::string host, uint16_t port = 1234);
 
     // IGame interface
-    void        init(const VulkanHelpers::ResourceContext &ctx) override;
-
-    // Creates a fresh unit for the given faction at position.
-    // Not called during normal gameplay yet — reserved for the round system.
-    entt::entity respawnUnit(Components::FactionId faction, glm::vec3 position);
-    VulkanHelpers::FrameOutput update(float dt, vk::Extent2D extent) override;
-    void        renderImGui(vk::CommandBuffer cmd) override;
+    void        initLogic()                                              override;
+    void        initGraphics(const VulkanHelpers::ResourceContext &ctx)  override;
+    VulkanHelpers::FrameOutput update(float dt, vk::Extent2D extent)    override;
+    void        renderImGui(vk::CommandBuffer cmd)                       override;
     void        onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) override;
     bool        wantsMouse()    const override;
     bool        wantsKeyboard() const override;
     bool        wantsClose()    const override;
 
+    // Reserved for the round system — not called during normal gameplay.
+    entt::entity respawnUnit(Components::FactionId faction, glm::vec3 position);
+
   private:
-    void        initScene();
     entt::entity spawnUnit(glm::vec3 position, Components::FactionId faction = Components::FactionId::Player);
 
-    // Engine window reference (non-owning, valid for Engine lifetime)
+    // Network event handlers
+    void onClientConnect(ENetPeer *peer);
+    void onClientDisconnect(ENetPeer *peer);
+    void serverSendSnapshot();
+    void serverHandleInput(const uint8_t *data, std::size_t size, ENetPeer *peer);
+    void clientApplySnapshot(const uint8_t *data, std::size_t size);
+    void clientHandleAssignment(const uint8_t *data, std::size_t size);
+    void clientCaptureAndSendInput(vk::Extent2D extent);
+
+    // Engine window reference (null for dedicated server)
     VulkanHelpers::Window *window{nullptr};
 
-    // Vulkan resources owned by the game
+    // Vulkan resources — null until initGraphics() is called
     std::shared_ptr<VulkanHelpers::Model>      unitModel;
     std::shared_ptr<VulkanHelpers::Terrain>    terrain;
     std::shared_ptr<VulkanHelpers::Model>      selectionRingModel;
+    std::shared_ptr<VulkanHelpers::Model>      projectileModel;
+    std::shared_ptr<VulkanHelpers::Model>      lavaTileModel;
     VulkanHelpers::HudResources                hudResources;
     std::shared_ptr<VulkanHelpers::MenuSystem> menuSystem;
 
@@ -61,18 +77,36 @@ class RtsGame : public VulkanHelpers::IGame {
     entt::registry             registry;
     VulkanHelpers::SpatialGrid spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
 
-    // Shared models created in init
-    std::shared_ptr<VulkanHelpers::Model> projectileModel;
-    std::shared_ptr<VulkanHelpers::Model> lavaTileModel;
-
     // Optional features
     std::optional<Systems::Pathfinder> pathfinder;
     std::optional<Systems::FogOfWar>   fogOfWar;
     bool                               minimapEnabled{false};
     bool                               combatEnabled{false};
 
-    // Lava zone — always active; shrinks the safe play area over time
     Systems::LavaZone lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
+
+    // Networking
+    enum class NetworkRole { Standalone, Server, Client };
+    NetworkRole networkRole_{NetworkRole::Standalone};
+    std::unique_ptr<Network::NetworkManager> networkManager_;
+    uint32_t nextNetworkId_{1};
+    uint32_t tick_{0};
+    float    snapshotTimer_{0.0f};
+    static constexpr float SNAPSHOT_INTERVAL = 0.05f; // 20 Hz
+
+    // Server: maps each connected peer to the NetworkId of the unit they own.
+    std::unordered_map<ENetPeer *, uint32_t> peerToNetId_;
+
+    // Client: which entity this peer controls + pending input state
+    uint32_t               myNetworkId_{0};
+    Components::FactionId  myFaction_{Components::FactionId::Player};
+    struct PendingInput {
+        bool      hasMoveOrder{false};
+        glm::vec3 moveTarget{};
+        bool      fireAbility{false};
+        glm::vec3 abilityTarget{};
+    };
+    PendingInput pendingInput_;
 
     bool closeRequested{false};
 };

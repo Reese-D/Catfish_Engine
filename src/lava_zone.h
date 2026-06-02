@@ -20,6 +20,7 @@ class LavaZone {
     bool  isLava(glm::vec2 worldPos) const;
     float getSafeRadius()      const { return safeRadius_; }
     float getDamagePerSecond() const { return damagePerSecond_; }
+    void  setSafeRadius(float r)    { safeRadius_ = r; }
 
   private:
     float safeRadius_;

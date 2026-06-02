@@ -37,6 +37,10 @@ struct Selectable {};
 struct Selected {};
 struct AlwaysSelected {}; // entity keeps Selected every frame regardless of clicks
 
+struct NetworkId {
+    uint32_t id{0};
+};
+
 enum class FactionId : uint8_t { Player = 0, Enemy = 1 };
 
 struct Faction {

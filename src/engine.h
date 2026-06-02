@@ -50,7 +50,14 @@ class IGame {
   public:
     virtual ~IGame() = default;
 
-    virtual void        init(const ResourceContext &ctx)                 = 0;
+    // initLogic — called by both Engine and HeadlessRunner.
+    // Set up ECS state, networking. Must not touch Vulkan.
+    virtual void initLogic() = 0;
+
+    // initGraphics — called by Engine only (not HeadlessRunner).
+    // Load GPU resources, create camera/terrain entities, set up UI.
+    virtual void initGraphics(const ResourceContext &ctx) = 0;
+
     virtual FrameOutput update(float dt, vk::Extent2D extent)           = 0;
     virtual void        renderImGui(vk::CommandBuffer cmd)               = 0;
     virtual void        onSwapChainRecreated(const SwapChain &swapChain) = 0;

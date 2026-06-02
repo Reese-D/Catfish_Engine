@@ -12,7 +12,8 @@ namespace VulkanHelpers {
 
 void Engine::run(IGame &game) {
     initAll();
-    game.init(makeResourceContext());
+    game.initLogic();
+    game.initGraphics(makeResourceContext());
 
     auto lastTime = std::chrono::steady_clock::now();
     while (!window->shouldClose() && !game.wantsClose()) {
