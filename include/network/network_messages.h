@@ -8,10 +8,27 @@
 // All multi-byte fields are in native byte order (both peers are assumed to be
 // the same architecture for now; add bswap if cross-platform is needed later).
 
+// Bump whenever the packet layout changes in a breaking way.
+constexpr uint16_t PROTOCOL_VERSION = 1;
+
 enum class MessageType : uint8_t {
-    Snapshot = 0x01,         // server → client, unreliable
-    Input = 0x02,            // client → server, unreliable
-    PlayerAssignment = 0x03, // server → client, reliable, sent once on connect
+    Snapshot           = 0x01, // server → client, unreliable
+    Input              = 0x02, // client → server, unreliable
+    PlayerAssignment   = 0x03, // server → client, reliable, sent once on connect
+    Disconnect         = 0x04, // server → client, reliable
+    ConnectionRejected = 0x05, // server → client, reliable
+    Hello              = 0x06, // client → server, reliable, sent once on connect
+};
+
+enum class DisconnectReason : uint8_t {
+    ServerShuttingDown = 0x01,
+    Kicked             = 0x02,
+    GameOver           = 0x03,
+};
+
+enum class RejectionReason : uint8_t {
+    ServerFull      = 0x01,
+    VersionMismatch = 0x02,
 };
 
 // ---- Per-entity / per-projectile data inside a Snapshot --------------------
@@ -57,8 +74,23 @@ struct InputPacket {
 };
 
 struct PlayerAssignmentPacket {
-    uint8_t msgType;        // MessageType::PlayerAssignment
-    uint32_t yourNetworkId; // the NetworkId of the entity the client controls
+    uint8_t  msgType;        // MessageType::PlayerAssignment
+    uint32_t yourNetworkId;  // the NetworkId of the entity the client controls
+};
+
+struct HelloPacket {
+    uint8_t  msgType;         // MessageType::Hello
+    uint16_t protocolVersion; // must equal PROTOCOL_VERSION
+};
+
+struct DisconnectPacket {
+    uint8_t msgType; // MessageType::Disconnect
+    uint8_t reason;  // DisconnectReason
+};
+
+struct ConnectionRejectedPacket {
+    uint8_t msgType; // MessageType::ConnectionRejected
+    uint8_t reason;  // RejectionReason
 };
 
 #pragma pack(pop)

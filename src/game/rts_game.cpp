@@ -148,14 +148,31 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
                 if (networkRole_ == NetworkRole::Server) {
                     if (type == MessageType::Input)
                         serverHandleInput(data, size, peer);
+                    if (type == MessageType::Hello)
+                        serverHandleHello(data, size, peer);
                 } else {
                     if (type == MessageType::Snapshot)
                         clientApplySnapshot(data, size);
                     if (type == MessageType::PlayerAssignment)
                         clientHandleAssignment(data, size);
+                    if (type == MessageType::Disconnect)
+                        clientHandleDisconnect(data, size);
+                    if (type == MessageType::ConnectionRejected)
+                        clientHandleConnectionRejected(data, size);
                 }
             },
-            [this](ENetPeer *peer) { onClientConnect(peer); }, [this](ENetPeer *peer) { onClientDisconnect(peer); }
+            [this](ENetPeer *peer) {
+                if (networkRole_ == NetworkRole::Server) {
+                    onClientConnect(peer);
+                } else {
+                    HelloPacket pkt{};
+                    pkt.msgType = static_cast<uint8_t>(MessageType::Hello);
+                    pkt.protocolVersion = PROTOCOL_VERSION;
+                    const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
+                    networkManager_->sendToServerReliable({raw, raw + sizeof(pkt)});
+                }
+            },
+            [this](ENetPeer *peer) { onClientDisconnect(peer); }
         );
     }
 
@@ -288,31 +305,18 @@ entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId factio
 // ---- Network: server -------------------------------------------------------
 
 void RtsGame::onClientConnect(ENetPeer *peer) {
-    if (networkRole_ != NetworkRole::Server)
-        return;
-
-    std::size_t slot = peerToNetId_.size();
-    if (slot >= SPAWN_POSITIONS.size()) {
-        std::cout << "[Server] Full — rejecting client\n";
-        enet_peer_disconnect(peer, 0);
+    if (peerToNetId_.size() + pendingPeers_.size() >= SPAWN_POSITIONS.size()) {
+        std::cout << "[Server] Full — rejecting incoming connection\n";
+        serverSendConnectionRejected(peer, RejectionReason::ServerFull);
         return;
     }
-
-    auto faction = (slot < SLOT_FACTIONS.size()) ? SLOT_FACTIONS[slot] : Components::FactionId::Enemy;
-    auto unit = spawnUnit(SPAWN_POSITIONS[slot], faction);
-    auto netId = registry.get<Components::NetworkId>(unit).id;
-    peerToNetId_[peer] = netId;
-
-    PlayerAssignmentPacket pkt{};
-    pkt.msgType = static_cast<uint8_t>(MessageType::PlayerAssignment);
-    pkt.yourNetworkId = netId;
-    const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
-    networkManager_->sendReliableTo(peer, {raw, raw + sizeof(pkt)});
-
-    std::cout << "[Server] Client connected → slot " << slot << ", NetworkId " << netId << "\n";
+    pendingPeers_.insert(peer);
+    std::cout << "[Server] Peer connected, awaiting Hello\n";
 }
 
 void RtsGame::onClientDisconnect(ENetPeer *peer) {
+    pendingPeers_.erase(peer);
+
     auto it = peerToNetId_.find(peer);
     if (it == peerToNetId_.end())
         return;
@@ -326,6 +330,53 @@ void RtsGame::onClientDisconnect(ENetPeer *peer) {
     }
     peerToNetId_.erase(it);
     std::cout << "[Server] Client disconnected, destroyed unit " << netId << "\n";
+}
+
+void RtsGame::serverSendConnectionRejected(ENetPeer *peer, RejectionReason reason) {
+    ConnectionRejectedPacket pkt{};
+    pkt.msgType = static_cast<uint8_t>(MessageType::ConnectionRejected);
+    pkt.reason = static_cast<uint8_t>(reason);
+    const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
+    networkManager_->sendReliableTo(peer, {raw, raw + sizeof(pkt)});
+    enet_peer_disconnect_later(peer, 0);
+}
+
+void RtsGame::serverSendDisconnect(ENetPeer *peer, DisconnectReason reason) {
+    DisconnectPacket pkt{};
+    pkt.msgType = static_cast<uint8_t>(MessageType::Disconnect);
+    pkt.reason = static_cast<uint8_t>(reason);
+    const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
+    networkManager_->sendReliableTo(peer, {raw, raw + sizeof(pkt)});
+    enet_peer_disconnect_later(peer, 0);
+}
+
+void RtsGame::serverHandleHello(const uint8_t *data, std::size_t size, ENetPeer *peer) {
+    if (size < sizeof(HelloPacket))
+        return;
+
+    const auto *pkt = reinterpret_cast<const HelloPacket *>(data);
+    if (pkt->protocolVersion != PROTOCOL_VERSION) {
+        std::cout << "[Server] Version mismatch (client=" << pkt->protocolVersion
+                  << " server=" << PROTOCOL_VERSION << ") — rejecting\n";
+        serverSendConnectionRejected(peer, RejectionReason::VersionMismatch);
+        return;
+    }
+
+    pendingPeers_.erase(peer);
+    std::size_t slot = peerToNetId_.size();
+
+    auto faction = (slot < SLOT_FACTIONS.size()) ? SLOT_FACTIONS[slot] : Components::FactionId::Enemy;
+    auto unit = spawnUnit(SPAWN_POSITIONS[slot], faction);
+    auto netId = registry.get<Components::NetworkId>(unit).id;
+    peerToNetId_[peer] = netId;
+
+    PlayerAssignmentPacket assignPkt{};
+    assignPkt.msgType = static_cast<uint8_t>(MessageType::PlayerAssignment);
+    assignPkt.yourNetworkId = netId;
+    const auto *raw = reinterpret_cast<const uint8_t *>(&assignPkt);
+    networkManager_->sendReliableTo(peer, {raw, raw + sizeof(assignPkt)});
+
+    std::cout << "[Server] Client accepted → slot " << slot << ", NetworkId " << netId << "\n";
 }
 
 void RtsGame::serverSendSnapshot() {
@@ -544,6 +595,33 @@ void RtsGame::clientHandleAssignment(const uint8_t *data, std::size_t size) {
             myFaction_ = registry.get<Components::Faction>(e).id;
         break;
     }
+}
+
+void RtsGame::clientHandleDisconnect(const uint8_t *data, std::size_t size) {
+    if (size < sizeof(DisconnectPacket))
+        return;
+    const auto *pkt = reinterpret_cast<const DisconnectPacket *>(data);
+    auto reason = static_cast<DisconnectReason>(pkt->reason);
+    switch (reason) {
+    case DisconnectReason::ServerShuttingDown: networkStatusMessage_ = "Server shut down."; break;
+    case DisconnectReason::Kicked:             networkStatusMessage_ = "You were kicked.";  break;
+    case DisconnectReason::GameOver:           networkStatusMessage_ = "Game over.";        break;
+    default:                                   networkStatusMessage_ = "Disconnected.";     break;
+    }
+    std::cout << "[Client] Disconnected: " << networkStatusMessage_ << "\n";
+}
+
+void RtsGame::clientHandleConnectionRejected(const uint8_t *data, std::size_t size) {
+    if (size < sizeof(ConnectionRejectedPacket))
+        return;
+    const auto *pkt = reinterpret_cast<const ConnectionRejectedPacket *>(data);
+    auto reason = static_cast<RejectionReason>(pkt->reason);
+    switch (reason) {
+    case RejectionReason::ServerFull:      networkStatusMessage_ = "Server is full.";       break;
+    case RejectionReason::VersionMismatch: networkStatusMessage_ = "Version mismatch.";     break;
+    default:                               networkStatusMessage_ = "Connection rejected.";  break;
+    }
+    std::cout << "[Client] Connection rejected: " << networkStatusMessage_ << "\n";
 }
 
 void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {

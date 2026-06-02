@@ -68,10 +68,13 @@ entt::entity spawnProjectile(
     entt::registry &registry, std::shared_ptr<VulkanHelpers::Model> model, glm::vec3 origin, glm::vec3 velocity, Components::FactionId ownerFaction, float knockbackForce,
     float hitRadius, float lifetime
 ) {
+    glm::vec3 dir = glm::length(velocity) > 0.001f ? glm::normalize(velocity) : glm::vec3{1, 0, 0};
+    glm::vec3 spawnPos = origin + dir * (hitRadius + 0.1f);
+
     auto e = registry.create();
     registry.emplace<Components::Transform>(
         e, Components::Transform{
-               .position = {origin.x, origin.y, 0.1f},
+               .position = {spawnPos.x, spawnPos.y, 0.1f},
                .rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f},
                .scale = {1.0f, 1.0f, 1.0f},
            }
@@ -121,14 +124,11 @@ void updateProjectiles(entt::registry &registry, float dt) {
             continue;
         }
 
-        // Collision with enemy units
+        // Collision with any unit
         bool hit = false;
-        for (auto unitEntity : registry.view<Components::Transform, Components::Faction, Components::MovementSpeed>()) {
+        for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed>()) {
             if (hit)
                 break;
-            const auto &faction = registry.get<Components::Faction>(unitEntity);
-            if (faction.id == proj.ownerFaction)
-                continue;
 
             const auto &ut = registry.get<Components::Transform>(unitEntity);
             float dx = t.position.x - ut.position.x;
