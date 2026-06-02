@@ -12,20 +12,18 @@ void processOrders(entt::registry &registry, float deltaTime, const Pathfinder *
 
     for (auto entity : view) {
         auto &queue = view.get<Components::OrderQueue>(entity);
-        if (queue.empty()) continue;
+        if (queue.empty())
+            continue;
 
-        auto       &transform = view.get<Components::Transform>(entity);
-        const auto &speed     = view.get<Components::MovementSpeed>(entity);
+        auto &transform = view.get<Components::Transform>(entity);
+        const auto &speed = view.get<Components::MovementSpeed>(entity);
 
         std::visit(
             Orders::overloaded{
                 [&](Orders::MoveOrder &move) {
                     if (move.path.empty()) {
                         if (pathfinder) {
-                            move.path = pathfinder->findPath(
-                                {transform.position.x, transform.position.y},
-                                {move.destination.x, move.destination.y}
-                            );
+                            move.path = pathfinder->findPath({transform.position.x, transform.position.y}, {move.destination.x, move.destination.y});
                         }
                         move.pathIndex = 0;
                         if (move.path.empty())
@@ -33,8 +31,7 @@ void processOrders(entt::registry &registry, float deltaTime, const Pathfinder *
                     }
 
                     const glm::vec3 &waypoint = move.path[move.pathIndex];
-                    glm::vec2        delta2d{waypoint.x - transform.position.x,
-                                            waypoint.y - transform.position.y};
+                    glm::vec2 delta2d{waypoint.x - transform.position.x, waypoint.y - transform.position.y};
                     float dist = glm::length(delta2d);
 
                     if (dist < 0.05f) {

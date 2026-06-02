@@ -26,24 +26,24 @@ namespace VulkanHelpers {
 // References to engine-owned Vulkan resources a game needs during init.
 // All references remain valid for the lifetime of the Engine.
 struct ResourceContext {
-    vk::raii::Instance            &instance;
-    vk::raii::Device              &device;
-    vk::raii::PhysicalDevice      &physicalDevice;
-    const vk::raii::CommandPool   &commandPool;
-    vk::raii::Queue               &graphicsQueue;
+    vk::raii::Instance &instance;
+    vk::raii::Device &device;
+    vk::raii::PhysicalDevice &physicalDevice;
+    const vk::raii::CommandPool &commandPool;
+    vk::raii::Queue &graphicsQueue;
     vk::raii::DescriptorSetLayout &textureLayout;
     vk::raii::DescriptorSetLayout &uboLayout;
-    Window                        &window;
-    const SwapChain               &swapChain;
-    vk::Format                     depthFormat;
-    uint32_t                       graphicsQueueFamilyIndex;
+    Window &window;
+    const SwapChain &swapChain;
+    vk::Format depthFormat;
+    uint32_t graphicsQueueFamilyIndex;
 };
 
 // Per-frame data returned by the game to the engine.
 struct FrameOutput {
     std::vector<DrawCall> draws;
-    glm::mat4             view{1.0f};
-    glm::mat4             proj{1.0f};
+    glm::mat4 view{1.0f};
+    glm::mat4 proj{1.0f};
 };
 
 class IGame {
@@ -58,12 +58,12 @@ class IGame {
     // Load GPU resources, create camera/terrain entities, set up UI.
     virtual void initGraphics(const ResourceContext &ctx) = 0;
 
-    virtual FrameOutput update(float dt, vk::Extent2D extent)           = 0;
-    virtual void        renderImGui(vk::CommandBuffer cmd)               = 0;
-    virtual void        onSwapChainRecreated(const SwapChain &swapChain) = 0;
-    virtual bool        wantsMouse()    const                            = 0;
-    virtual bool        wantsKeyboard() const                            = 0;
-    virtual bool        wantsClose()    const                            = 0;
+    virtual FrameOutput update(float dt, vk::Extent2D extent) = 0;
+    virtual void renderImGui(vk::CommandBuffer cmd) = 0;
+    virtual void onSwapChainRecreated(const SwapChain &swapChain) = 0;
+    virtual bool wantsMouse() const = 0;
+    virtual bool wantsKeyboard() const = 0;
+    virtual bool wantsClose() const = 0;
 };
 
 class Engine {
@@ -71,25 +71,24 @@ class Engine {
     void run(IGame &game);
 
   private:
-    void            initAll();
+    void initAll();
     ResourceContext makeResourceContext();
-    void            recreateSwapChain(IGame &game);
+    void recreateSwapChain(IGame &game);
 
-    static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT, vk::DebugUtilsMessageTypeFlagsEXT,
-        const vk::DebugUtilsMessengerCallbackDataEXT *, void *);
+    static VKAPI_ATTR vk::Bool32 VKAPI_CALL
+    debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT, vk::DebugUtilsMessageTypeFlagsEXT, const vk::DebugUtilsMessengerCallbackDataEXT *, void *);
 
-    std::shared_ptr<Window>                           window;
-    std::shared_ptr<Instance>                         vulkanInstance;
+    std::shared_ptr<Window> window;
+    std::shared_ptr<Instance> vulkanInstance;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
-    std::shared_ptr<Surface>                          surface;
-    std::shared_ptr<PhysicalDevice>                   physicalDevice;
-    std::shared_ptr<LogicalDevice>                    logicalDevice;
-    std::shared_ptr<SwapChain>                        swapChain;
-    std::shared_ptr<DepthBuffer>                      depthBuffer;
-    std::shared_ptr<GraphicsPipeline>                 graphicsPipeline;
-    std::shared_ptr<Renderer>                         renderer;
-    std::shared_ptr<UniformBuffer>                    uniformBuffer;
+    std::shared_ptr<Surface> surface;
+    std::shared_ptr<PhysicalDevice> physicalDevice;
+    std::shared_ptr<LogicalDevice> logicalDevice;
+    std::shared_ptr<SwapChain> swapChain;
+    std::shared_ptr<DepthBuffer> depthBuffer;
+    std::shared_ptr<GraphicsPipeline> graphicsPipeline;
+    std::shared_ptr<Renderer> renderer;
+    std::shared_ptr<UniformBuffer> uniformBuffer;
 };
 
 } // namespace VulkanHelpers

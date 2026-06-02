@@ -18,17 +18,13 @@ void checkVkResult(VkResult result) {
     }
 }
 
-uint32_t imageCountFor(const SwapChain &swapChain) {
-    return std::max<uint32_t>(2, static_cast<uint32_t>(swapChain.getImages().size()));
-}
+uint32_t imageCountFor(const SwapChain &swapChain) { return std::max<uint32_t>(2, static_cast<uint32_t>(swapChain.getImages().size())); }
 
 } // namespace
 
 MenuSystem::MenuSystem(
-    const Window &window, const vk::raii::Instance &instance,
-    const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device,
-    uint32_t graphicsQueueFamilyIndex, const vk::raii::Queue &graphicsQueue,
-    const SwapChain &swapChain, vk::Format depthFormat
+    const Window &window, const vk::raii::Instance &instance, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device, uint32_t graphicsQueueFamilyIndex,
+    const vk::raii::Queue &graphicsQueue, const SwapChain &swapChain, vk::Format depthFormat
 ) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -100,21 +96,19 @@ MenuAction MenuSystem::drawMainMenu(vk::Extent2D extent) {
     ImGui::SetNextWindowSize(displaySize);
 
     const ImGuiWindowFlags flags =
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoBringToFrontOnFocus;
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
     MenuAction action = MenuAction::None;
     ImGui::Begin("Catfish Engine Main Menu", nullptr, flags);
 
     const float panelWidth = std::min(360.0f, displaySize.x - 40.0f);
     const float panelHeight = 210.0f;
-    ImGui::SetCursorPos(ImVec2{
-        (displaySize.x - panelWidth) * 0.5f,
-        (displaySize.y - panelHeight) * 0.5f,
-    });
+    ImGui::SetCursorPos(
+        ImVec2{
+            (displaySize.x - panelWidth) * 0.5f,
+            (displaySize.y - panelHeight) * 0.5f,
+        }
+    );
 
     ImGui::BeginChild("MainMenuPanel", ImVec2{panelWidth, panelHeight}, ImGuiChildFlags_Borders);
     ImGui::Spacing();
@@ -152,11 +146,7 @@ void MenuSystem::drawOverlay(float deltaTime) {
     ImGui::SetNextWindowBgAlpha(0.35f);
     ImGui::Begin(
         "Overlay", &showOverlay,
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoNav
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav
     );
     ImGui::Text("FPS %.1f", deltaTime > 0.0f ? 1.0f / deltaTime : 0.0f);
     ImGui::End();
@@ -172,12 +162,8 @@ void MenuSystem::onSwapChainRecreated(const SwapChain &swapChain) {
     ImGui_ImplVulkan_SetMinImageCount(2);
 }
 
-bool MenuSystem::wantsMouse() const {
-    return ImGui::GetIO().WantCaptureMouse;
-}
+bool MenuSystem::wantsMouse() const { return ImGui::GetIO().WantCaptureMouse; }
 
-bool MenuSystem::wantsKeyboard() const {
-    return ImGui::GetIO().WantCaptureKeyboard;
-}
+bool MenuSystem::wantsKeyboard() const { return ImGui::GetIO().WantCaptureKeyboard; }
 
 } // namespace VulkanHelpers

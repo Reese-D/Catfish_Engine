@@ -14,19 +14,16 @@ namespace VulkanHelpers {
 class TextureImage {
   public:
     TextureImage(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const std::string &imagePath
     );
     TextureImage(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         std::span<const std::byte> encodedBytes
     );
     // Construct from raw RGBA pixels (no image decoding step)
     TextureImage(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const unsigned char *pixels, int width, int height
     );
     ~TextureImage() = default;
@@ -39,8 +36,7 @@ class TextureImage {
 
   private:
     void upload(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const unsigned char *pixels, int texWidth, int texHeight
     );
 

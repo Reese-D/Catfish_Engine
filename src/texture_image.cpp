@@ -14,8 +14,7 @@
 namespace VulkanHelpers {
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const std::string &imagePath
 ) {
     int texWidth, texHeight, texChannels;
@@ -28,16 +27,12 @@ TextureImage::TextureImage(
 }
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     std::span<const std::byte> encodedBytes
 ) {
     int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load_from_memory(
-        reinterpret_cast<const stbi_uc *>(encodedBytes.data()),
-        static_cast<int>(encodedBytes.size()),
-        &texWidth, &texHeight, &texChannels, STBI_rgb_alpha
-    );
+    stbi_uc *pixels =
+        stbi_load_from_memory(reinterpret_cast<const stbi_uc *>(encodedBytes.data()), static_cast<int>(encodedBytes.size()), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     if (!pixels) {
         throw std::runtime_error("Failed to decode embedded texture");
     }
@@ -46,16 +41,14 @@ TextureImage::TextureImage(
 }
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const unsigned char *pixels, int width, int height
 ) {
     upload(device, physicalDevice, commandPool, graphicsQueue, pixels, width, height);
 }
 
 void TextureImage::upload(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const unsigned char *pixels, int texWidth, int texHeight
 ) {
     vk::DeviceSize imageSize = static_cast<vk::DeviceSize>(texWidth) * texHeight * 4;
@@ -71,9 +64,7 @@ void TextureImage::upload(
     auto stagingMemory = vk::raii::DeviceMemory{
         device, vk::MemoryAllocateInfo{
                     .allocationSize = stagingReqs.size,
-                    .memoryTypeIndex = findMemoryType(
-                        physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-                    ),
+                    .memoryTypeIndex = findMemoryType(physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
                 }
     };
     stagingBuffer.bindMemory(*stagingMemory, 0);
@@ -86,11 +77,12 @@ void TextureImage::upload(
         device, vk::ImageCreateInfo{
                     .imageType = vk::ImageType::e2D,
                     .format = vk::Format::eR8G8B8A8Srgb,
-                    .extent = vk::Extent3D{
-                        .width = static_cast<uint32_t>(texWidth),
-                        .height = static_cast<uint32_t>(texHeight),
-                        .depth = 1,
-                    },
+                    .extent =
+                        vk::Extent3D{
+                            .width = static_cast<uint32_t>(texWidth),
+                            .height = static_cast<uint32_t>(texHeight),
+                            .depth = 1,
+                        },
                     .mipLevels = 1,
                     .arrayLayers = 1,
                     .samples = vk::SampleCountFlagBits::e1,
@@ -139,12 +131,13 @@ void TextureImage::upload(
             .bufferOffset = 0,
             .bufferRowLength = 0,
             .bufferImageHeight = 0,
-            .imageSubresource = vk::ImageSubresourceLayers{
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .mipLevel = 0,
-                .baseArrayLayer = 0,
-                .layerCount = 1,
-            },
+            .imageSubresource =
+                vk::ImageSubresourceLayers{
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel = 0,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
             .imageOffset = vk::Offset3D{0, 0, 0},
             .imageExtent = vk::Extent3D{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1},
         };

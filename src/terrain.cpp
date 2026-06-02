@@ -12,43 +12,38 @@
 namespace VulkanHelpers {
 
 Terrain::Terrain(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
-    const vk::raii::DescriptorSetLayout &textureLayout,
-    float extent, int cells
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout, float extent, int cells
 ) {
     // 4x4 checkerboard grass texture (two shades of green, full RGBA)
     constexpr int texSize = 4;
     std::array<unsigned char, texSize * texSize * 4> pixels{};
     for (int y = 0; y < texSize; ++y) {
         for (int x = 0; x < texSize; ++x) {
-            bool light     = (x + y) % 2 == 0;
-            int  i         = (y * texSize + x) * 4;
-            pixels[i]     = light ? 80  : 50;  // R
+            bool light = (x + y) % 2 == 0;
+            int i = (y * texSize + x) * 4;
+            pixels[i] = light ? 80 : 50;       // R
             pixels[i + 1] = light ? 150 : 100; // G
-            pixels[i + 2] = light ? 60  : 40;  // B
-            pixels[i + 3] = 255;                // A
+            pixels[i + 2] = light ? 60 : 40;   // B
+            pixels[i + 3] = 255;               // A
         }
     }
-    auto texture = std::make_shared<TextureImage>(
-        device, physicalDevice, commandPool, graphicsQueue,
-        pixels.data(), texSize, texSize
-    );
+    auto texture = std::make_shared<TextureImage>(device, physicalDevice, commandPool, graphicsQueue, pixels.data(), texSize, texSize);
 
     // Flat grid mesh: (cells+1)^2 vertices, cells^2 quads
-    const int   verts    = cells + 1;
-    const float step     = (2.0f * extent) / static_cast<float>(cells);
-    const float uvScale  = static_cast<float>(cells) / 4.0f; // tile the 4px texture
+    const int verts = cells + 1;
+    const float step = (2.0f * extent) / static_cast<float>(cells);
+    const float uvScale = static_cast<float>(cells) / 4.0f; // tile the 4px texture
 
     std::vector<Vertex> vertices;
     vertices.reserve(static_cast<std::size_t>(verts * verts));
     for (int y = 0; y < verts; ++y) {
         for (int x = 0; x < verts; ++x) {
             Vertex v{};
-            v.pos[0]      = -extent + x * step;
-            v.pos[1]      = -extent + y * step;
-            v.pos[2]      = 0.0f;
-            v.color[0]    = v.color[1] = v.color[2] = 1.0f;
+            v.pos[0] = -extent + x * step;
+            v.pos[1] = -extent + y * step;
+            v.pos[2] = 0.0f;
+            v.color[0] = v.color[1] = v.color[2] = 1.0f;
             v.texCoord[0] = static_cast<float>(x) / static_cast<float>(cells) * uvScale;
             v.texCoord[1] = static_cast<float>(y) / static_cast<float>(cells) * uvScale;
             vertices.push_back(v);
@@ -67,10 +62,7 @@ Terrain::Terrain(
         }
     }
 
-    model = std::make_shared<Model>(
-        device, physicalDevice, commandPool, graphicsQueue,
-        textureLayout, vertices, indices, std::move(texture)
-    );
+    model = std::make_shared<Model>(device, physicalDevice, commandPool, graphicsQueue, textureLayout, vertices, indices, std::move(texture));
 }
 
 } // namespace VulkanHelpers

@@ -14,13 +14,11 @@ void HeadlessRunner::run(IGame &game) {
     // but IGame::update() requires one for its interface contract.
     constexpr vk::Extent2D FAKE_EXTENT{800, 600};
 
-    using Clock    = std::chrono::steady_clock;
+    using Clock = std::chrono::steady_clock;
     using Duration = Clock::duration;
 
-    const float   tick       = 1.0f / tickHz_;
-    const Duration tickDur   = std::chrono::duration_cast<Duration>(
-        std::chrono::duration<float>(tick)
-    );
+    const float tick = 1.0f / tickHz_;
+    const Duration tickDur = std::chrono::duration_cast<Duration>(std::chrono::duration<float>(tick));
 
     auto nextTick = Clock::now();
 

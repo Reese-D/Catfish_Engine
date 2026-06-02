@@ -28,8 +28,8 @@ class SpatialGrid {
     bool inBounds(glm::ivec2 cell) const;
     std::size_t cellIndex(glm::ivec2 cell) const;
 
-    float      cellSize;
-    glm::vec2  gridMin;
+    float cellSize;
+    glm::vec2 gridMin;
     glm::ivec2 gridDims;
 
     std::vector<std::vector<entt::entity>> cells;

@@ -16,17 +16,17 @@ class Pathfinder {
     void setBlocked(glm::vec2 worldPos, bool blocked);
 
   private:
-    glm::ivec2  toCell(glm::vec2 worldPos) const;
-    glm::vec2   toWorld(glm::ivec2 cell) const;
-    bool        inBounds(glm::ivec2 cell) const;
-    bool        isWalkable(glm::ivec2 cell) const;
+    glm::ivec2 toCell(glm::vec2 worldPos) const;
+    glm::vec2 toWorld(glm::ivec2 cell) const;
+    bool inBounds(glm::ivec2 cell) const;
+    bool isWalkable(glm::ivec2 cell) const;
     std::size_t cellIndex(glm::ivec2 cell) const;
 
-    bool                   hasLineOfSight(glm::vec2 a, glm::vec2 b) const;
+    bool hasLineOfSight(glm::vec2 a, glm::vec2 b) const;
     std::vector<glm::vec3> smooth(const std::vector<glm::vec3> &raw) const;
 
-    float      cellSize_;
-    glm::vec2  worldMin_;
+    float cellSize_;
+    glm::vec2 worldMin_;
     glm::ivec2 dims_;
     std::vector<bool> blocked_;
 };

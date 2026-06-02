@@ -19,11 +19,13 @@ uint32_t findMemoryType(const vk::raii::PhysicalDevice &physicalDevice, uint32_t
 }
 
 vk::raii::CommandBuffer beginSingleTimeCommands(const vk::raii::Device &device, const vk::raii::CommandPool &commandPool) {
-    auto buffers = device.allocateCommandBuffers(vk::CommandBufferAllocateInfo{
-        .commandPool = *commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1,
-    });
+    auto buffers = device.allocateCommandBuffers(
+        vk::CommandBufferAllocateInfo{
+            .commandPool = *commandPool,
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        }
+    );
     auto cmd = std::move(buffers[0]);
     cmd.begin(vk::CommandBufferBeginInfo{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
     return cmd;

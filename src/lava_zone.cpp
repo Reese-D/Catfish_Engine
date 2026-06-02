@@ -5,11 +5,7 @@
 namespace Systems {
 
 LavaZone::LavaZone(float initialRadius, float shrinkInterval, float shrinkAmount, float damagePerSecond)
-    : safeRadius_(initialRadius)
-    , shrinkInterval_(shrinkInterval)
-    , shrinkAmount_(shrinkAmount)
-    , damagePerSecond_(damagePerSecond)
-{}
+    : safeRadius_(initialRadius), shrinkInterval_(shrinkInterval), shrinkAmount_(shrinkAmount), damagePerSecond_(damagePerSecond) {}
 
 void LavaZone::update(float dt) {
     shrinkTimer_ += dt;

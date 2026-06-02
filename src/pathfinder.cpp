@@ -8,8 +8,7 @@
 
 namespace Systems {
 
-Pathfinder::Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize)
-    : cellSize_(cellSize), worldMin_(worldMin) {
+Pathfinder::Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : cellSize_(cellSize), worldMin_(worldMin) {
     dims_ = {
         static_cast<int>(std::ceil((worldMax.x - worldMin.x) / cellSize)),
         static_cast<int>(std::ceil((worldMax.y - worldMin.y) / cellSize)),
@@ -31,17 +30,11 @@ glm::vec2 Pathfinder::toWorld(glm::ivec2 cell) const {
     };
 }
 
-bool Pathfinder::inBounds(glm::ivec2 cell) const {
-    return cell.x >= 0 && cell.x < dims_.x && cell.y >= 0 && cell.y < dims_.y;
-}
+bool Pathfinder::inBounds(glm::ivec2 cell) const { return cell.x >= 0 && cell.x < dims_.x && cell.y >= 0 && cell.y < dims_.y; }
 
-bool Pathfinder::isWalkable(glm::ivec2 cell) const {
-    return inBounds(cell) && !blocked_[cellIndex(cell)];
-}
+bool Pathfinder::isWalkable(glm::ivec2 cell) const { return inBounds(cell) && !blocked_[cellIndex(cell)]; }
 
-std::size_t Pathfinder::cellIndex(glm::ivec2 cell) const {
-    return static_cast<std::size_t>(cell.y * dims_.x + cell.x);
-}
+std::size_t Pathfinder::cellIndex(glm::ivec2 cell) const { return static_cast<std::size_t>(cell.y * dims_.x + cell.x); }
 
 void Pathfinder::setBlocked(glm::vec2 worldPos, bool blocked) {
     auto cell = toCell(worldPos);
@@ -52,9 +45,9 @@ void Pathfinder::setBlocked(glm::vec2 worldPos, bool blocked) {
 namespace {
 
 float octile(glm::ivec2 a, glm::ivec2 b) {
-    int   dx = std::abs(a.x - b.x);
-    int   dy = std::abs(a.y - b.y);
-    int   mn = std::min(dx, dy);
+    int dx = std::abs(a.x - b.x);
+    int dy = std::abs(a.y - b.y);
+    int mn = std::min(dx, dy);
     return static_cast<float>(dx + dy) + (1.41421356f - 2.0f) * static_cast<float>(mn);
 }
 
@@ -62,21 +55,21 @@ float octile(glm::ivec2 a, glm::ivec2 b) {
 
 std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) const {
     auto startCell = toCell(start);
-    auto endCell   = toCell(end);
+    auto endCell = toCell(end);
 
     if (!inBounds(startCell) || !inBounds(endCell))
         return {};
     if (startCell == endCell)
         return {{end.x, end.y, 0.0f}};
 
-    const std::size_t N        = static_cast<std::size_t>(dims_.x * dims_.y);
+    const std::size_t N = static_cast<std::size_t>(dims_.x * dims_.y);
     const std::size_t startIdx = cellIndex(startCell);
-    const std::size_t endIdx   = cellIndex(endCell);
-    const std::size_t NONE     = std::numeric_limits<std::size_t>::max();
+    const std::size_t endIdx = cellIndex(endCell);
+    const std::size_t NONE = std::numeric_limits<std::size_t>::max();
 
-    std::vector<float>       gScore(N, std::numeric_limits<float>::infinity());
+    std::vector<float> gScore(N, std::numeric_limits<float>::infinity());
     std::vector<std::size_t> cameFrom(N, NONE);
-    std::vector<bool>        closed(N, false);
+    std::vector<bool> closed(N, false);
 
     gScore[startIdx] = 0.0f;
 
@@ -84,27 +77,29 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
     std::priority_queue<Entry, std::vector<Entry>, std::greater<>> openSet;
     openSet.push({octile(startCell, endCell), startIdx});
 
-    constexpr int   DX[8]    = {-1, 0, 1, -1, 1, -1, 0, 1};
-    constexpr int   DY[8]    = {-1, -1, -1, 0, 0, 1, 1, 1};
-    constexpr float COST[8]  = {1.41421356f, 1.0f, 1.41421356f, 1.0f, 1.0f, 1.41421356f, 1.0f, 1.41421356f};
+    constexpr int DX[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
+    constexpr int DY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    constexpr float COST[8] = {1.41421356f, 1.0f, 1.41421356f, 1.0f, 1.0f, 1.41421356f, 1.0f, 1.41421356f};
 
     while (!openSet.empty()) {
         auto [f, currIdx] = openSet.top();
         openSet.pop();
 
-        if (closed[currIdx]) continue;
+        if (closed[currIdx])
+            continue;
         closed[currIdx] = true;
 
         if (currIdx == endIdx) {
             std::vector<glm::vec3> path;
             std::size_t idx = endIdx;
             while (idx != startIdx) {
-                int x  = static_cast<int>(idx) % dims_.x;
-                int y  = static_cast<int>(idx) / dims_.x;
+                int x = static_cast<int>(idx) % dims_.x;
+                int y = static_cast<int>(idx) / dims_.x;
                 auto w = toWorld({x, y});
                 path.push_back({w.x, w.y, 0.0f});
                 idx = cameFrom[idx];
-                if (idx == NONE) break;
+                if (idx == NONE)
+                    break;
             }
             if (!path.empty())
                 path.front() = {end.x, end.y, 0.0f};
@@ -117,7 +112,8 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
 
         for (int i = 0; i < 8; ++i) {
             glm::ivec2 nb{cx + DX[i], cy + DY[i]};
-            if (!isWalkable(nb)) continue;
+            if (!isWalkable(nb))
+                continue;
 
             // Don't cut through diagonal gaps
             if (DX[i] != 0 && DY[i] != 0) {
@@ -125,10 +121,10 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
                     continue;
             }
 
-            std::size_t nbIdx      = cellIndex(nb);
-            float       tentativeG = gScore[currIdx] + COST[i];
+            std::size_t nbIdx = cellIndex(nb);
+            float tentativeG = gScore[currIdx] + COST[i];
             if (tentativeG < gScore[nbIdx]) {
-                gScore[nbIdx]   = tentativeG;
+                gScore[nbIdx] = tentativeG;
                 cameFrom[nbIdx] = currIdx;
                 openSet.push({tentativeG + octile(nb, endCell), nbIdx});
             }
@@ -150,11 +146,19 @@ bool Pathfinder::hasLineOfSight(glm::vec2 a, glm::vec2 b) const {
     int err = dx - dy;
 
     while (true) {
-        if (!isWalkable({x, y})) return false;
-        if (x == cb.x && y == cb.y) break;
+        if (!isWalkable({x, y}))
+            return false;
+        if (x == cb.x && y == cb.y)
+            break;
         int e2 = 2 * err;
-        if (e2 > -dy) { err -= dy; x += sx; }
-        if (e2 <  dx) { err += dx; y += sy; }
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
     }
     return true;
 }

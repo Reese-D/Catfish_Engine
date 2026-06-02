@@ -9,9 +9,7 @@
 
 namespace VulkanHelpers {
 
-DepthBuffer::DepthBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D extent) {
-    create(device, physicalDevice, extent);
-}
+DepthBuffer::DepthBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D extent) { create(device, physicalDevice, extent); }
 
 void DepthBuffer::recreate(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D extent) {
     imageView.reset();

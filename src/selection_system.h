@@ -10,11 +10,7 @@
 
 namespace Systems {
 
-void updateSelection(
-    entt::registry &registry,
-    const VulkanHelpers::Window &window,
-    vk::Extent2D extent
-);
+void updateSelection(entt::registry &registry, const VulkanHelpers::Window &window, vk::Extent2D extent);
 
 } // namespace Systems
 

@@ -17,23 +17,14 @@ namespace Systems {
 
 // Creates a flat disc mesh to be shared across all projectile entities.
 std::shared_ptr<VulkanHelpers::Model> createProjectileModel(
-    const vk::raii::Device &device,
-    const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool,
-    const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
 // Spawns one projectile entity and returns its handle.
 entt::entity spawnProjectile(
-    entt::registry &registry,
-    std::shared_ptr<VulkanHelpers::Model> model,
-    glm::vec3 origin,
-    glm::vec3 velocity,
-    Components::FactionId ownerFaction,
-    float knockbackForce,
-    float hitRadius = 0.4f,
-    float lifetime  = 6.0f
+    entt::registry &registry, std::shared_ptr<VulkanHelpers::Model> model, glm::vec3 origin, glm::vec3 velocity, Components::FactionId ownerFaction, float knockbackForce,
+    float hitRadius = 0.4f, float lifetime = 6.0f
 );
 
 // Ticks Ability cooldown timers.
@@ -43,12 +34,7 @@ void tickAbilities(entt::registry &registry, float dt);
 void updateProjectiles(entt::registry &registry, float dt);
 
 // Reads Q key + mouse position; fires ability for each selected player unit.
-void processAbilityInput(
-    entt::registry &registry,
-    const VulkanHelpers::Window &window,
-    vk::Extent2D extent,
-    std::shared_ptr<VulkanHelpers::Model> projectileModel
-);
+void processAbilityInput(entt::registry &registry, const VulkanHelpers::Window &window, vk::Extent2D extent, std::shared_ptr<VulkanHelpers::Model> projectileModel);
 
 } // namespace Systems
 

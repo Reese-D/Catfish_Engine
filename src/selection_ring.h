@@ -14,10 +14,8 @@ namespace VulkanHelpers {
 // be shared and reused for every selected unit — the per-unit position is
 // supplied via the draw call's transform matrix.
 std::shared_ptr<Model> createSelectionRingModel(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
-    const vk::raii::DescriptorSetLayout &textureLayout,
-    float innerRadius = 0.45f, float outerRadius = 0.65f, int segments = 24
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout, float innerRadius = 0.45f, float outerRadius = 0.65f, int segments = 24
 );
 
 } // namespace VulkanHelpers

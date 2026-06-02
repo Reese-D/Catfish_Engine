@@ -16,10 +16,8 @@
 namespace VulkanHelpers {
 
 Model::Model(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
-    const vk::raii::DescriptorSetLayout &textureLayout,
-    const std::string &path
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout, const std::string &path
 ) {
     auto dataBuffer = fastgltf::GltfDataBuffer::FromPath(path);
     if (dataBuffer.error() != fastgltf::Error::None) {
@@ -40,7 +38,8 @@ Model::Model(
             uint32_t vertexOffset = static_cast<uint32_t>(vertices.size());
 
             auto posIt = primitive.findAttribute("POSITION");
-            if (posIt == primitive.attributes.end()) continue;
+            if (posIt == primitive.attributes.end())
+                continue;
 
             const auto &posAccessor = asset->accessors[posIt->accessorIndex];
             std::size_t vertexCount = posAccessor.count;
@@ -49,7 +48,9 @@ Model::Model(
             std::size_t i = 0;
             fastgltf::iterateAccessor<fastgltf::math::fvec3>(asset.get(), posAccessor, [&](fastgltf::math::fvec3 pos) {
                 auto &v = vertices[vertexOffset + i++];
-                v.pos[0] = pos[0]; v.pos[1] = pos[1]; v.pos[2] = pos[2];
+                v.pos[0] = pos[0];
+                v.pos[1] = pos[1];
+                v.pos[2] = pos[2];
                 v.color[0] = v.color[1] = v.color[2] = 1.0f;
                 v.texCoord[0] = v.texCoord[1] = 0.0f;
             });
@@ -60,15 +61,14 @@ Model::Model(
                 std::size_t j = 0;
                 fastgltf::iterateAccessor<fastgltf::math::fvec2>(asset.get(), texAccessor, [&](fastgltf::math::fvec2 uv) {
                     auto &v = vertices[vertexOffset + j++];
-                    v.texCoord[0] = uv[0]; v.texCoord[1] = uv[1];
+                    v.texCoord[0] = uv[0];
+                    v.texCoord[1] = uv[1];
                 });
             }
 
             if (primitive.indicesAccessor.has_value()) {
                 const auto &indexAccessor = asset->accessors[*primitive.indicesAccessor];
-                fastgltf::iterateAccessor<uint32_t>(asset.get(), indexAccessor, [&](uint32_t index) {
-                    indices.push_back(vertexOffset + index);
-                });
+                fastgltf::iterateAccessor<uint32_t>(asset.get(), indexAccessor, [&](uint32_t index) { indices.push_back(vertexOffset + index); });
             }
         }
     }
@@ -78,24 +78,24 @@ Model::Model(
     }
 
     vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
-    indexBuffer  = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
+    indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
 
     // Extract base color texture from the first primitive with a material
     fastgltf::DefaultBufferDataAdapter adapter;
     for (const auto &mesh : asset->meshes) {
         for (const auto &primitive : mesh.primitives) {
-            if (!primitive.materialIndex.has_value()) continue;
+            if (!primitive.materialIndex.has_value())
+                continue;
             const auto &mat = asset->materials[*primitive.materialIndex];
-            if (!mat.pbrData.baseColorTexture.has_value()) continue;
+            if (!mat.pbrData.baseColorTexture.has_value())
+                continue;
             const auto &tex = asset->textures[mat.pbrData.baseColorTexture->textureIndex];
-            if (!tex.imageIndex.has_value()) continue;
+            if (!tex.imageIndex.has_value())
+                continue;
             const auto &img = asset->images[*tex.imageIndex];
             if (const auto *bv = std::get_if<fastgltf::sources::BufferView>(&img.data)) {
                 auto bytes = adapter(asset.get(), bv->bufferViewIndex);
-                textureImage = std::make_shared<TextureImage>(
-                    device, physicalDevice, commandPool, graphicsQueue,
-                    std::span<const std::byte>(bytes.data(), bytes.size())
-                );
+                textureImage = std::make_shared<TextureImage>(device, physicalDevice, commandPool, graphicsQueue, std::span<const std::byte>(bytes.data(), bytes.size()));
                 material = std::make_shared<Material>(device, textureLayout, *textureImage);
                 return;
             }
@@ -106,16 +106,13 @@ Model::Model(
 }
 
 Model::Model(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
-    const vk::raii::DescriptorSetLayout &textureLayout,
-    const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
-    std::shared_ptr<TextureImage> texture
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout, const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, std::shared_ptr<TextureImage> texture
 ) {
     vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
-    indexBuffer  = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
+    indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
     textureImage = std::move(texture);
-    material     = std::make_shared<Material>(device, textureLayout, *textureImage);
+    material = std::make_shared<Material>(device, textureLayout, *textureImage);
 }
 
 } // namespace VulkanHelpers

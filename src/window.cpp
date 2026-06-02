@@ -73,7 +73,7 @@ void Window::scrollCallback(GLFWwindow *win, double /*xoffset*/, double yoffset)
 
 void Window::windowSizeCallback(GLFWwindow *win, int w, int h) {
     auto *self = static_cast<Window *>(glfwGetWindowUserPointer(win));
-    self->width  = static_cast<uint32_t>(w);
+    self->width = static_cast<uint32_t>(w);
     self->height = static_cast<uint32_t>(h);
 }
 

@@ -27,16 +27,13 @@ class Renderer {
     const vk::raii::CommandPool &getCommandPool() const { return *commandPool; }
 
     bool drawFrame(
-        const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-        const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
-        const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer,
-        const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi = {}
+        const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
+        const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer, const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi = {}
     );
 
   private:
     void recordCommandBuffer(
-        uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-        const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
+        uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
         const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
     );
 

@@ -19,10 +19,8 @@ enum class MenuAction {
 class MenuSystem {
   public:
     MenuSystem(
-        const Window &window, const vk::raii::Instance &instance,
-        const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device,
-        uint32_t graphicsQueueFamilyIndex, const vk::raii::Queue &graphicsQueue,
-        const SwapChain &swapChain, vk::Format depthFormat
+        const Window &window, const vk::raii::Instance &instance, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device, uint32_t graphicsQueueFamilyIndex,
+        const vk::raii::Queue &graphicsQueue, const SwapChain &swapChain, vk::Format depthFormat
     );
     ~MenuSystem();
 

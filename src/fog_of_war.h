@@ -17,26 +17,25 @@ class FogOfWar {
 
     // Resets current Visible→Fogged, then illuminates around units of viewerFaction.
     // Pass the local player's faction so each client gets their own perspective.
-    void update(entt::registry &registry,
-                Components::FactionId viewerFaction = Components::FactionId::Player);
+    void update(entt::registry &registry, Components::FactionId viewerFaction = Components::FactionId::Player);
 
     FogState stateAt(glm::vec2 worldPos) const;
     FogState stateAt(glm::ivec2 cell) const;
-    bool     isVisible(glm::vec2 worldPos) const;
+    bool isVisible(glm::vec2 worldPos) const;
 
     // Grid accessors for the renderer
     glm::ivec2 dims() const { return dims_; }
-    glm::vec2  cellWorldMin(glm::ivec2 cell) const;
-    glm::vec2  cellWorldMax(glm::ivec2 cell) const;
+    glm::vec2 cellWorldMin(glm::ivec2 cell) const;
+    glm::vec2 cellWorldMax(glm::ivec2 cell) const;
 
   private:
-    glm::ivec2  toCell(glm::vec2 worldPos) const;
-    bool        inBounds(glm::ivec2 cell) const;
+    glm::ivec2 toCell(glm::vec2 worldPos) const;
+    bool inBounds(glm::ivec2 cell) const;
     std::size_t cellIndex(glm::ivec2 cell) const;
 
-    float      cellSize_;
-    float      sightRadius_;
-    glm::vec2  worldMin_;
+    float cellSize_;
+    float sightRadius_;
+    glm::vec2 worldMin_;
     glm::ivec2 dims_;
     std::vector<FogState> grid_;
 };

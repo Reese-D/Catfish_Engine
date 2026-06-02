@@ -13,11 +13,7 @@ namespace VulkanHelpers {
 // Owns the per-draw descriptor set for set 1 (texture sampler).
 class Material {
   public:
-    Material(
-        const vk::raii::Device &device,
-        const vk::raii::DescriptorSetLayout &textureLayout,
-        const TextureImage &texture
-    );
+    Material(const vk::raii::Device &device, const vk::raii::DescriptorSetLayout &textureLayout, const TextureImage &texture);
     ~Material() = default;
 
     Material(const Material &) = delete;

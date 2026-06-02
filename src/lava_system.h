@@ -18,20 +18,13 @@ namespace Systems {
 // Creates a shared 1×1 unit quad with an orange-red texture.
 // Pass the returned model to appendLavaDrawCalls every frame.
 std::shared_ptr<VulkanHelpers::Model> createLavaTileModel(
-    const vk::raii::Device &device,
-    const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool,
-    const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
 // Appends one draw call per lava cell at Z=0.02f so depth testing puts
 // unit bodies (which extend above ground) correctly in front of lava.
-void appendLavaDrawCalls(
-    const LavaZone &lava,
-    std::vector<VulkanHelpers::DrawCall> &draws,
-    const VulkanHelpers::Model &tileModel
-);
+void appendLavaDrawCalls(const LavaZone &lava, std::vector<VulkanHelpers::DrawCall> &draws, const VulkanHelpers::Model &tileModel);
 
 // Applies continuous HP drain to every unit (MovementSpeed + Health) in lava.
 void applyLavaDamage(const LavaZone &lava, entt::registry &registry, float dt);

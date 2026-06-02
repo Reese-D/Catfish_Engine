@@ -43,8 +43,7 @@ std::vector<vk::VertexInputAttributeDescription> Vertex::getAttributeDescription
 }
 
 VertexBuffer::VertexBuffer(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const std::vector<Vertex> &vertices
 ) {
     vertexCount = static_cast<uint32_t>(vertices.size());
@@ -62,9 +61,7 @@ VertexBuffer::VertexBuffer(
     auto stagingMemory = vk::raii::DeviceMemory{
         device, vk::MemoryAllocateInfo{
                     .allocationSize = stagingReqs.size,
-                    .memoryTypeIndex = findMemoryType(
-                        physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-                    ),
+                    .memoryTypeIndex = findMemoryType(physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
                 }
     };
     stagingBuffer.bindMemory(*stagingMemory, 0);
@@ -91,11 +88,13 @@ VertexBuffer::VertexBuffer(
     vertexBuffer->bindMemory(**vertexBufferMemory, 0);
 
     // One-time transfer command
-    auto cmdBuffers = device.allocateCommandBuffers(vk::CommandBufferAllocateInfo{
-        .commandPool = *commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1,
-    });
+    auto cmdBuffers = device.allocateCommandBuffers(
+        vk::CommandBufferAllocateInfo{
+            .commandPool = *commandPool,
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        }
+    );
     auto &cmd = cmdBuffers[0];
     cmd.begin(vk::CommandBufferBeginInfo{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
     cmd.copyBuffer(*stagingBuffer, **vertexBuffer, vk::BufferCopy{.size = dataSize});

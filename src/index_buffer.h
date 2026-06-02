@@ -12,8 +12,7 @@ namespace VulkanHelpers {
 class IndexBuffer {
   public:
     IndexBuffer(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const std::vector<uint32_t> &indices
     );
     ~IndexBuffer() = default;

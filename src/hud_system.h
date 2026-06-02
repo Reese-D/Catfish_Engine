@@ -16,15 +16,14 @@
 namespace VulkanHelpers {
 
 struct HudResources {
-    std::shared_ptr<Model> barBackground;  // grey, full width
-    std::shared_ptr<Model> barGreen;       // > 66 % HP
-    std::shared_ptr<Model> barYellow;      // 33–66 % HP
-    std::shared_ptr<Model> barRed;         // < 33 % HP
+    std::shared_ptr<Model> barBackground; // grey, full width
+    std::shared_ptr<Model> barGreen;      // > 66 % HP
+    std::shared_ptr<Model> barYellow;     // 33–66 % HP
+    std::shared_ptr<Model> barRed;        // < 33 % HP
 };
 
 HudResources createHudResources(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
@@ -34,12 +33,7 @@ namespace Systems {
 
 // Appends background + foreground bar draw calls for every entity with Health.
 // fog may be nullptr to disable culling.
-void appendHealthBars(
-    entt::registry &registry,
-    std::vector<VulkanHelpers::DrawCall> &draws,
-    const VulkanHelpers::HudResources &hud,
-    const FogOfWar *fog = nullptr
-);
+void appendHealthBars(entt::registry &registry, std::vector<VulkanHelpers::DrawCall> &draws, const VulkanHelpers::HudResources &hud, const FogOfWar *fog = nullptr);
 
 } // namespace Systems
 

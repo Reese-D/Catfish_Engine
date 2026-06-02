@@ -16,25 +16,21 @@ namespace VulkanHelpers {
 GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat, vk::Format depthFormat) {
     // Set 0: UBO (view + proj), vertex stage
     auto uboBinding = vk::DescriptorSetLayoutBinding{
-        .binding        = 0,
+        .binding = 0,
         .descriptorType = vk::DescriptorType::eUniformBuffer,
         .descriptorCount = 1,
-        .stageFlags     = vk::ShaderStageFlagBits::eVertex,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
     };
-    uboLayout = std::make_shared<vk::raii::DescriptorSetLayout>(
-        device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &uboBinding}
-    );
+    uboLayout = std::make_shared<vk::raii::DescriptorSetLayout>(device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &uboBinding});
 
     // Set 1: combined image sampler, fragment stage
     auto texBinding = vk::DescriptorSetLayoutBinding{
-        .binding        = 0,
+        .binding = 0,
         .descriptorType = vk::DescriptorType::eCombinedImageSampler,
         .descriptorCount = 1,
-        .stageFlags     = vk::ShaderStageFlagBits::eFragment,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
     };
-    textureLayout = std::make_shared<vk::raii::DescriptorSetLayout>(
-        device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &texBinding}
-    );
+    textureLayout = std::make_shared<vk::raii::DescriptorSetLayout>(device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &texBinding});
 
     auto vertCode = readShaderFile("shaders/vert.spv");
     auto fragCode = readShaderFile("shaders/frag.spv");
@@ -117,16 +113,16 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
 
     auto pushConstantRange = vk::PushConstantRange{
         .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .offset     = 0,
-        .size       = sizeof(glm::mat4),
+        .offset = 0,
+        .size = sizeof(glm::mat4),
     };
     std::array<vk::DescriptorSetLayout, 2> rawLayouts = {**uboLayout, **textureLayout};
     pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(
         device, vk::PipelineLayoutCreateInfo{
-                    .setLayoutCount         = static_cast<uint32_t>(rawLayouts.size()),
-                    .pSetLayouts            = rawLayouts.data(),
+                    .setLayoutCount = static_cast<uint32_t>(rawLayouts.size()),
+                    .pSetLayouts = rawLayouts.data(),
                     .pushConstantRangeCount = 1,
-                    .pPushConstantRanges    = &pushConstantRange,
+                    .pPushConstantRanges = &pushConstantRange,
                 }
     );
 

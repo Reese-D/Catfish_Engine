@@ -10,8 +10,7 @@
 namespace VulkanHelpers {
 
 IndexBuffer::IndexBuffer(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const std::vector<uint32_t> &indices
 ) {
     indexCount = static_cast<uint32_t>(indices.size());
@@ -29,9 +28,7 @@ IndexBuffer::IndexBuffer(
     auto stagingMemory = vk::raii::DeviceMemory{
         device, vk::MemoryAllocateInfo{
                     .allocationSize = stagingReqs.size,
-                    .memoryTypeIndex = findMemoryType(
-                        physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-                    ),
+                    .memoryTypeIndex = findMemoryType(physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
                 }
     };
     stagingBuffer.bindMemory(*stagingMemory, 0);
@@ -58,11 +55,13 @@ IndexBuffer::IndexBuffer(
     indexBuffer->bindMemory(**indexBufferMemory, 0);
 
     // One-time transfer command
-    auto cmdBuffers = device.allocateCommandBuffers(vk::CommandBufferAllocateInfo{
-        .commandPool = *commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1,
-    });
+    auto cmdBuffers = device.allocateCommandBuffers(
+        vk::CommandBufferAllocateInfo{
+            .commandPool = *commandPool,
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        }
+    );
     auto &cmd = cmdBuffers[0];
     cmd.begin(vk::CommandBufferBeginInfo{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
     cmd.copyBuffer(*stagingBuffer, **indexBuffer, vk::BufferCopy{.size = dataSize});

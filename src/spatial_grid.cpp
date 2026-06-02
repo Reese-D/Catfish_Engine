@@ -7,8 +7,7 @@
 
 namespace VulkanHelpers {
 
-SpatialGrid::SpatialGrid(float cellSize, glm::vec2 min, glm::vec2 max)
-    : cellSize(cellSize), gridMin(min) {
+SpatialGrid::SpatialGrid(float cellSize, glm::vec2 min, glm::vec2 max) : cellSize(cellSize), gridMin(min) {
     gridDims = {
         static_cast<int>(std::ceil((max.x - min.x) / cellSize)),
         static_cast<int>(std::ceil((max.y - min.y) / cellSize)),
@@ -17,11 +16,12 @@ SpatialGrid::SpatialGrid(float cellSize, glm::vec2 min, glm::vec2 max)
 }
 
 void SpatialGrid::update(entt::registry &registry) {
-    for (auto &cell : cells) cell.clear();
+    for (auto &cell : cells)
+        cell.clear();
 
     for (auto entity : registry.view<Components::Transform, Components::Selectable>()) {
-        const auto &t    = registry.get<Components::Transform>(entity);
-        auto         cell = worldToCell({t.position.x, t.position.y});
+        const auto &t = registry.get<Components::Transform>(entity);
+        auto cell = worldToCell({t.position.x, t.position.y});
         if (inBounds(cell)) {
             cells[cellIndex(cell)].push_back(entity);
         }
@@ -73,12 +73,8 @@ glm::ivec2 SpatialGrid::worldToCell(glm::vec2 pos) const {
     };
 }
 
-bool SpatialGrid::inBounds(glm::ivec2 cell) const {
-    return cell.x >= 0 && cell.y >= 0 && cell.x < gridDims.x && cell.y < gridDims.y;
-}
+bool SpatialGrid::inBounds(glm::ivec2 cell) const { return cell.x >= 0 && cell.y >= 0 && cell.x < gridDims.x && cell.y < gridDims.y; }
 
-std::size_t SpatialGrid::cellIndex(glm::ivec2 cell) const {
-    return static_cast<std::size_t>(cell.y) * gridDims.x + cell.x;
-}
+std::size_t SpatialGrid::cellIndex(glm::ivec2 cell) const { return static_cast<std::size_t>(cell.y) * gridDims.x + cell.x; }
 
 } // namespace VulkanHelpers

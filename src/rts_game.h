@@ -26,9 +26,8 @@ namespace Game {
 class RtsGame : public VulkanHelpers::IGame {
   public:
     // Feature toggles — call before run.
-    void enablePathfinding(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20}, float cellSize = 0.5f);
-    void enableFogOfWar(glm::vec2 worldMin = {-20,-20}, glm::vec2 worldMax = {20,20},
-                        float cellSize = 1.0f, float sightRadius = 5.0f);
+    void enablePathfinding(glm::vec2 worldMin = {-20, -20}, glm::vec2 worldMax = {20, 20}, float cellSize = 0.5f);
+    void enableFogOfWar(glm::vec2 worldMin = {-20, -20}, glm::vec2 worldMax = {20, 20}, float cellSize = 1.0f, float sightRadius = 5.0f);
     void enableMinimap();
     void enableCombat();
 
@@ -37,14 +36,14 @@ class RtsGame : public VulkanHelpers::IGame {
     void setupAsClient(std::string host, uint16_t port = 1234);
 
     // IGame interface
-    void        initLogic()                                              override;
-    void        initGraphics(const VulkanHelpers::ResourceContext &ctx)  override;
-    VulkanHelpers::FrameOutput update(float dt, vk::Extent2D extent)    override;
-    void        renderImGui(vk::CommandBuffer cmd)                       override;
-    void        onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) override;
-    bool        wantsMouse()    const override;
-    bool        wantsKeyboard() const override;
-    bool        wantsClose()    const override;
+    void initLogic() override;
+    void initGraphics(const VulkanHelpers::ResourceContext &ctx) override;
+    VulkanHelpers::FrameOutput update(float dt, vk::Extent2D extent) override;
+    void renderImGui(vk::CommandBuffer cmd) override;
+    void onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) override;
+    bool wantsMouse() const override;
+    bool wantsKeyboard() const override;
+    bool wantsClose() const override;
 
     // Reserved for the round system — not called during normal gameplay.
     entt::entity respawnUnit(Components::FactionId faction, glm::vec3 position);
@@ -65,23 +64,23 @@ class RtsGame : public VulkanHelpers::IGame {
     VulkanHelpers::Window *window{nullptr};
 
     // Vulkan resources — null until initGraphics() is called
-    std::shared_ptr<VulkanHelpers::Model>      unitModel;
-    std::shared_ptr<VulkanHelpers::Terrain>    terrain;
-    std::shared_ptr<VulkanHelpers::Model>      selectionRingModel;
-    std::shared_ptr<VulkanHelpers::Model>      projectileModel;
-    std::shared_ptr<VulkanHelpers::Model>      lavaTileModel;
-    VulkanHelpers::HudResources                hudResources;
+    std::shared_ptr<VulkanHelpers::Model> unitModel;
+    std::shared_ptr<VulkanHelpers::Terrain> terrain;
+    std::shared_ptr<VulkanHelpers::Model> selectionRingModel;
+    std::shared_ptr<VulkanHelpers::Model> projectileModel;
+    std::shared_ptr<VulkanHelpers::Model> lavaTileModel;
+    VulkanHelpers::HudResources hudResources;
     std::shared_ptr<VulkanHelpers::MenuSystem> menuSystem;
 
     // ECS
-    entt::registry             registry;
+    entt::registry registry;
     VulkanHelpers::SpatialGrid spatialGrid{2.0f, {-20.0f, -20.0f}, {20.0f, 20.0f}};
 
     // Optional features
     std::optional<Systems::Pathfinder> pathfinder;
-    std::optional<Systems::FogOfWar>   fogOfWar;
-    bool                               minimapEnabled{false};
-    bool                               combatEnabled{false};
+    std::optional<Systems::FogOfWar> fogOfWar;
+    bool minimapEnabled{false};
+    bool combatEnabled{false};
 
     Systems::LavaZone lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
 
@@ -91,19 +90,19 @@ class RtsGame : public VulkanHelpers::IGame {
     std::unique_ptr<Network::NetworkManager> networkManager_;
     uint32_t nextNetworkId_{1};
     uint32_t tick_{0};
-    float    snapshotTimer_{0.0f};
+    float snapshotTimer_{0.0f};
     static constexpr float SNAPSHOT_INTERVAL = 0.05f; // 20 Hz
 
     // Server: maps each connected peer to the NetworkId of the unit they own.
     std::unordered_map<ENetPeer *, uint32_t> peerToNetId_;
 
     // Client: which entity this peer controls + pending input state
-    uint32_t               myNetworkId_{0};
-    Components::FactionId  myFaction_{Components::FactionId::Player};
+    uint32_t myNetworkId_{0};
+    Components::FactionId myFaction_{Components::FactionId::Player};
     struct PendingInput {
-        bool      hasMoveOrder{false};
+        bool hasMoveOrder{false};
         glm::vec3 moveTarget{};
-        bool      fireAbility{false};
+        bool fireAbility{false};
         glm::vec3 abilityTarget{};
     };
     PendingInput pendingInput_;

@@ -19,14 +19,15 @@ int main(int argc, char *argv[]) {
             std::string_view arg(argv[i]);
             if (arg == "--server") {
                 isServer = true;
-                uint16_t port = (i + 1 < argc && argv[i+1][0] != '-')
-                                    ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
+                uint16_t port = (i + 1 < argc && argv[i + 1][0] != '-') ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
                 game.setupAsServer(port);
             } else if (arg == "--client") {
-                if (i + 1 >= argc) { std::cerr << "Usage: --client <host> [port]\n"; return EXIT_FAILURE; }
+                if (i + 1 >= argc) {
+                    std::cerr << "Usage: --client <host> [port]\n";
+                    return EXIT_FAILURE;
+                }
                 std::string host = argv[++i];
-                uint16_t port    = (i + 1 < argc && argv[i+1][0] != '-')
-                                       ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
+                uint16_t port = (i + 1 < argc && argv[i + 1][0] != '-') ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
                 game.setupAsClient(std::move(host), port);
             }
         }

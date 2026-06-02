@@ -21,8 +21,7 @@ struct Vertex {
 class VertexBuffer {
   public:
     VertexBuffer(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
         const std::vector<Vertex> &vertices
     );
     ~VertexBuffer() = default;

@@ -22,7 +22,8 @@ class ValidationLayers {
     // Get the required layers
     std::vector<const char *> getRequiredLayers() const;
 
-    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> createDebugMessenger(const vk::raii::Instance &instance,  vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback);
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> createDebugMessenger(const vk::raii::Instance &instance, vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback);
+
   private:
     std::vector<const char *> validationLayers;
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;

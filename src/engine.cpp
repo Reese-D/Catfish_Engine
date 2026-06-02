@@ -17,9 +17,9 @@ void Engine::run(IGame &game) {
 
     auto lastTime = std::chrono::steady_clock::now();
     while (!window->shouldClose() && !game.wantsClose()) {
-        auto  now       = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
         float deltaTime = std::chrono::duration<float>(now - lastTime).count();
-        lastTime        = now;
+        lastTime = now;
 
         window->pollEvents();
 
@@ -27,10 +27,8 @@ void Engine::run(IGame &game) {
         uniformBuffer->update(output.view, output.proj);
 
         if (renderer->drawFrame(
-                *logicalDevice->getDevice(), *swapChain, *graphicsPipeline,
-                *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(),
-                output.draws, *uniformBuffer, *depthBuffer,
-                [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
+                *logicalDevice->getDevice(), *swapChain, *graphicsPipeline, *logicalDevice->getGraphicsQueue(), *logicalDevice->getPresentQueue(), output.draws, *uniformBuffer,
+                *depthBuffer, [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
             )) {
             recreateSwapChain(game);
         }
@@ -47,8 +45,7 @@ void Engine::initAll() {
 
     ValidationLayers vl;
     auto ctx = vulkanInstance->getContext();
-    if (vl.areValidationLayersSupported(vl.getRequiredLayers(), *ctx) &&
-        vl.areRequiredExtensionsSupported(window->getRequiredInstanceExtensions(), *ctx)) {
+    if (vl.areValidationLayersSupported(vl.getRequiredLayers(), *ctx) && vl.areRequiredExtensionsSupported(window->getRequiredInstanceExtensions(), *ctx)) {
         debugMessenger = vl.createDebugMessenger(*vulkanInstance->getInstance(), &debugCallback);
     }
 
@@ -59,52 +56,39 @@ void Engine::initAll() {
     physicalDevice = std::make_shared<PhysicalDevice>(*vulkanInstance->getInstance(), *surface->getSurface());
 
     std::cout << "creating logical device...\n";
-    logicalDevice = std::make_shared<LogicalDevice>(
-        *physicalDevice->getPhysicalDevice(),
-        physicalDevice->getGraphicsQueueFamilyIndex(),
-        physicalDevice->getPresentQueueFamilyIndex()
-    );
+    logicalDevice = std::make_shared<LogicalDevice>(*physicalDevice->getPhysicalDevice(), physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex());
 
     std::cout << "creating swap chain...\n";
     swapChain = std::make_shared<SwapChain>(
-        *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(),
-        physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex(), *window
+        *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
+        physicalDevice->getPresentQueueFamilyIndex(), *window
     );
 
     std::cout << "creating depth buffer...\n";
-    depthBuffer = std::make_shared<DepthBuffer>(
-        *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent()
-    );
+    depthBuffer = std::make_shared<DepthBuffer>(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent());
 
     std::cout << "creating graphics pipeline...\n";
-    graphicsPipeline = std::make_shared<GraphicsPipeline>(
-        *logicalDevice->getDevice(), swapChain->getFormat(), depthBuffer->getFormat()
-    );
+    graphicsPipeline = std::make_shared<GraphicsPipeline>(*logicalDevice->getDevice(), swapChain->getFormat(), depthBuffer->getFormat());
 
     std::cout << "creating renderer...\n";
-    renderer = std::make_shared<Renderer>(
-        *logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex()
-    );
+    renderer = std::make_shared<Renderer>(*logicalDevice->getDevice(), physicalDevice->getGraphicsQueueFamilyIndex());
 
     std::cout << "creating uniform buffer...\n";
-    uniformBuffer = std::make_shared<UniformBuffer>(
-        *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(),
-        *graphicsPipeline->getUboLayout()
-    );
+    uniformBuffer = std::make_shared<UniformBuffer>(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), *graphicsPipeline->getUboLayout());
 }
 
 ResourceContext Engine::makeResourceContext() {
     return {
-        .instance                 = *vulkanInstance->getInstance(),
-        .device                   = *logicalDevice->getDevice(),
-        .physicalDevice           = *physicalDevice->getPhysicalDevice(),
-        .commandPool              = renderer->getCommandPool(),
-        .graphicsQueue            = *logicalDevice->getGraphicsQueue(),
-        .textureLayout            = *graphicsPipeline->getTextureLayout(),
-        .uboLayout                = *graphicsPipeline->getUboLayout(),
-        .window                   = *window,
-        .swapChain                = *swapChain,
-        .depthFormat              = depthBuffer->getFormat(),
+        .instance = *vulkanInstance->getInstance(),
+        .device = *logicalDevice->getDevice(),
+        .physicalDevice = *physicalDevice->getPhysicalDevice(),
+        .commandPool = renderer->getCommandPool(),
+        .graphicsQueue = *logicalDevice->getGraphicsQueue(),
+        .textureLayout = *graphicsPipeline->getTextureLayout(),
+        .uboLayout = *graphicsPipeline->getUboLayout(),
+        .window = *window,
+        .swapChain = *swapChain,
+        .depthFormat = depthBuffer->getFormat(),
         .graphicsQueueFamilyIndex = physicalDevice->getGraphicsQueueFamilyIndex(),
     };
 }
@@ -117,21 +101,15 @@ void Engine::recreateSwapChain(IGame &game) {
     }
     logicalDevice->getDevice()->waitIdle();
     swapChain->recreate(
-        *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(),
-        physicalDevice->getGraphicsQueueFamilyIndex(), physicalDevice->getPresentQueueFamilyIndex(), *window
+        *physicalDevice->getPhysicalDevice(), *logicalDevice->getDevice(), *surface->getSurface(), physicalDevice->getGraphicsQueueFamilyIndex(),
+        physicalDevice->getPresentQueueFamilyIndex(), *window
     );
-    depthBuffer->recreate(
-        *logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent()
-    );
+    depthBuffer->recreate(*logicalDevice->getDevice(), *physicalDevice->getPhysicalDevice(), swapChain->getExtent());
     game.onSwapChainRecreated(*swapChain);
 }
 
-vk::Bool32 Engine::debugCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT   severity,
-    vk::DebugUtilsMessageTypeFlagsEXT          type,
-    const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData,
-    void *
-) {
+vk::Bool32
+Engine::debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
     using Sev = vk::DebugUtilsMessageSeverityFlagBitsEXT;
     if (severity == Sev::eError || severity == Sev::eWarning)
         std::cerr << "validation: " << to_string(type) << ": " << pCallbackData->pMessage << "\n";

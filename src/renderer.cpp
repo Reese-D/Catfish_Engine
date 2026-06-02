@@ -36,10 +36,8 @@ Renderer::Renderer(const vk::raii::Device &device, uint32_t graphicsQueueFamilyI
 }
 
 bool Renderer::drawFrame(
-    const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-    const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
-    const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer,
-    const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
+    const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
+    const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer, const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     (void)device.waitForFences(**inFlightFence, vk::True, UINT64_MAX);
 
@@ -94,8 +92,7 @@ bool Renderer::drawFrame(
 }
 
 void Renderer::recordCommandBuffer(
-    uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline,
-    const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
+    uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
     const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     commandBuffer->begin(vk::CommandBufferBeginInfo{});
@@ -189,13 +186,7 @@ void Renderer::recordCommandBuffer(
         // Bind per-draw material (set 1 — texture)
         commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **pipeline.getPipelineLayout(), 1, {draw.materialSet}, {});
 
-        commandBuffer->pushConstants(
-            **pipeline.getPipelineLayout(),
-            vk::ShaderStageFlagBits::eVertex,
-            0,
-            sizeof(glm::mat4),
-            &draw.transform
-        );
+        commandBuffer->pushConstants(**pipeline.getPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4), &draw.transform);
         commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});
         commandBuffer->bindIndexBuffer(**draw.model->getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
         commandBuffer->drawIndexed(draw.model->getIndexBuffer().getIndexCount(), 1, 0, 0, 0);

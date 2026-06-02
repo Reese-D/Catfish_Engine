@@ -65,22 +65,22 @@ struct MovementSpeed {
 
 struct Ability {
     float cooldown{1.5f};
-    float timer{1.5f};         // starts ready (timer >= cooldown)
+    float timer{1.5f}; // starts ready (timer >= cooldown)
     float projectileSpeed{8.0f};
     float knockbackForce{12.0f};
 };
 
 struct Projectile {
     FactionId ownerFaction;
-    glm::vec3 velocity{0.0f};  // world units per second
-    float     knockbackForce{12.0f};
-    float     hitRadius{0.4f};
-    float     lifetime{6.0f};
+    glm::vec3 velocity{0.0f}; // world units per second
+    float knockbackForce{12.0f};
+    float hitRadius{0.4f};
+    float lifetime{6.0f};
 };
 
 struct Knockback {
     glm::vec2 force{0.0f};
-    float     decay{5.0f};     // force lost per second (exponential)
+    float decay{5.0f}; // force lost per second (exponential)
 };
 
 struct OrderQueue {

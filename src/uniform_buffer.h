@@ -17,10 +17,7 @@ struct UniformBufferObject {
 
 class UniformBuffer {
   public:
-    UniformBuffer(
-        const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-        const vk::raii::DescriptorSetLayout &uboLayout
-    );
+    UniformBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::DescriptorSetLayout &uboLayout);
     ~UniformBuffer() = default;
 
     UniformBuffer(const UniformBuffer &) = delete;
