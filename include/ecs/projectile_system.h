@@ -11,7 +11,6 @@
 
 #include "components.h"
 #include "model.h"
-#include "window.h"
 
 namespace Systems {
 
@@ -27,14 +26,11 @@ entt::entity spawnProjectile(
     float hitRadius = 0.4f, float lifetime = 6.0f
 );
 
-// Ticks Ability cooldown timers.
+// Ticks AbilitySet cooldown timers.
 void tickAbilities(entt::registry &registry, float dt);
 
-// Moves projectiles, checks collisions, applies knockback, despawns on hit or expiry.
+// Moves projectiles, applies gravity-well pulls, checks collisions, despawns on hit or expiry.
 void updateProjectiles(entt::registry &registry, float dt);
-
-// Reads Q key + mouse position; fires ability for each selected player unit.
-void processAbilityInput(entt::registry &registry, const VulkanHelpers::Window &window, vk::Extent2D extent, std::shared_ptr<VulkanHelpers::Model> projectileModel);
 
 } // namespace Systems
 

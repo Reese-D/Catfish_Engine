@@ -67,16 +67,7 @@ void RtsGame::setupAsClient(std::string host, uint16_t port) {
 
 // ---- IGame: initLogic ------------------------------------------------------
 
-void RtsGame::initLogic() {
-    // Standalone mode pre-spawns a fixed scene. Server and Client get their
-    // entities from client connections and network snapshots respectively.
-    if (networkRole_ == NetworkRole::Standalone) {
-        auto player = spawnUnit({-3.0f, 0.0f, 0.0f}, Components::FactionId::Player);
-        registry.emplace<Components::AlwaysSelected>(player);
-        registry.emplace<Components::Selected>(player);
-        spawnUnit({3.0f, 0.0f, 0.0f}, Components::FactionId::Enemy);
-    }
-}
+void RtsGame::initLogic() {}
 
 // ---- IGame: initGraphics ---------------------------------------------------
 
@@ -187,10 +178,7 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         Systems::updateCamera(registry, extent);
 
     } else {
-        // Server or Standalone: full simulation
-        if (window && (!menuSystem || !menuSystem->wantsKeyboard()))
-            Systems::updateCameraInput(registry, *window, dt);
-
+        // Server: full simulation
         lavaZone.update(dt);
         Systems::applyLavaDamage(lavaZone, registry, dt);
         if (combatEnabled)
@@ -203,20 +191,10 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         Systems::applySeparation(registry);
         Systems::clampToBounds(registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
 
-        if (networkRole_ != NetworkRole::Server)
-            Systems::updateCamera(registry, extent);
-
-        if (window && (!menuSystem || !menuSystem->wantsMouse())) {
-            Systems::updateSelection(registry, *window, extent);
-            Systems::processAbilityInput(registry, *window, extent, projectileModel);
-        }
-
-        if (networkRole_ == NetworkRole::Server) {
-            snapshotTimer_ += dt;
-            if (snapshotTimer_ >= SNAPSHOT_INTERVAL) {
-                snapshotTimer_ -= SNAPSHOT_INTERVAL;
-                serverSendSnapshot();
-            }
+        snapshotTimer_ += dt;
+        if (snapshotTimer_ >= SNAPSHOT_INTERVAL) {
+            snapshotTimer_ -= SNAPSHOT_INTERVAL;
+            serverSendSnapshot();
         }
     }
 
@@ -293,7 +271,12 @@ entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId factio
     registry.emplace<Components::OrderQueue>(e);
     registry.emplace<Components::Faction>(e, Components::Faction{faction});
     registry.emplace<Components::Health>(e);
-    registry.emplace<Components::Ability>(e);
+    registry.emplace<Components::AbilitySet>(e, Components::AbilitySet{
+        .slots = {
+            Components::AbilitySlot{Components::AbilityId::Projectile,  1.5f, 1.5f, 8.0f,  12.0f},
+            Components::AbilitySlot{Components::AbilityId::GravityWell, 4.0f, 4.0f, 2.0f,  0.0f,  15.0f, 5.0f, 0.5f},
+        }
+    });
     if (combatEnabled)
         registry.emplace<Components::Combat>(e);
     auto netId = nextNetworkId_++;
@@ -451,22 +434,41 @@ void RtsGame::serverHandleInput(const uint8_t *data, std::size_t size, ENetPeer 
         registry.get<Components::OrderQueue>(clientEntity).enqueueImmediate(Orders::MoveOrder{.destination = {pkt.moveX, pkt.moveY, pkt.moveZ}, .path = {}, .pathIndex = 0});
     }
 
-    if ((pkt.flags & InputFlags::FireAbility) && registry.all_of<Components::Ability, Components::Transform, Components::Faction>(clientEntity)) {
-        auto &ab = registry.get<Components::Ability>(clientEntity);
-        if (ab.timer >= ab.cooldown) {
-            const auto &t = registry.get<Components::Transform>(clientEntity);
-            const auto &f = registry.get<Components::Faction>(clientEntity);
-            glm::vec3 delta = glm::vec3{pkt.abilityX, pkt.abilityY, pkt.abilityZ} - t.position;
-            delta.z = 0.0f;
-            float len = glm::length(delta);
-            if (len > 0.001f) {
-                auto proj  = Systems::spawnProjectile(registry, projectileModel, t.position, (delta / len) * ab.projectileSpeed, f.id, ab.knockbackForce);
-                auto netId = nextNetworkId_++;
-                registry.emplace<Components::NetworkId>(proj, Components::NetworkId{netId});
-                netIdToEntity_[netId] = proj;
-                ab.timer = 0.0f;
-            }
+    if ((pkt.flags & InputFlags::FireAbility) && registry.all_of<Components::AbilitySet, Components::Transform, Components::Faction>(clientEntity)) {
+        auto &abilitySet = registry.get<Components::AbilitySet>(clientEntity);
+        if (pkt.abilitySlot >= abilitySet.slots.size())
+            return;
+
+        auto &slot = abilitySet.slots[pkt.abilitySlot];
+        if (slot.timer < slot.cooldown)
+            return;
+
+        const auto &t = registry.get<Components::Transform>(clientEntity);
+        const auto &f = registry.get<Components::Faction>(clientEntity);
+        glm::vec3 delta = glm::vec3{pkt.abilityX, pkt.abilityY, pkt.abilityZ} - t.position;
+        delta.z = 0.0f;
+        float len = glm::length(delta);
+        if (len < 0.001f)
+            return;
+
+        glm::vec3 velocity = (delta / len) * slot.projectileSpeed;
+        auto proj = Systems::spawnProjectile(registry, projectileModel, t.position, velocity, f.id, slot.knockbackForce);
+
+        if (slot.id == Components::AbilityId::GravityWell) {
+            registry.emplace<Components::GravityWell>(proj, Components::GravityWell{
+                .pullStrength    = slot.pullStrength,
+                .pullRadius      = slot.pullRadius,
+                .activationDelay = slot.activationDelay,
+            });
+            // Override lifetime and hitRadius for gravity wells
+            registry.get<Components::Projectile>(proj).lifetime  = 5.0f;
+            registry.get<Components::Projectile>(proj).hitRadius = 0.6f;
         }
+
+        auto netId = nextNetworkId_++;
+        registry.emplace<Components::NetworkId>(proj, Components::NetworkId{netId});
+        netIdToEntity_[netId] = proj;
+        slot.timer = 0.0f;
     }
 }
 
@@ -630,12 +632,15 @@ void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {
 
     bool rightDown = window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     bool qDown     = window->isKeyPressed(GLFW_KEY_Q);
+    bool eDown     = window->isKeyPressed(GLFW_KEY_E);
     bool rightJust = rightDown && !prevMouseRight_;
     bool qJust     = qDown     && !prevKeyQ_;
+    bool eJust     = eDown     && !prevKeyE_;
     prevMouseRight_ = rightDown;
     prevKeyQ_       = qDown;
+    prevKeyE_       = eDown;
 
-    if (!rightJust && !qJust)
+    if (!rightJust && !qJust && !eJust)
         return;
 
     const Components::Camera *cam = nullptr;
@@ -663,21 +668,23 @@ void RtsGame::clientCaptureAndSendInput(vk::Extent2D extent) {
         return;
     glm::vec3 ground = glm::vec3(nearW) + t * dir;
 
-    bool      hasMoveOrder = rightJust;
-    bool      fireAbility  = qJust;
-    glm::vec3 moveTarget   = rightJust ? ground : glm::vec3{};
-    glm::vec3 abilityTarget = qJust   ? ground : glm::vec3{};
+    bool      hasMoveOrder  = rightJust;
+    bool      fireAbility   = qJust || eJust;
+    uint8_t   abilitySlot   = eJust ? 1 : 0; // Q=slot 0, E=slot 1
+    glm::vec3 moveTarget    = rightJust    ? ground : glm::vec3{};
+    glm::vec3 abilityTarget = fireAbility  ? ground : glm::vec3{};
 
     InputPacket pkt{};
-    pkt.msgType  = static_cast<uint8_t>(MessageType::Input);
-    pkt.tick     = tick_;
-    pkt.flags    = (hasMoveOrder ? InputFlags::MoveOrder : 0) | (fireAbility ? InputFlags::FireAbility : 0);
-    pkt.moveX    = moveTarget.x;
-    pkt.moveY    = moveTarget.y;
-    pkt.moveZ    = moveTarget.z;
-    pkt.abilityX = abilityTarget.x;
-    pkt.abilityY = abilityTarget.y;
-    pkt.abilityZ = abilityTarget.z;
+    pkt.msgType     = static_cast<uint8_t>(MessageType::Input);
+    pkt.tick        = tick_;
+    pkt.flags       = (hasMoveOrder ? InputFlags::MoveOrder : 0) | (fireAbility ? InputFlags::FireAbility : 0);
+    pkt.abilitySlot = abilitySlot;
+    pkt.moveX       = moveTarget.x;
+    pkt.moveY       = moveTarget.y;
+    pkt.moveZ       = moveTarget.z;
+    pkt.abilityX    = abilityTarget.x;
+    pkt.abilityY    = abilityTarget.y;
+    pkt.abilityZ    = abilityTarget.z;
 
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
     networkManager_->sendToServerUnreliable({raw, raw + sizeof(pkt)});

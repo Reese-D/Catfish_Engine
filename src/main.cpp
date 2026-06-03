@@ -14,11 +14,13 @@ int main(int argc, char *argv[]) {
         game.enableMinimap();
 
         bool isServer = false;
+        bool modeSet  = false;
 
         for (int i = 1; i < argc; ++i) {
             std::string_view arg(argv[i]);
             if (arg == "--server") {
                 isServer = true;
+                modeSet  = true;
                 uint16_t port = (i + 1 < argc && argv[i + 1][0] != '-') ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
                 game.setupAsServer(port);
             } else if (arg == "--client") {
@@ -26,10 +28,17 @@ int main(int argc, char *argv[]) {
                     std::cerr << "Usage: --client <host> [port]\n";
                     return EXIT_FAILURE;
                 }
+                modeSet = true;
                 std::string host = argv[++i];
                 uint16_t port = (i + 1 < argc && argv[i + 1][0] != '-') ? static_cast<uint16_t>(std::atoi(argv[++i])) : 1234;
                 game.setupAsClient(std::move(host), port);
             }
+        }
+
+        if (!modeSet) {
+            std::cerr << "Usage: " << argv[0] << " --server [port]\n"
+                      << "       " << argv[0] << " --client <host> [port]\n";
+            return EXIT_FAILURE;
         }
 
         if (isServer) {

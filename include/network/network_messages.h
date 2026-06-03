@@ -9,7 +9,7 @@
 // the same architecture for now; add bswap if cross-platform is needed later).
 
 // Bump whenever the packet layout changes in a breaking way.
-constexpr uint16_t PROTOCOL_VERSION = 1;
+constexpr uint16_t PROTOCOL_VERSION = 2;
 
 enum class MessageType : uint8_t {
     Snapshot           = 0x01, // server → client, unreliable
@@ -66,9 +66,10 @@ namespace InputFlags {
 }
 
 struct InputPacket {
-    uint8_t  msgType; // MessageType::Input
+    uint8_t  msgType;     // MessageType::Input
     uint32_t tick;
-    uint8_t  flags;   // InputFlags bitmask
+    uint8_t  flags;       // InputFlags bitmask
+    uint8_t  abilitySlot; // which AbilitySet slot to fire (when FireAbility set)
     float    moveX, moveY, moveZ;
     float    abilityX, abilityY, abilityZ;
 };

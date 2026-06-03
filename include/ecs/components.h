@@ -6,6 +6,7 @@
 
 #include <deque>
 #include <memory>
+#include <vector>
 
 #include "model.h"
 #include "orders.h"
@@ -68,11 +69,36 @@ struct MovementSpeed {
     float speed{3.0f}; // units per second
 };
 
-struct Ability {
+enum class AbilityId : uint8_t {
+    Projectile  = 0,
+    GravityWell = 1,
+};
+
+struct AbilitySlot {
+    AbilityId id{AbilityId::Projectile};
     float cooldown{1.5f};
-    float timer{1.5f}; // starts ready (timer >= cooldown)
+    float timer{1.5f}; // ready when timer >= cooldown
+
+    // Projectile params
     float projectileSpeed{8.0f};
     float knockbackForce{12.0f};
+
+    // GravityWell params
+    float pullStrength{15.0f};
+    float pullRadius{5.0f};
+    float activationDelay{0.5f};
+};
+
+struct AbilitySet {
+    std::vector<AbilitySlot> slots;
+};
+
+// Tag component placed on gravity-well projectile entities.
+struct GravityWell {
+    float pullStrength{15.0f};
+    float pullRadius{5.0f};
+    float activationDelay{0.5f};
+    float activationTimer{0.0f}; // counts up; pull starts when >= activationDelay
 };
 
 struct Projectile {

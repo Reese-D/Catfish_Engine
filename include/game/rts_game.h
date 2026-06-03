@@ -92,8 +92,8 @@ class RtsGame : public VulkanHelpers::IGame {
     Systems::LavaZone lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
 
     // Networking
-    enum class NetworkRole { Standalone, Server, Client };
-    NetworkRole networkRole_{NetworkRole::Standalone};
+    enum class NetworkRole { Server, Client };
+    NetworkRole networkRole_{NetworkRole::Client};
     std::unique_ptr<Network::NetworkManager> networkManager_;
     uint32_t nextNetworkId_{1};
     uint32_t tick_{0};
@@ -115,6 +115,7 @@ class RtsGame : public VulkanHelpers::IGame {
     Components::FactionId myFaction_{Components::FactionId::Player};
     bool                  prevMouseRight_{false};
     bool                  prevKeyQ_{false};
+    bool                  prevKeyE_{false};
 
     bool closeRequested{false};
 };
