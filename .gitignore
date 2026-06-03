@@ -7,6 +7,8 @@ bin/
 *.dylib
 compile_commands.json
 shaders/*.spv
+catfish_server
+catfish_client
 
 # IDE files
 *.swp

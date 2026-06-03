@@ -8,7 +8,6 @@
 #include <memory>
 #include <vector>
 
-#include "model.h"
 #include "orders.h"
 
 namespace WorldBounds {
@@ -24,9 +23,7 @@ struct Transform {
     glm::vec3 scale{1.0f, 1.0f, 1.0f};
 };
 
-struct RenderMesh {
-    std::shared_ptr<VulkanHelpers::Model> model;
-};
+// RenderMesh is client-only — defined in include/client/ecs/render_components.h
 
 struct Camera {
     glm::vec3 position{2.0f, 2.0f, 2.0f};

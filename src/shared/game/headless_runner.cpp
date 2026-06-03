@@ -6,13 +6,9 @@
 
 namespace VulkanHelpers {
 
-void HeadlessRunner::run(IGame &game) {
+void HeadlessRunner::run(IServerGame &game) {
     game.initLogic();
     std::cout << "[Server] Headless simulation running at " << tickHz_ << " Hz\n";
-
-    // A fake extent is passed each tick — the server never uses it for rendering,
-    // but IGame::update() requires one for its interface contract.
-    constexpr vk::Extent2D FAKE_EXTENT{800, 600};
 
     using Clock = std::chrono::steady_clock;
     using Duration = Clock::duration;
@@ -23,7 +19,7 @@ void HeadlessRunner::run(IGame &game) {
     auto nextTick = Clock::now();
 
     while (!game.wantsClose()) {
-        game.update(tick, FAKE_EXTENT);
+        game.update(tick);
         nextTick += tickDur;
         std::this_thread::sleep_until(nextTick);
     }

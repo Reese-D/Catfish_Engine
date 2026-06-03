@@ -1,6 +1,6 @@
 # Catfish Engine
 
-A Vulkan 1.3 renderer with an EnTT ECS layer, built into a simple real-time strategy game. Features pathfinding, fog of war, a minimap, projectiles, lava, and a basic networking layer (dedicated server + client).
+A Vulkan 1.3 renderer with an EnTT ECS layer, built into a simple real-time strategy game. Features fog of war, a minimap, projectiles, lava, and a networking layer with separate server and client binaries.
 
 ## Dependencies
 
@@ -11,12 +11,12 @@ Install these via your package manager before building.
 | Package | Notes |
 |---|---|
 | `clang` | C++23, used for both `clang++` and `clang` |
-| `vulkan-headers` / `vulkan-devel` | Vulkan SDK headers |
-| `libvulkan` | Vulkan loader (`libvulkan.so`) |
+| `vulkan-headers` / `vulkan-devel` | Vulkan SDK headers (client only) |
+| `libvulkan` | Vulkan loader — `libvulkan.so` (client only) |
 | `vulkan-validation-layers` | Optional but recommended during development |
-| `glfw` | Windowing (`libglfw`) |
-| `simdjson` | Required by fastgltf (`libsimdjson`) |
-| `slang` | Shader compiler (`slangc` must be on `PATH`) |
+| `glfw` | Windowing — `libglfw` (client only) |
+| `simdjson` | Required by fastgltf — `libsimdjson` (client only) |
+| `slang` | Shader compiler — `slangc` must be on `PATH` (client only) |
 
 **Arch Linux:**
 ```sh
@@ -38,48 +38,41 @@ Install `slangc` from the [Slang GitHub releases](https://github.com/shader-slan
 ```sh
 git clone <repo-url>
 cd Catfish_Engine
-make
+make          # builds both catfish_server and catfish_client
+make catfish_server   # server only (no Vulkan/GLFW required)
+make catfish_client   # client only
+make clean    # remove build artefacts and SPIR-V blobs
 ```
 
-This compiles the shaders via `slangc` then links the `catfish_engine` binary in the project root.
-
-```sh
-make clean   # remove build artefacts and SPIR-V blobs
-```
+The server binary has no Vulkan dependency and can be built and run on headless machines.
 
 ## Running
 
-### Standalone (local, single machine)
-
-```sh
-./catfish_engine
-```
-
-Both factions are controlled by the same player. Left-click to select a unit, right-click to move, Q to fire a projectile.
-
-### Networked (two machines or two terminals)
+Start the server first, then connect one or more clients.
 
 **Server** (headless, no window):
 ```sh
-./catfish_engine --server [port]
+./catfish_server [--port <port>]
 # default port: 1234
 ```
 
 **Client:**
 ```sh
-./catfish_engine --client <host> [port]
-# e.g. ./catfish_engine --client 127.0.0.1
+./catfish_client --host <server-address> [--port <port>]
+# e.g. ./catfish_client --host 127.0.0.1
+#      ./catfish_client --host 192.168.1.10 --port 5000
 ```
 
-The first client to connect is assigned the Player faction; the second gets Enemy. Each client sees fog of war from their own units' perspective.
+The first client to connect is assigned the Player faction; the second gets Enemy. Each client sees fog of war from their own units' perspective. Up to four clients can connect simultaneously.
 
 ## Controls
 
 | Input | Action |
 |---|---|
+| Right-click | Set thrust direction (unit accelerates toward cursor continuously) |
+| Q | Fire fast projectile toward cursor |
+| E | Launch gravity well toward cursor (pulls units in after 0.5 s) |
 | Left-click | Select unit |
-| Right-click | Move selected unit |
-| Q | Fire projectile toward cursor |
 | Middle-drag / scroll | Pan / zoom camera |
 | Left-click minimap | Pan camera to location |
 
@@ -87,18 +80,25 @@ The first client to connect is assigned the Player faction; the second gets Enem
 
 ```
 include/
-  engine/      Vulkan backend headers (VulkanHelpers namespace)
-  ecs/         ECS component and system headers (Systems namespace)
-  game/        Game-specific headers (rts_game, menu_system)
-  network/     Networking headers (NetworkManager, message structs)
+  shared/      Headers used by both binaries
+    ecs/         Simulation component and system headers
+    game/        Shared game base, server game interface, HeadlessRunner
+    network/     NetworkManager, message structs, protocol version
+  server/      Server-only headers
+    game/        RtsGameServer
+  client/      Client-only headers
+    engine/      Vulkan backend (VulkanHelpers namespace)
+    ecs/         Rendering and input system headers; RenderMesh component
+    game/        RtsGameClient, MenuSystem
 src/
-  engine/      Vulkan backend sources
-  ecs/         ECS system sources
-  game/        Game logic sources
-  network/     Networking sources
-  main.cpp     Entry point
-shaders/       Slang shader source + compiled SPIR-V
-models/        GLB model assets
+  shared/      Compiled into libcatfish_shared.a (linked by both binaries)
+    ecs/         Simulation systems (movement, combat, projectiles, lava, etc.)
+    game/        RtsGameBase, HeadlessRunner
+    network/     NetworkManager
+  server/      catfish_server entry point and server game logic
+  client/      catfish_client entry point, rendering, input, client game logic
+shaders/       Slang shader source + compiled SPIR-V (client only)
+models/        GLB model assets (client only)
 third_party/   Vendored libraries (EnTT, ImGui, fastgltf, ENet, stb_image)
 Makefile
 ```
