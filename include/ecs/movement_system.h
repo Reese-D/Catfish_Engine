@@ -9,11 +9,14 @@ namespace Systems {
 // Pushes overlapping units apart so they don't stack on the same position.
 void applySeparation(entt::registry &registry);
 
-// Clamps all unit positions (entities with MovementSpeed) to [worldMin, worldMax] on XY.
+// Clamps all unit positions to [worldMin, worldMax] on XY and zeroes velocity into walls.
 void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax);
 
-// Applies and decays Knockback forces on all affected entities.
-void applyKnockback(entt::registry &registry, float dt);
+// Moves all entities with Velocity by vel * dt each frame (frictionless — no decay).
+void applyVelocity(entt::registry &registry, float dt);
+
+// Accelerates units in their current ThrustDirection each frame.
+void applyThrust(entt::registry &registry, float dt);
 
 } // namespace Systems
 

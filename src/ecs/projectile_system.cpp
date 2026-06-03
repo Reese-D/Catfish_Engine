@@ -128,23 +128,21 @@ void updateProjectiles(entt::registry &registry, float dt) {
             if (gw.activationTimer < gw.activationDelay) {
                 gw.activationTimer += dt;
             } else {
-                for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed>()) {
+                // Inverse-square pull: acceleration = pullStrength / dist²
+                for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
                     const auto &ut = registry.get<Components::Transform>(unitEntity);
                     glm::vec2 toWell{t.position.x - ut.position.x, t.position.y - ut.position.y};
                     float dist = glm::length(toWell);
                     if (dist < 0.1f || dist > gw.pullRadius)
                         continue;
-                    glm::vec2 pull = glm::normalize(toWell) * (gw.pullStrength * dt);
-                    if (registry.all_of<Components::Knockback>(unitEntity))
-                        registry.get<Components::Knockback>(unitEntity).force += pull;
-                    else
-                        registry.emplace<Components::Knockback>(unitEntity, Components::Knockback{pull, 3.0f});
+                    float accelMag = gw.pullStrength / (dist * dist);
+                    registry.get<Components::Velocity>(unitEntity).vel += glm::normalize(toWell) * (accelMag * dt);
                 }
             }
         } else {
-            // Regular projectile: hit first unit in range, apply knockback, destroy.
+            // Regular projectile: flat impulse on first unit hit, then destroy.
             bool hit = false;
-            for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed>()) {
+            for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
                 if (hit)
                     break;
                 const auto &ut = registry.get<Components::Transform>(unitEntity);
@@ -154,11 +152,7 @@ void updateProjectiles(entt::registry &registry, float dt) {
                     continue;
 
                 glm::vec3 dir = glm::length(proj.velocity) > 0.001f ? glm::normalize(proj.velocity) : glm::vec3{1, 0, 0};
-                glm::vec2 push = glm::vec2(dir.x, dir.y) * proj.knockbackForce;
-                if (registry.all_of<Components::Knockback>(unitEntity))
-                    registry.get<Components::Knockback>(unitEntity).force += push;
-                else
-                    registry.emplace<Components::Knockback>(unitEntity, Components::Knockback{push, 5.0f});
+                registry.get<Components::Velocity>(unitEntity).vel += glm::vec2(dir.x, dir.y) * proj.knockbackForce;
 
                 toDestroy.push_back(projEntity);
                 hit = true;

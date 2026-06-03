@@ -22,7 +22,6 @@
 #include "minimap_system.h"
 #include "movement_system.h"
 #include "network_messages.h"
-#include "order_system.h"
 #include "projectile_system.h"
 #include "render_system.h"
 #include "rts_game.h"
@@ -186,8 +185,8 @@ VulkanHelpers::FrameOutput RtsGame::update(float dt, vk::Extent2D extent) {
         Systems::processDeath(registry);
         Systems::tickAbilities(registry, dt);
         Systems::updateProjectiles(registry, dt);
-        Systems::processOrders(registry, dt, pathfinder ? &*pathfinder : nullptr);
-        Systems::applyKnockback(registry, dt);
+        Systems::applyThrust(registry, dt);
+        Systems::applyVelocity(registry, dt);
         Systems::applySeparation(registry);
         Systems::clampToBounds(registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
 
@@ -268,6 +267,8 @@ entt::entity RtsGame::spawnUnit(glm::vec3 position, Components::FactionId factio
         registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{unitModel});
     registry.emplace<Components::Selectable>(e);
     registry.emplace<Components::MovementSpeed>(e);
+    registry.emplace<Components::Velocity>(e);
+    registry.emplace<Components::ThrustDirection>(e);
     registry.emplace<Components::OrderQueue>(e);
     registry.emplace<Components::Faction>(e, Components::Faction{faction});
     registry.emplace<Components::Health>(e);
@@ -430,8 +431,11 @@ void RtsGame::serverHandleInput(const uint8_t *data, std::size_t size, ENetPeer 
         return;
     entt::entity clientEntity = entIt->second;
 
-    if ((pkt.flags & InputFlags::MoveOrder) && registry.all_of<Components::OrderQueue>(clientEntity)) {
-        registry.get<Components::OrderQueue>(clientEntity).enqueueImmediate(Orders::MoveOrder{.destination = {pkt.moveX, pkt.moveY, pkt.moveZ}, .path = {}, .pathIndex = 0});
+    if ((pkt.flags & InputFlags::MoveOrder) && registry.all_of<Components::ThrustDirection, Components::Transform>(clientEntity)) {
+        const auto &t = registry.get<Components::Transform>(clientEntity);
+        glm::vec2 delta{pkt.moveX - t.position.x, pkt.moveY - t.position.y};
+        if (glm::length(delta) > 0.001f)
+            registry.get<Components::ThrustDirection>(clientEntity).dir = glm::normalize(delta);
     }
 
     if ((pkt.flags & InputFlags::FireAbility) && registry.all_of<Components::AbilitySet, Components::Transform, Components::Faction>(clientEntity)) {

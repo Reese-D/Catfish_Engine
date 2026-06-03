@@ -42,26 +42,36 @@ void applySeparation(entt::registry &registry) {
     }
 }
 
-void applyKnockback(entt::registry &registry, float dt) {
-    std::vector<entt::entity> toClear;
-    for (auto entity : registry.view<Components::Knockback, Components::Transform>()) {
-        auto &kb = registry.get<Components::Knockback>(entity);
-        auto &t = registry.get<Components::Transform>(entity);
-        t.position.x += kb.force.x * dt;
-        t.position.y += kb.force.y * dt;
-        kb.force -= kb.force * (kb.decay * dt);
-        if (glm::length(kb.force) < 0.01f)
-            toClear.push_back(entity);
+void applyThrust(entt::registry &registry, float dt) {
+    for (auto entity : registry.view<Components::ThrustDirection, Components::Velocity>()) {
+        const auto &th = registry.get<Components::ThrustDirection>(entity);
+        if (glm::length(th.dir) < 0.001f)
+            continue;
+        registry.get<Components::Velocity>(entity).vel += th.dir * (th.force * dt);
     }
-    for (auto e : toClear)
-        registry.remove<Components::Knockback>(e);
+}
+
+void applyVelocity(entt::registry &registry, float dt) {
+    for (auto entity : registry.view<Components::Velocity, Components::Transform>()) {
+        auto &v = registry.get<Components::Velocity>(entity);
+        auto &t = registry.get<Components::Transform>(entity);
+        t.position.x += v.vel.x * dt;
+        t.position.y += v.vel.y * dt;
+    }
 }
 
 void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax) {
     for (auto entity : registry.view<Components::Transform, Components::MovementSpeed>()) {
         auto &t = registry.get<Components::Transform>(entity);
+        bool hitX = t.position.x <= worldMin.x || t.position.x >= worldMax.x;
+        bool hitY = t.position.y <= worldMin.y || t.position.y >= worldMax.y;
         t.position.x = glm::clamp(t.position.x, worldMin.x, worldMax.x);
         t.position.y = glm::clamp(t.position.y, worldMin.y, worldMax.y);
+        if ((hitX || hitY) && registry.all_of<Components::Velocity>(entity)) {
+            auto &v = registry.get<Components::Velocity>(entity);
+            if (hitX) v.vel.x = 0.0f;
+            if (hitY) v.vel.y = 0.0f;
+        }
     }
 }
 

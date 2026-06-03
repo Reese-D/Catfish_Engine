@@ -109,9 +109,13 @@ struct Projectile {
     float lifetime{6.0f};
 };
 
-struct Knockback {
-    glm::vec2 force{0.0f};
-    float decay{5.0f}; // force lost per second (exponential)
+struct Velocity {
+    glm::vec2 vel{0.0f}; // persists indefinitely (frictionless surface)
+};
+
+struct ThrustDirection {
+    glm::vec2 dir{0.0f}; // unit vector; zero means no thrust
+    float force{3.0f};   // acceleration in units/sec²
 };
 
 struct OrderQueue {
