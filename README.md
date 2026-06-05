@@ -20,7 +20,7 @@ Install these via your package manager before building.
 
 **Arch Linux:**
 ```sh
-sudo pacman -S clang vulkan-headers vulkan-icd-loader vulkan-validation-layers glfw simdjson
+sudo pacman -S shader-slang clang vulkan-headers vulkan-icd-loader vulkan-validation-layers glfw simdjson
 ```
 `slangc` is available via the `shader-slang` AUR package or the upstream release tarball.
 
@@ -45,6 +45,26 @@ make clean    # remove build artefacts and SPIR-V blobs
 ```
 
 The server binary has no Vulkan dependency and can be built and run on headless machines.
+
+## Diagram Generation
+
+This project supports automatic UML diagram generation using clang-uml. To generate diagrams:
+
+1. Install clang-uml:
+   ```
+   # Ubuntu/Debian
+   sudo apt install clang-uml
+   
+   # macOS
+   brew install clang-uml
+   ```
+
+2. Generate diagrams:
+   ```
+   ./generate_diagrams.sh
+   ```
+
+This will create UML diagrams in the `diagrams/` directory showing class relationships, inheritance, and include dependencies.
 
 ## Running
 
