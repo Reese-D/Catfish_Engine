@@ -13,11 +13,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Add LunarG Vulkan SDK apt repo
+        run: |
+          sudo wget -qO /etc/apt/trusted.gpg.d/lunarg.asc \
+            https://packages.lunarg.com/lunarg-signing-key-pub.asc
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan.list \
+            https://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+          sudo apt-get update
+
       - name: Install build dependencies
         run: |
-          sudo apt-get update
           sudo apt-get install -y \
             clang-18 \
+            vulkan-headers \
             libvulkan-dev \
             libglfw3-dev \
             libsimdjson-dev \
