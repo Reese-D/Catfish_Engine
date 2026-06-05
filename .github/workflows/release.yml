@@ -51,12 +51,12 @@ jobs:
             | xargs -I{} cp -L {} "$DEST/lib/"
 
           # Launch script: sets LD_LIBRARY_PATH so bundled libs take precedence
-          cat > "$DEST/catfish_client.sh" << 'EOF'
-#!/bin/sh
-D="$(dirname "$(readlink -f "$0")")"
-export LD_LIBRARY_PATH="$D/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec "$D/catfish_client" "$@"
-EOF
+          {
+            echo '#!/bin/sh'
+            echo 'D="$(dirname "$(readlink -f "$0")")"'
+            echo 'export LD_LIBRARY_PATH="$D/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"'
+            echo 'exec "$D/catfish_client" "$@"'
+          } > "$DEST/catfish_client.sh"
           chmod +x "$DEST/catfish_client.sh"
 
           tar czf "${DEST}.tar.gz" "$DEST/"
