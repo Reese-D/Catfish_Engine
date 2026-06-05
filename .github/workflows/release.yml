@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04        # ships clang-18 + newer vulkan-headers (fixes raii.hpp bug)
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
@@ -34,30 +34,31 @@ jobs:
       - name: Mark compiled shaders as up-to-date
         run: touch shaders/vert.spv shaders/frag.spv
 
-      - name: Build (static client libs)
-        run: |
-          make catfish_client catfish_server \
-            CXX=clang++-18 CC=clang-18 \
-            CLIENT_LIBS="-lvulkan \
-              -L/usr/lib/x86_64-linux-gnu \
-              -Wl,-Bstatic -l:libglfw3.a -l:libsimdjson.a -Wl,-Bdynamic \
-              third_party/fastgltf/libfastgltf.a \
-              -static-libstdc++ -static-libgcc"
-
-      - name: Verify static linking
-        run: |
-          echo "=== catfish_client dynamic deps ==="
-          ldd catfish_client
-          echo "=== catfish_server dynamic deps ==="
-          ldd catfish_server
+      - name: Build
+        run: make catfish_client catfish_server CXX=clang++-18 CC=clang-18
 
       - name: Package tarball
         run: |
           DEST=catfish-engine-${{ github.ref_name }}-linux-x86_64
-          mkdir -p "$DEST/shaders" "$DEST/models"
+          mkdir -p "$DEST/shaders" "$DEST/models" "$DEST/lib"
           cp catfish_client catfish_server "$DEST/"
           cp shaders/vert.spv shaders/frag.spv "$DEST/shaders/"
           cp models/goblin.glb "$DEST/models/"
+
+          # Bundle runtime shared libs — exclude Vulkan (GPU driver) and kernel/libc
+          ldd catfish_client | awk '{print $3}' | grep '^/' \
+            | grep -Ev 'libvulkan|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libutil\.|linux-vdso|ld-linux' \
+            | xargs -I{} cp -L {} "$DEST/lib/"
+
+          # Launch script: sets LD_LIBRARY_PATH so bundled libs take precedence
+          cat > "$DEST/catfish_client.sh" << 'EOF'
+#!/bin/sh
+D="$(dirname "$(readlink -f "$0")")"
+export LD_LIBRARY_PATH="$D/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec "$D/catfish_client" "$@"
+EOF
+          chmod +x "$DEST/catfish_client.sh"
+
           tar czf "${DEST}.tar.gz" "$DEST/"
 
       - name: Upload release
