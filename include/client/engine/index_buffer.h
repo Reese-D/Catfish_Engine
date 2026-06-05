@@ -20,13 +20,13 @@ class IndexBuffer {
     IndexBuffer(const IndexBuffer &) = delete;
     IndexBuffer &operator=(const IndexBuffer &) = delete;
 
-    std::shared_ptr<vk::raii::Buffer> getBuffer() const { return indexBuffer; }
-    uint32_t getIndexCount() const { return indexCount; }
+    std::shared_ptr<vk::raii::Buffer> getBuffer() const { return m_indexBuffer; }
+    uint32_t getIndexCount() const { return m_indexCount; }
 
   private:
-    std::shared_ptr<vk::raii::Buffer> indexBuffer;
-    std::shared_ptr<vk::raii::DeviceMemory> indexBufferMemory;
-    uint32_t indexCount{0};
+    std::shared_ptr<vk::raii::Buffer> m_indexBuffer;
+    std::shared_ptr<vk::raii::DeviceMemory> m_indexBufferMemory;
+    uint32_t m_indexCount{0};
 };
 
 } // namespace VulkanHelpers

@@ -31,8 +31,8 @@ class TextureImage {
     TextureImage(const TextureImage &) = delete;
     TextureImage &operator=(const TextureImage &) = delete;
 
-    vk::ImageView getImageView() const { return **imageView; }
-    vk::Sampler getSampler() const { return **sampler; }
+    vk::ImageView getImageView() const { return **m_imageView; }
+    vk::Sampler getSampler() const { return **m_sampler; }
 
   private:
     void upload(
@@ -40,10 +40,10 @@ class TextureImage {
         const unsigned char *pixels, int texWidth, int texHeight
     );
 
-    std::shared_ptr<vk::raii::Image> image;
-    std::shared_ptr<vk::raii::DeviceMemory> imageMemory;
-    std::shared_ptr<vk::raii::ImageView> imageView;
-    std::shared_ptr<vk::raii::Sampler> sampler;
+    std::shared_ptr<vk::raii::Image> m_image;
+    std::shared_ptr<vk::raii::DeviceMemory> m_imageMemory;
+    std::shared_ptr<vk::raii::ImageView> m_imageView;
+    std::shared_ptr<vk::raii::Sampler> m_sampler;
 };
 
 } // namespace VulkanHelpers

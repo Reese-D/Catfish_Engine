@@ -8,7 +8,7 @@
 
 #include <vulkan/vulkan.hpp>
 namespace VulkanHelpers {
-Window::Window(uint32_t width, uint32_t height, const char *title) : width(width), height(height) {
+Window::Window(uint32_t m_width, uint32_t m_height, const char *title) : m_width(m_width), m_height(m_height) {
 
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW");
@@ -17,64 +17,64 @@ Window::Window(uint32_t width, uint32_t height, const char *title) : width(width
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    m_window = glfwCreateWindow(m_width, m_height, title, nullptr, nullptr);
 
-    if (!window) {
+    if (!m_window) {
         glfwTerminate();
-        throw std::runtime_error("Failed to create GLFW window");
+        throw std::runtime_error("Failed to create GLFW m_window");
     }
 
-    glfwSetWindowUserPointer(window, this);
-    glfwSetScrollCallback(window, scrollCallback);
-    glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetWindowUserPointer(m_window, this);
+    glfwSetScrollCallback(m_window, scrollCallback);
+    glfwSetWindowSizeCallback(m_window, windowSizeCallback);
 }
 
 Window::~Window() {
-    if (window) {
-        glfwDestroyWindow(window);
+    if (m_window) {
+        glfwDestroyWindow(m_window);
     }
     glfwTerminate();
 }
 
 std::pair<int, int> Window::getFramebufferSize() const {
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    return {width, height};
+    int m_width, m_height;
+    glfwGetFramebufferSize(m_window, &m_width, &m_height);
+    return {m_width, m_height};
 }
 
-bool Window::shouldClose() const { return glfwWindowShouldClose(window); }
+bool Window::shouldClose() const { return glfwWindowShouldClose(m_window); }
 
-void Window::requestClose() const { glfwSetWindowShouldClose(window, GLFW_TRUE); }
+void Window::requestClose() const { glfwSetWindowShouldClose(m_window, GLFW_TRUE); }
 
 void Window::pollEvents() const { glfwPollEvents(); }
 
 void Window::waitEvents() const { glfwWaitEvents(); }
 
-bool Window::isKeyPressed(int key) const { return glfwGetKey(window, key) == GLFW_PRESS; }
+bool Window::isKeyPressed(int key) const { return glfwGetKey(m_window, key) == GLFW_PRESS; }
 
-bool Window::isMouseButtonPressed(int button) const { return glfwGetMouseButton(window, button) == GLFW_PRESS; }
+bool Window::isMouseButtonPressed(int button) const { return glfwGetMouseButton(m_window, button) == GLFW_PRESS; }
 
 std::pair<double, double> Window::getMousePosition() const {
     double x, y;
-    glfwGetCursorPos(window, &x, &y);
+    glfwGetCursorPos(m_window, &x, &y);
     return {x, y};
 }
 
 float Window::consumeScrollDelta() {
-    float delta = scrollDelta;
-    scrollDelta = 0.0f;
+    float delta = m_scrollDelta;
+    m_scrollDelta = 0.0f;
     return delta;
 }
 
 void Window::scrollCallback(GLFWwindow *win, double /*xoffset*/, double yoffset) {
     auto *self = static_cast<Window *>(glfwGetWindowUserPointer(win));
-    self->scrollDelta += static_cast<float>(yoffset);
+    self->m_scrollDelta += static_cast<float>(yoffset);
 }
 
 void Window::windowSizeCallback(GLFWwindow *win, int w, int h) {
     auto *self = static_cast<Window *>(glfwGetWindowUserPointer(win));
-    self->width = static_cast<uint32_t>(w);
-    self->height = static_cast<uint32_t>(h);
+    self->m_width = static_cast<uint32_t>(w);
+    self->m_height = static_cast<uint32_t>(h);
 }
 
 std::vector<const char *> Window::getRequiredInstanceExtensions() const {

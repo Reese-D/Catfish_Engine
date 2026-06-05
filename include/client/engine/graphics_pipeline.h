@@ -18,19 +18,19 @@ class GraphicsPipeline {
     GraphicsPipeline(const GraphicsPipeline &) = delete;
     GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
 
-    std::shared_ptr<vk::raii::Pipeline> getPipeline() const { return pipeline; }
-    std::shared_ptr<vk::raii::PipelineLayout> getPipelineLayout() const { return pipelineLayout; }
-    std::shared_ptr<vk::raii::DescriptorSetLayout> getUboLayout() const { return uboLayout; }
-    std::shared_ptr<vk::raii::DescriptorSetLayout> getTextureLayout() const { return textureLayout; }
+    std::shared_ptr<vk::raii::Pipeline> getPipeline() const { return m_pipeline; }
+    std::shared_ptr<vk::raii::PipelineLayout> getPipelineLayout() const { return m_pipelineLayout; }
+    std::shared_ptr<vk::raii::DescriptorSetLayout> getUboLayout() const { return m_uboLayout; }
+    std::shared_ptr<vk::raii::DescriptorSetLayout> getTextureLayout() const { return m_textureLayout; }
 
   private:
     static std::vector<char> readShaderFile(const std::string &filename);
     static vk::raii::ShaderModule createShaderModule(const vk::raii::Device &device, const std::vector<char> &code);
 
-    std::shared_ptr<vk::raii::DescriptorSetLayout> uboLayout;
-    std::shared_ptr<vk::raii::DescriptorSetLayout> textureLayout;
-    std::shared_ptr<vk::raii::PipelineLayout> pipelineLayout;
-    std::shared_ptr<vk::raii::Pipeline> pipeline;
+    std::shared_ptr<vk::raii::DescriptorSetLayout> m_uboLayout;
+    std::shared_ptr<vk::raii::DescriptorSetLayout> m_textureLayout;
+    std::shared_ptr<vk::raii::PipelineLayout> m_pipelineLayout;
+    std::shared_ptr<vk::raii::Pipeline> m_pipeline;
 };
 
 } // namespace VulkanHelpers

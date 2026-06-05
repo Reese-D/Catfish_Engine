@@ -78,17 +78,17 @@ class Engine {
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL
     debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT, vk::DebugUtilsMessageTypeFlagsEXT, const vk::DebugUtilsMessengerCallbackDataEXT *, void *);
 
-    std::shared_ptr<Window> window;
-    std::shared_ptr<Instance> vulkanInstance;
-    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
-    std::shared_ptr<Surface> surface;
-    std::shared_ptr<PhysicalDevice> physicalDevice;
-    std::shared_ptr<LogicalDevice> logicalDevice;
-    std::shared_ptr<SwapChain> swapChain;
-    std::shared_ptr<DepthBuffer> depthBuffer;
-    std::shared_ptr<GraphicsPipeline> graphicsPipeline;
-    std::shared_ptr<Renderer> renderer;
-    std::shared_ptr<UniformBuffer> uniformBuffer;
+    std::shared_ptr<Window> m_window;
+    std::shared_ptr<Instance> m_vulkanInstance;
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debugMessenger;
+    std::shared_ptr<Surface> m_surface;
+    std::shared_ptr<PhysicalDevice> m_physicalDevice;
+    std::shared_ptr<LogicalDevice> m_logicalDevice;
+    std::shared_ptr<SwapChain> m_swapChain;
+    std::shared_ptr<DepthBuffer> m_depthBuffer;
+    std::shared_ptr<GraphicsPipeline> m_graphicsPipeline;
+    std::shared_ptr<Renderer> m_renderer;
+    std::shared_ptr<UniformBuffer> m_uniformBuffer;
 };
 
 } // namespace VulkanHelpers

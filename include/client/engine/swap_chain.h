@@ -22,11 +22,11 @@ class SwapChain {
     SwapChain(const SwapChain &) = delete;
     SwapChain &operator=(const SwapChain &) = delete;
 
-    std::shared_ptr<vk::raii::SwapchainKHR> getSwapChain() const { return swapChain; }
-    const std::vector<vk::Image> &getImages() const { return images; }
-    const std::vector<vk::raii::ImageView> &getImageViews() const { return imageViews; }
-    vk::Format getFormat() const { return format; }
-    vk::Extent2D getExtent() const { return extent; }
+    std::shared_ptr<vk::raii::SwapchainKHR> getSwapChain() const { return m_swapChain; }
+    const std::vector<vk::Image> &getImages() const { return m_images; }
+    const std::vector<vk::raii::ImageView> &getImageViews() const { return m_imageViews; }
+    vk::Format getFormat() const { return m_format; }
+    vk::Extent2D getExtent() const { return m_extent; }
 
     void recreate(
         const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device, const vk::raii::SurfaceKHR &surface, uint32_t graphicsFamily, uint32_t presentFamily,
@@ -44,11 +44,11 @@ class SwapChain {
     static vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR> &modes);
     static vk::Extent2D chooseExtent(const vk::SurfaceCapabilitiesKHR &capabilities, const Window &window);
 
-    std::shared_ptr<vk::raii::SwapchainKHR> swapChain;
-    std::vector<vk::Image> images;
-    std::vector<vk::raii::ImageView> imageViews;
-    vk::Format format{};
-    vk::Extent2D extent{};
+    std::shared_ptr<vk::raii::SwapchainKHR> m_swapChain;
+    std::vector<vk::Image> m_images;
+    std::vector<vk::raii::ImageView> m_imageViews;
+    vk::Format m_format{};
+    vk::Extent2D m_extent{};
 };
 
 } // namespace VulkanHelpers

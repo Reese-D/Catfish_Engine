@@ -13,7 +13,7 @@
 
 namespace VulkanHelpers {
 
-GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format swapChainFormat, vk::Format depthFormat) {
+GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &m_device, vk::Format swapChainFormat, vk::Format depthFormat) {
     // Set 0: UBO (view + proj), vertex stage
     auto uboBinding = vk::DescriptorSetLayoutBinding{
         .binding = 0,
@@ -21,7 +21,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .descriptorCount = 1,
         .stageFlags = vk::ShaderStageFlagBits::eVertex,
     };
-    uboLayout = std::make_shared<vk::raii::DescriptorSetLayout>(device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &uboBinding});
+    m_uboLayout = std::make_shared<vk::raii::DescriptorSetLayout>(m_device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &uboBinding});
 
     // Set 1: combined image sampler, fragment stage
     auto texBinding = vk::DescriptorSetLayoutBinding{
@@ -30,12 +30,12 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .descriptorCount = 1,
         .stageFlags = vk::ShaderStageFlagBits::eFragment,
     };
-    textureLayout = std::make_shared<vk::raii::DescriptorSetLayout>(device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &texBinding});
+    m_textureLayout = std::make_shared<vk::raii::DescriptorSetLayout>(m_device, vk::DescriptorSetLayoutCreateInfo{.bindingCount = 1, .pBindings = &texBinding});
 
     auto vertCode = readShaderFile("shaders/vert.spv");
     auto fragCode = readShaderFile("shaders/frag.spv");
-    auto vertModule = createShaderModule(device, vertCode);
-    auto fragModule = createShaderModule(device, fragCode);
+    auto vertModule = createShaderModule(m_device, vertCode);
+    auto fragModule = createShaderModule(m_device, fragCode);
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = {
         vk::PipelineShaderStageCreateInfo{
@@ -116,9 +116,9 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         .offset = 0,
         .size = sizeof(glm::mat4),
     };
-    std::array<vk::DescriptorSetLayout, 2> rawLayouts = {**uboLayout, **textureLayout};
-    pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(
-        device, vk::PipelineLayoutCreateInfo{
+    std::array<vk::DescriptorSetLayout, 2> rawLayouts = {**m_uboLayout, **m_textureLayout};
+    m_pipelineLayout = std::make_shared<vk::raii::PipelineLayout>(
+        m_device, vk::PipelineLayoutCreateInfo{
                     .setLayoutCount = static_cast<uint32_t>(rawLayouts.size()),
                     .pSetLayouts = rawLayouts.data(),
                     .pushConstantRangeCount = 1,
@@ -138,7 +138,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
             .pDepthStencilState = &depthStencilInfo,
             .pColorBlendState = &colorBlendInfo,
             .pDynamicState = &dynamicStateInfo,
-            .layout = **pipelineLayout,
+            .layout = **m_pipelineLayout,
         },
         vk::PipelineRenderingCreateInfo{
             .colorAttachmentCount = 1,
@@ -147,7 +147,7 @@ GraphicsPipeline::GraphicsPipeline(const vk::raii::Device &device, vk::Format sw
         },
     };
 
-    pipeline = std::make_shared<vk::raii::Pipeline>(device, nullptr, pipelineChain.get<vk::GraphicsPipelineCreateInfo>());
+    m_pipeline = std::make_shared<vk::raii::Pipeline>(m_device, nullptr, pipelineChain.get<vk::GraphicsPipelineCreateInfo>());
 }
 
 std::vector<char> GraphicsPipeline::readShaderFile(const std::string &filename) {
@@ -162,9 +162,9 @@ std::vector<char> GraphicsPipeline::readShaderFile(const std::string &filename) 
     return buffer;
 }
 
-vk::raii::ShaderModule GraphicsPipeline::createShaderModule(const vk::raii::Device &device, const std::vector<char> &code) {
+vk::raii::ShaderModule GraphicsPipeline::createShaderModule(const vk::raii::Device &m_device, const std::vector<char> &code) {
     return vk::raii::ShaderModule{
-        device, vk::ShaderModuleCreateInfo{
+        m_device, vk::ShaderModuleCreateInfo{
                     .codeSize = code.size(),
                     .pCode = reinterpret_cast<const uint32_t *>(code.data()),
                 }

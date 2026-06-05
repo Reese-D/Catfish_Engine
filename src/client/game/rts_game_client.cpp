@@ -27,21 +27,21 @@ namespace Game {
 void RtsGameClient::initLogic() {}
 
 void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
-    window = &ctx.window;
+    m_window = &ctx.window;
 
-    unitModel        = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
-    terrain          = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    projectileModel  = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    lavaTileModel    = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    hudResources     = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    selectionRingModel = VulkanHelpers::createSelectionRingModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
+    m_unitModel        = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
+    m_terrain          = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_projectileModel  = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_lavaTileModel    = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_hudResources     = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_selectionRingModel = VulkanHelpers::createSelectionRingModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
         ctx.window, ctx.instance, ctx.physicalDevice, ctx.device,
         ctx.graphicsQueueFamilyIndex, ctx.graphicsQueue, ctx.swapChain, ctx.depthFormat
     );
 
-    auto camEntity = registry.create();
-    registry.emplace<Components::Camera>(
+    auto camEntity = m_registry.create();
+    m_registry.emplace<Components::Camera>(
         camEntity, Components::Camera{
                        .position = {0.0f, -12.0f, 14.0f},
                        .target = {0.0f, 0.0f, 0.0f},
@@ -51,23 +51,23 @@ void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
                    }
     );
 
-    auto terrainEnt = registry.create();
-    registry.emplace<Components::Transform>(terrainEnt);
-    registry.emplace<Components::RenderMesh>(terrainEnt, Components::RenderMesh{terrain->getModelPtr()});
+    auto terrainEnt = m_registry.create();
+    m_registry.emplace<Components::Transform>(terrainEnt);
+    m_registry.emplace<Components::RenderMesh>(terrainEnt, Components::RenderMesh{m_terrain->getModelPtr()});
 }
 
 VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) {
-    if (menuSystem)
-        menuSystem->beginFrame();
+    if (m_menuSystem)
+        m_menuSystem->beginFrame();
 
     VulkanHelpers::FrameOutput out;
-    bool gameplayActive = !menuSystem || menuSystem->isGameplayStarted();
+    bool gameplayActive = !m_menuSystem || m_menuSystem->isGameplayStarted();
 
     if (!gameplayActive) {
-        if (menuSystem && menuSystem->drawMainMenu(extent) == VulkanHelpers::MenuAction::Exit)
-            closeRequested = true;
-        for (auto e : registry.view<Components::Camera>()) {
-            const auto &cam = registry.get<Components::Camera>(e);
+        if (m_menuSystem && m_menuSystem->drawMainMenu(extent) == VulkanHelpers::MenuAction::Exit)
+            m_closeRequested = true;
+        for (auto e : m_registry.view<Components::Camera>()) {
+            const auto &cam = m_registry.get<Components::Camera>(e);
             out.view = cam.view;
             out.proj = cam.proj;
             break;
@@ -76,8 +76,8 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     }
 
     // ---- Network poll -------------------------------------------------------
-    if (networkManager_) {
-        networkManager_->poll(
+    if (m_networkManager) {
+        m_networkManager->poll(
             [this](const uint8_t *data, std::size_t size, ENetPeer *) {
                 if (size == 0) return;
                 auto type = static_cast<MessageType>(data[0]);
@@ -89,42 +89,42 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
             [this](ENetPeer *) {
                 HelloPacket pkt{};
                 pkt.msgType = static_cast<uint8_t>(MessageType::Hello);
-                pkt.protocolVersion = PROTOCOL_VERSION;
+                pkt.protocolVersion = kProtocolVersion;
                 const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
-                networkManager_->sendToServerReliable({raw, raw + sizeof(pkt)});
+                m_networkManager->sendToServerReliable({raw, raw + sizeof(pkt)});
             },
             nullptr
         );
     }
 
-    ++tick_;
+    ++m_tick;
 
-    if (window && (!menuSystem || !menuSystem->wantsKeyboard()))
-        Systems::updateCameraInput(registry, *window, dt);
-    if (window && (!menuSystem || !menuSystem->wantsMouse()))
+    if (m_window && (!m_menuSystem || !m_menuSystem->wantsKeyboard()))
+        Systems::updateCameraInput(m_registry, *m_window, dt);
+    if (m_window && (!m_menuSystem || !m_menuSystem->wantsMouse()))
         clientCaptureAndSendInput(extent);
-    Systems::updateCamera(registry, extent);
-    spatialGrid.update(registry);
+    Systems::updateCamera(m_registry, extent);
+    m_spatialGrid.update(m_registry);
 
     // ---- Rendering ---------------------------------------------------------
-    const Systems::FogOfWar *fog = fogOfWar ? &*fogOfWar : nullptr;
-    if (fogOfWar)
-        fogOfWar->update(registry, myFaction_);
+    const Systems::FogOfWar *fog = m_fogOfWar ? &*m_fogOfWar : nullptr;
+    if (m_fogOfWar)
+        m_fogOfWar->update(m_registry, m_myFaction);
 
-    out.draws = Systems::collectDrawCalls(registry, fog);
-    Systems::appendLavaDrawCalls(lavaZone, out.draws, *lavaTileModel);
-    Systems::appendSelectionRings(registry, out.draws, *selectionRingModel, fog);
-    Systems::appendHealthBars(registry, out.draws, hudResources, fog);
+    out.draws = Systems::collectDrawCalls(m_registry, fog);
+    Systems::appendLavaDrawCalls(m_lavaZone, out.draws, *m_lavaTileModel);
+    Systems::appendSelectionRings(m_registry, out.draws, *m_selectionRingModel, fog);
+    Systems::appendHealthBars(m_registry, out.draws, m_hudResources, fog);
 
-    if (menuSystem)
-        menuSystem->drawOverlay(dt);
-    if (fogOfWar)
-        Systems::drawFogOverlay(*fogOfWar, registry, extent);
-    if (minimapEnabled)
-        Systems::drawMinimap(fog, registry, extent);
+    if (m_menuSystem)
+        m_menuSystem->drawOverlay(dt);
+    if (m_fogOfWar)
+        Systems::drawFogOverlay(*m_fogOfWar, m_registry, extent);
+    if (m_minimapEnabled)
+        Systems::drawMinimap(fog, m_registry, extent);
 
-    for (auto e : registry.view<Components::Camera>()) {
-        const auto &cam = registry.get<Components::Camera>(e);
+    for (auto e : m_registry.view<Components::Camera>()) {
+        const auto &cam = m_registry.get<Components::Camera>(e);
         out.view = cam.view;
         out.proj = cam.proj;
         break;
@@ -134,17 +134,17 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
 }
 
 void RtsGameClient::renderImGui(vk::CommandBuffer cmd) {
-    if (menuSystem)
-        menuSystem->render(cmd);
+    if (m_menuSystem)
+        m_menuSystem->render(cmd);
 }
 
 void RtsGameClient::onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) {
-    if (menuSystem)
-        menuSystem->onSwapChainRecreated(swapChain);
+    if (m_menuSystem)
+        m_menuSystem->onSwapChainRecreated(swapChain);
 }
 
-bool RtsGameClient::wantsMouse()    const { return menuSystem && menuSystem->wantsMouse(); }
-bool RtsGameClient::wantsKeyboard() const { return menuSystem && menuSystem->wantsKeyboard(); }
+bool RtsGameClient::wantsMouse()    const { return m_menuSystem && m_menuSystem->wantsMouse(); }
+bool RtsGameClient::wantsKeyboard() const { return m_menuSystem && m_menuSystem->wantsKeyboard(); }
 
 // ---- Client network handlers (GPU-aware) -----------------------------------
 
@@ -154,11 +154,11 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
     if (!r.read(hdr))
         return;
 
-    lavaZone.setSafeRadius(hdr.lavaRadius);
+    m_lavaZone.setSafeRadius(hdr.lavaRadius);
 
     std::unordered_map<uint32_t, entt::entity> knownUnits;
-    for (auto e : registry.view<Components::NetworkId, Components::Faction>())
-        knownUnits[registry.get<Components::NetworkId>(e).id] = e;
+    for (auto e : m_registry.view<Components::NetworkId, Components::Faction>())
+        knownUnits[m_registry.get<Components::NetworkId>(e).id] = e;
 
     std::unordered_set<uint32_t> seenUnits;
     for (uint8_t i = 0; i < hdr.entityCount; ++i) {
@@ -169,42 +169,42 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
         auto it = knownUnits.find(es.netId);
         if (it == knownUnits.end()) {
             auto faction = static_cast<Components::FactionId>(es.faction);
-            auto e = registry.create();
-            registry.emplace<Components::NetworkId>(e, Components::NetworkId{es.netId});
-            netIdToEntity_[es.netId] = e;
-            registry.emplace<Components::Transform>(
+            auto e = m_registry.create();
+            m_registry.emplace<Components::NetworkId>(e, Components::NetworkId{es.netId});
+            m_netIdToEntity[es.netId] = e;
+            m_registry.emplace<Components::Transform>(
                 e, Components::Transform{
                        .position = {es.x, es.y, es.z},
                        .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0)),
                        .scale = {1, 1, 1},
                    }
             );
-            if (unitModel)
-                registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{unitModel});
-            registry.emplace<Components::Faction>(e, Components::Faction{faction});
-            registry.emplace<Components::Health>(e, Components::Health{es.health, es.maxHealth});
-            registry.emplace<Components::Selectable>(e);
-            if (es.netId == myNetworkId_) {
-                myFaction_ = faction;
-                registry.emplace<Components::AlwaysSelected>(e);
-                registry.emplace<Components::Selected>(e);
+            if (m_unitModel)
+                m_registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{m_unitModel});
+            m_registry.emplace<Components::Faction>(e, Components::Faction{faction});
+            m_registry.emplace<Components::Health>(e, Components::Health{es.health, es.maxHealth});
+            m_registry.emplace<Components::Selectable>(e);
+            if (es.netId == m_myNetworkId) {
+                m_myFaction = faction;
+                m_registry.emplace<Components::AlwaysSelected>(e);
+                m_registry.emplace<Components::Selected>(e);
             }
         } else {
-            registry.get<Components::Transform>(it->second).position = {es.x, es.y, es.z};
-            auto &h = registry.get<Components::Health>(it->second);
+            m_registry.get<Components::Transform>(it->second).position = {es.x, es.y, es.z};
+            auto &h = m_registry.get<Components::Health>(it->second);
             h.current = es.health; h.max = es.maxHealth;
         }
     }
     for (auto &[nid, e] : knownUnits) {
-        if (!seenUnits.count(nid) && registry.valid(e)) {
-            registry.destroy(e);
-            netIdToEntity_.erase(nid);
+        if (!seenUnits.count(nid) && m_registry.valid(e)) {
+            m_registry.destroy(e);
+            m_netIdToEntity.erase(nid);
         }
     }
 
     std::unordered_map<uint32_t, entt::entity> knownProj;
-    for (auto e : registry.view<Components::NetworkId, Components::Projectile>())
-        knownProj[registry.get<Components::NetworkId>(e).id] = e;
+    for (auto e : m_registry.view<Components::NetworkId, Components::Projectile>())
+        knownProj[m_registry.get<Components::NetworkId>(e).id] = e;
 
     std::unordered_set<uint32_t> seenProj;
     for (uint8_t i = 0; i < hdr.projectileCount; ++i) {
@@ -214,63 +214,63 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
 
         auto it = knownProj.find(ps.netId);
         if (it == knownProj.end()) {
-            auto e = registry.create();
-            registry.emplace<Components::NetworkId>(e, Components::NetworkId{ps.netId});
-            netIdToEntity_[ps.netId] = e;
-            registry.emplace<Components::Transform>(
+            auto e = m_registry.create();
+            m_registry.emplace<Components::NetworkId>(e, Components::NetworkId{ps.netId});
+            m_netIdToEntity[ps.netId] = e;
+            m_registry.emplace<Components::Transform>(
                 e, Components::Transform{
                        .position = {ps.x, ps.y, ps.z},
                        .rotation = glm::quat{1, 0, 0, 0},
                        .scale = {1, 1, 1},
                    }
             );
-            if (projectileModel)
-                registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{projectileModel});
-            registry.emplace<Components::Projectile>(
+            if (m_projectileModel)
+                m_registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{m_projectileModel});
+            m_registry.emplace<Components::Projectile>(
                 e, Components::Projectile{
                        .ownerFaction = static_cast<Components::FactionId>(ps.faction),
                        .velocity = {ps.vx, ps.vy, ps.vz},
                    }
             );
         } else {
-            registry.get<Components::Transform>(it->second).position = {ps.x, ps.y, ps.z};
-            registry.get<Components::Projectile>(it->second).velocity = {ps.vx, ps.vy, ps.vz};
+            m_registry.get<Components::Transform>(it->second).position = {ps.x, ps.y, ps.z};
+            m_registry.get<Components::Projectile>(it->second).velocity = {ps.vx, ps.vy, ps.vz};
         }
     }
     for (auto &[nid, e] : knownProj) {
-        if (!seenProj.count(nid) && registry.valid(e)) {
-            registry.destroy(e);
-            netIdToEntity_.erase(nid);
+        if (!seenProj.count(nid) && m_registry.valid(e)) {
+            m_registry.destroy(e);
+            m_netIdToEntity.erase(nid);
         }
     }
 }
 
 void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
-    if (!networkManager_ || !networkManager_->isConnected())
+    if (!m_networkManager || !m_networkManager->isConnected())
         return;
 
-    bool rightDown = window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
-    bool qDown     = window->isKeyPressed(GLFW_KEY_Q);
-    bool eDown     = window->isKeyPressed(GLFW_KEY_E);
-    bool rightJust = rightDown && !prevMouseRight_;
-    bool qJust     = qDown     && !prevKeyQ_;
-    bool eJust     = eDown     && !prevKeyE_;
-    prevMouseRight_ = rightDown;
-    prevKeyQ_       = qDown;
-    prevKeyE_       = eDown;
+    bool rightDown = m_window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+    bool qDown     = m_window->isKeyPressed(GLFW_KEY_Q);
+    bool eDown     = m_window->isKeyPressed(GLFW_KEY_E);
+    bool rightJust = rightDown && !m_prevMouseRight;
+    bool qJust     = qDown     && !m_prevKeyQ;
+    bool eJust     = eDown     && !m_prevKeyE;
+    m_prevMouseRight = rightDown;
+    m_prevKeyQ       = qDown;
+    m_prevKeyE       = eDown;
 
     if (!rightJust && !qJust && !eJust)
         return;
 
     const Components::Camera *cam = nullptr;
-    for (auto e : registry.view<Components::Camera>()) {
-        cam = &registry.get<Components::Camera>(e);
+    for (auto e : m_registry.view<Components::Camera>()) {
+        cam = &m_registry.get<Components::Camera>(e);
         break;
     }
     if (!cam)
         return;
 
-    auto [mx, my] = window->getMousePosition();
+    auto [mx, my] = m_window->getMousePosition();
     float ndcX = (2.0f * static_cast<float>(mx)) / static_cast<float>(extent.width)  - 1.0f;
     float ndcY = (2.0f * static_cast<float>(my)) / static_cast<float>(extent.height) - 1.0f;
     glm::mat4 invVP = glm::inverse(cam->proj * cam->view);
@@ -293,14 +293,14 @@ void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
 
     InputPacket pkt{};
     pkt.msgType     = static_cast<uint8_t>(MessageType::Input);
-    pkt.tick        = tick_;
-    pkt.flags       = (hasMoveOrder ? InputFlags::MoveOrder : 0) | (fireAbility ? InputFlags::FireAbility : 0);
+    pkt.tick        = m_tick;
+    pkt.flags       = (hasMoveOrder ? InputFlags::kMoveOrder : 0) | (fireAbility ? InputFlags::kFireAbility : 0);
     pkt.abilitySlot = abilitySlot;
     pkt.moveX = moveTarget.x;    pkt.moveY = moveTarget.y;    pkt.moveZ = moveTarget.z;
     pkt.abilityX = abilityTarget.x; pkt.abilityY = abilityTarget.y; pkt.abilityZ = abilityTarget.z;
 
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
-    networkManager_->sendToServerUnreliable({raw, raw + sizeof(pkt)});
+    m_networkManager->sendToServerUnreliable({raw, raw + sizeof(pkt)});
 }
 
 } // namespace Game

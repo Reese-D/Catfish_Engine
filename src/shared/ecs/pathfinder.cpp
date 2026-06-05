@@ -8,38 +8,38 @@
 
 namespace Systems {
 
-Pathfinder::Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : cellSize_(cellSize), worldMin_(worldMin) {
-    dims_ = {
+Pathfinder::Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : m_cellSize(cellSize), m_worldMin(worldMin) {
+    m_dims = {
         static_cast<int>(std::ceil((worldMax.x - worldMin.x) / cellSize)),
         static_cast<int>(std::ceil((worldMax.y - worldMin.y) / cellSize)),
     };
-    blocked_.assign(static_cast<std::size_t>(dims_.x * dims_.y), false);
+    m_blocked.assign(static_cast<std::size_t>(m_dims.x * m_dims.y), false);
 }
 
 glm::ivec2 Pathfinder::toCell(glm::vec2 worldPos) const {
     return {
-        static_cast<int>((worldPos.x - worldMin_.x) / cellSize_),
-        static_cast<int>((worldPos.y - worldMin_.y) / cellSize_),
+        static_cast<int>((worldPos.x - m_worldMin.x) / m_cellSize),
+        static_cast<int>((worldPos.y - m_worldMin.y) / m_cellSize),
     };
 }
 
 glm::vec2 Pathfinder::toWorld(glm::ivec2 cell) const {
     return {
-        worldMin_.x + (static_cast<float>(cell.x) + 0.5f) * cellSize_,
-        worldMin_.y + (static_cast<float>(cell.y) + 0.5f) * cellSize_,
+        m_worldMin.x + (static_cast<float>(cell.x) + 0.5f) * m_cellSize,
+        m_worldMin.y + (static_cast<float>(cell.y) + 0.5f) * m_cellSize,
     };
 }
 
-bool Pathfinder::inBounds(glm::ivec2 cell) const { return cell.x >= 0 && cell.x < dims_.x && cell.y >= 0 && cell.y < dims_.y; }
+bool Pathfinder::inBounds(glm::ivec2 cell) const { return cell.x >= 0 && cell.x < m_dims.x && cell.y >= 0 && cell.y < m_dims.y; }
 
-bool Pathfinder::isWalkable(glm::ivec2 cell) const { return inBounds(cell) && !blocked_[cellIndex(cell)]; }
+bool Pathfinder::isWalkable(glm::ivec2 cell) const { return inBounds(cell) && !m_blocked[cellIndex(cell)]; }
 
-std::size_t Pathfinder::cellIndex(glm::ivec2 cell) const { return static_cast<std::size_t>(cell.y * dims_.x + cell.x); }
+std::size_t Pathfinder::cellIndex(glm::ivec2 cell) const { return static_cast<std::size_t>(cell.y * m_dims.x + cell.x); }
 
 void Pathfinder::setBlocked(glm::vec2 worldPos, bool blocked) {
     auto cell = toCell(worldPos);
     if (inBounds(cell))
-        blocked_[cellIndex(cell)] = blocked;
+        m_blocked[cellIndex(cell)] = blocked;
 }
 
 namespace {
@@ -62,7 +62,7 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
     if (startCell == endCell)
         return {{end.x, end.y, 0.0f}};
 
-    const std::size_t N = static_cast<std::size_t>(dims_.x * dims_.y);
+    const std::size_t N = static_cast<std::size_t>(m_dims.x * m_dims.y);
     const std::size_t startIdx = cellIndex(startCell);
     const std::size_t endIdx = cellIndex(endCell);
     const std::size_t NONE = std::numeric_limits<std::size_t>::max();
@@ -93,8 +93,8 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
             std::vector<glm::vec3> path;
             std::size_t idx = endIdx;
             while (idx != startIdx) {
-                int x = static_cast<int>(idx) % dims_.x;
-                int y = static_cast<int>(idx) / dims_.x;
+                int x = static_cast<int>(idx) % m_dims.x;
+                int y = static_cast<int>(idx) / m_dims.x;
                 auto w = toWorld({x, y});
                 path.push_back({w.x, w.y, 0.0f});
                 idx = cameFrom[idx];
@@ -107,8 +107,8 @@ std::vector<glm::vec3> Pathfinder::findPath(glm::vec2 start, glm::vec2 end) cons
             return smooth(path);
         }
 
-        int cx = static_cast<int>(currIdx) % dims_.x;
-        int cy = static_cast<int>(currIdx) / dims_.x;
+        int cx = static_cast<int>(currIdx) % m_dims.x;
+        int cy = static_cast<int>(currIdx) / m_dims.x;
 
         for (int i = 0; i < 8; ++i) {
             glm::ivec2 nb{cx + DX[i], cy + DY[i]};

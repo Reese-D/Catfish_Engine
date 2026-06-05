@@ -62,7 +62,7 @@ Terrain::Terrain(
         }
     }
 
-    model = std::make_shared<Model>(device, physicalDevice, commandPool, graphicsQueue, textureLayout, vertices, indices, std::move(texture));
+    m_model = std::make_shared<Model>(device, physicalDevice, commandPool, graphicsQueue, textureLayout, vertices, indices, std::move(texture));
 }
 
 } // namespace VulkanHelpers

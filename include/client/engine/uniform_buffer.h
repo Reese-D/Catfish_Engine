@@ -25,15 +25,15 @@ class UniformBuffer {
 
     void update(const glm::mat4 &view, const glm::mat4 &proj);
 
-    vk::DescriptorSet getDescriptorSet() const { return **descriptorSet; }
+    vk::DescriptorSet getDescriptorSet() const { return **m_descriptorSet; }
 
   private:
-    std::shared_ptr<vk::raii::Buffer> buffer;
-    std::shared_ptr<vk::raii::DeviceMemory> bufferMemory;
-    void *mappedData{nullptr};
+    std::shared_ptr<vk::raii::Buffer> m_buffer;
+    std::shared_ptr<vk::raii::DeviceMemory> m_bufferMemory;
+    void *m_mappedData{nullptr};
 
-    std::shared_ptr<vk::raii::DescriptorPool> descriptorPool;
-    std::shared_ptr<vk::raii::DescriptorSet> descriptorSet;
+    std::shared_ptr<vk::raii::DescriptorPool> m_descriptorPool;
+    std::shared_ptr<vk::raii::DescriptorSet> m_descriptorSet;
 };
 
 } // namespace VulkanHelpers

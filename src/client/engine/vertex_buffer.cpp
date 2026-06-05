@@ -43,15 +43,15 @@ std::vector<vk::VertexInputAttributeDescription> Vertex::getAttributeDescription
 }
 
 VertexBuffer::VertexBuffer(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const std::vector<Vertex> &vertices
 ) {
-    vertexCount = static_cast<uint32_t>(vertices.size());
+    m_vertexCount = static_cast<uint32_t>(vertices.size());
     vk::DeviceSize dataSize = sizeof(Vertex) * vertices.size();
 
     // Host-visible staging buffer
     auto stagingBuffer = vk::raii::Buffer{
-        device, vk::BufferCreateInfo{
+        m_device, vk::BufferCreateInfo{
                     .size = dataSize,
                     .usage = vk::BufferUsageFlagBits::eTransferSrc,
                     .sharingMode = vk::SharingMode::eExclusive,
@@ -59,7 +59,7 @@ VertexBuffer::VertexBuffer(
     };
     auto stagingReqs = stagingBuffer.getMemoryRequirements();
     auto stagingMemory = vk::raii::DeviceMemory{
-        device, vk::MemoryAllocateInfo{
+        m_device, vk::MemoryAllocateInfo{
                     .allocationSize = stagingReqs.size,
                     .memoryTypeIndex = findMemoryType(physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
                 }
@@ -71,24 +71,24 @@ VertexBuffer::VertexBuffer(
     stagingMemory.unmapMemory();
 
     // Device-local vertex buffer
-    vertexBuffer = std::make_shared<vk::raii::Buffer>(
-        device, vk::BufferCreateInfo{
+    m_vertexBuffer = std::make_shared<vk::raii::Buffer>(
+        m_device, vk::BufferCreateInfo{
                     .size = dataSize,
                     .usage = vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
                     .sharingMode = vk::SharingMode::eExclusive,
                 }
     );
-    auto vertexReqs = vertexBuffer->getMemoryRequirements();
-    vertexBufferMemory = std::make_shared<vk::raii::DeviceMemory>(
-        device, vk::MemoryAllocateInfo{
+    auto vertexReqs = m_vertexBuffer->getMemoryRequirements();
+    m_vertexBufferMemory = std::make_shared<vk::raii::DeviceMemory>(
+        m_device, vk::MemoryAllocateInfo{
                     .allocationSize = vertexReqs.size,
                     .memoryTypeIndex = findMemoryType(physicalDevice, vertexReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal),
                 }
     );
-    vertexBuffer->bindMemory(**vertexBufferMemory, 0);
+    m_vertexBuffer->bindMemory(**m_vertexBufferMemory, 0);
 
     // One-time transfer command
-    auto cmdBuffers = device.allocateCommandBuffers(
+    auto cmdBuffers = m_device.allocateCommandBuffers(
         vk::CommandBufferAllocateInfo{
             .commandPool = *commandPool,
             .level = vk::CommandBufferLevel::ePrimary,
@@ -97,7 +97,7 @@ VertexBuffer::VertexBuffer(
     );
     auto &cmd = cmdBuffers[0];
     cmd.begin(vk::CommandBufferBeginInfo{.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-    cmd.copyBuffer(*stagingBuffer, **vertexBuffer, vk::BufferCopy{.size = dataSize});
+    cmd.copyBuffer(*stagingBuffer, **m_vertexBuffer, vk::BufferCopy{.size = dataSize});
     cmd.end();
 
     vk::CommandBuffer rawCmd = *cmd;

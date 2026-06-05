@@ -22,25 +22,25 @@ class RtsGameClient : public RtsGameBase, public VulkanHelpers::IGame {
     void onSwapChainRecreated(const VulkanHelpers::SwapChain &swapChain) override;
     bool wantsMouse() const override;
     bool wantsKeyboard() const override;
-    bool wantsClose() const override { return closeRequested; }
+    bool wantsClose() const override { return m_closeRequested; }
 
   private:
     void clientApplySnapshot(const uint8_t *data, std::size_t size);
     void clientCaptureAndSendInput(vk::Extent2D extent);
 
-    VulkanHelpers::Window *window{nullptr};
+    VulkanHelpers::Window *m_window{nullptr};
 
-    std::shared_ptr<VulkanHelpers::Model> unitModel;
-    std::shared_ptr<VulkanHelpers::Terrain> terrain;
-    std::shared_ptr<VulkanHelpers::Model> selectionRingModel;
-    std::shared_ptr<VulkanHelpers::Model> projectileModel;
-    std::shared_ptr<VulkanHelpers::Model> lavaTileModel;
-    VulkanHelpers::HudResources hudResources;
-    std::shared_ptr<VulkanHelpers::MenuSystem> menuSystem;
+    std::shared_ptr<VulkanHelpers::Model> m_unitModel;
+    std::shared_ptr<VulkanHelpers::Terrain> m_terrain;
+    std::shared_ptr<VulkanHelpers::Model> m_selectionRingModel;
+    std::shared_ptr<VulkanHelpers::Model> m_projectileModel;
+    std::shared_ptr<VulkanHelpers::Model> m_lavaTileModel;
+    VulkanHelpers::HudResources m_hudResources;
+    std::shared_ptr<VulkanHelpers::MenuSystem> m_menuSystem;
 
-    bool prevMouseRight_{false};
-    bool prevKeyQ_{false};
-    bool prevKeyE_{false};
+    bool m_prevMouseRight{false};
+    bool m_prevKeyQ{false};
+    bool m_prevKeyE{false};
 };
 
 } // namespace Game

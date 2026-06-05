@@ -21,8 +21,8 @@ void SwapChain::recreate(
     const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::Device &device, const vk::raii::SurfaceKHR &surface, uint32_t graphicsFamily, uint32_t presentFamily,
     const Window &window
 ) {
-    imageViews.clear();
-    swapChain.reset();
+    m_imageViews.clear();
+    m_swapChain.reset();
     create(physicalDevice, device, surface, graphicsFamily, presentFamily, window);
 }
 
@@ -33,8 +33,8 @@ void SwapChain::create(
     auto capabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
     auto surfaceFormat = chooseSurfaceFormat(physicalDevice.getSurfaceFormatsKHR(*surface));
     auto presentMode = choosePresentMode(physicalDevice.getSurfacePresentModesKHR(*surface));
-    extent = chooseExtent(capabilities, window);
-    format = surfaceFormat.format;
+    m_extent = chooseExtent(capabilities, window);
+    m_format = surfaceFormat.format;
 
     uint32_t imageCount = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount) {
@@ -46,7 +46,7 @@ void SwapChain::create(
         .minImageCount = imageCount,
         .imageFormat = surfaceFormat.format,
         .imageColorSpace = surfaceFormat.colorSpace,
-        .imageExtent = extent,
+        .imageExtent = m_extent,
         .imageArrayLayers = 1,
         .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
         .preTransform = capabilities.currentTransform,
@@ -64,18 +64,18 @@ void SwapChain::create(
         createInfo.imageSharingMode = vk::SharingMode::eExclusive;
     }
 
-    swapChain = std::make_shared<vk::raii::SwapchainKHR>(device, createInfo);
-    images = swapChain->getImages();
+    m_swapChain = std::make_shared<vk::raii::SwapchainKHR>(device, createInfo);
+    m_images = m_swapChain->getImages();
     createImageViews(device);
 }
 
 void SwapChain::createImageViews(const vk::raii::Device &device) {
-    imageViews.clear();
-    for (const auto &image : images) {
+    m_imageViews.clear();
+    for (const auto &image : m_images) {
         auto createInfo = vk::ImageViewCreateInfo{
             .image = image,
             .viewType = vk::ImageViewType::e2D,
-            .format = format,
+            .format = m_format,
             .subresourceRange = vk::ImageSubresourceRange{
                 .aspectMask = vk::ImageAspectFlagBits::eColor,
                 .baseMipLevel = 0,
@@ -84,7 +84,7 @@ void SwapChain::createImageViews(const vk::raii::Device &device) {
                 .layerCount = 1,
             },
         };
-        imageViews.emplace_back(device, createInfo);
+        m_imageViews.emplace_back(device, createInfo);
     }
 }
 

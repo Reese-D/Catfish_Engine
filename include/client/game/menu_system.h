@@ -33,13 +33,13 @@ class MenuSystem {
     void render(vk::CommandBuffer commandBuffer);
     void onSwapChainRecreated(const SwapChain &swapChain);
 
-    bool isGameplayStarted() const { return gameplayStarted; }
+    bool isGameplayStarted() const { return m_gameplayStarted; }
     bool wantsMouse() const;
     bool wantsKeyboard() const;
 
   private:
-    bool gameplayStarted{false};
-    bool showOverlay{true};
+    bool m_gameplayStarted{false};
+    bool m_showOverlay{true};
 };
 
 } // namespace VulkanHelpers

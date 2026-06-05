@@ -9,7 +9,7 @@
 // the same architecture for now; add bswap if cross-platform is needed later).
 
 // Bump whenever the packet layout changes in a breaking way.
-constexpr uint16_t PROTOCOL_VERSION = 2;
+constexpr uint16_t kProtocolVersion = 2;
 
 enum class MessageType : uint8_t {
     Snapshot           = 0x01, // server → client, unreliable
@@ -61,8 +61,8 @@ struct SnapshotHeader {
 };
 
 namespace InputFlags {
-    constexpr uint8_t MoveOrder   = 0x01;
-    constexpr uint8_t FireAbility = 0x02;
+    constexpr uint8_t kMoveOrder   = 0x01;
+    constexpr uint8_t kFireAbility = 0x02;
 }
 
 struct InputPacket {
@@ -102,33 +102,33 @@ class BufWriter {
   public:
     template <typename T> void write(const T &v) {
         const auto *p = reinterpret_cast<const uint8_t *>(&v);
-        buf_.insert(buf_.end(), p, p + sizeof(T));
+        m_buf.insert(m_buf.end(), p, p + sizeof(T));
     }
-    const std::vector<uint8_t> &buf() const { return buf_; }
+    const std::vector<uint8_t> &buf() const { return m_buf; }
 
   private:
-    std::vector<uint8_t> buf_;
+    std::vector<uint8_t> m_buf;
 };
 
 class BufReader {
   public:
-    BufReader(const uint8_t *data, std::size_t size) : data_(data), size_(size) {}
+    BufReader(const uint8_t *data, std::size_t size) : m_data(data), m_size(size) {}
 
     template <typename T> bool read(T &v) {
-        if (pos_ + sizeof(T) > size_)
+        if (m_pos + sizeof(T) > m_size)
             return false;
-        std::memcpy(&v, data_ + pos_, sizeof(T));
-        pos_ += sizeof(T);
+        std::memcpy(&v, m_data + m_pos, sizeof(T));
+        m_pos += sizeof(T);
         return true;
     }
 
-    bool ok() const { return pos_ <= size_; }
-    bool done() const { return pos_ == size_; }
+    bool ok() const { return m_pos <= m_size; }
+    bool done() const { return m_pos == m_size; }
 
   private:
-    const uint8_t *data_;
-    std::size_t size_;
-    std::size_t pos_{0};
+    const uint8_t *m_data;
+    std::size_t m_size;
+    std::size_t m_pos{0};
 };
 
 #endif // NETWORK_MESSAGES_H

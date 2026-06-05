@@ -16,18 +16,18 @@ class PhysicalDevice {
     PhysicalDevice(const PhysicalDevice &) = delete;
     PhysicalDevice &operator=(const PhysicalDevice &) = delete;
 
-    std::shared_ptr<vk::raii::PhysicalDevice> getPhysicalDevice() const { return physicalDevice; }
-    uint32_t getGraphicsQueueFamilyIndex() const { return graphicsQueueFamilyIndex; }
-    uint32_t getPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
+    std::shared_ptr<vk::raii::PhysicalDevice> getPhysicalDevice() const { return m_physicalDevice; }
+    uint32_t getGraphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
+    uint32_t getPresentQueueFamilyIndex() const { return m_presentQueueFamilyIndex; }
 
   private:
     static bool isDeviceSuitable(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface);
     static uint32_t findGraphicsQueueFamily(const vk::raii::PhysicalDevice &device);
     static uint32_t findPresentQueueFamily(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface);
 
-    std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
-    uint32_t graphicsQueueFamilyIndex{0};
-    uint32_t presentQueueFamilyIndex{0};
+    std::shared_ptr<vk::raii::PhysicalDevice> m_physicalDevice;
+    uint32_t m_graphicsQueueFamilyIndex{0};
+    uint32_t m_presentQueueFamilyIndex{0};
 };
 
 } // namespace VulkanHelpers

@@ -18,10 +18,10 @@ class Surface {
     Surface(const Surface &) = delete;
     Surface &operator=(const Surface &) = delete;
 
-    std::shared_ptr<vk::raii::SurfaceKHR> getSurface() const { return surface; }
+    std::shared_ptr<vk::raii::SurfaceKHR> getSurface() const { return m_surface; }
 
   private:
-    std::shared_ptr<vk::raii::SurfaceKHR> surface;
+    std::shared_ptr<vk::raii::SurfaceKHR> m_surface;
 };
 
 } // namespace VulkanHelpers

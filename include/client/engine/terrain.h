@@ -24,11 +24,11 @@ class Terrain {
     Terrain(const Terrain &) = delete;
     Terrain &operator=(const Terrain &) = delete;
 
-    const Model &getModel() const { return *model; }
-    std::shared_ptr<Model> getModelPtr() const { return model; }
+    const Model &getModel() const { return *m_model; }
+    std::shared_ptr<Model> getModelPtr() const { return m_model; }
 
   private:
-    std::shared_ptr<Model> model;
+    std::shared_ptr<Model> m_model;
 };
 
 } // namespace VulkanHelpers

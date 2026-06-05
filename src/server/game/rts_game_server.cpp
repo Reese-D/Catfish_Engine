@@ -14,8 +14,8 @@ namespace Game {
 void RtsGameServer::initLogic() {}
 
 void RtsGameServer::update(float dt) {
-    if (networkManager_) {
-        networkManager_->poll(
+    if (m_networkManager) {
+        m_networkManager->poll(
             [this](const uint8_t *data, std::size_t size, ENetPeer *peer) {
                 if (size == 0) return;
                 auto type = static_cast<MessageType>(data[0]);
@@ -27,25 +27,25 @@ void RtsGameServer::update(float dt) {
         );
     }
 
-    ++tick_;
+    ++m_tick;
 
-    lavaZone.update(dt);
-    Systems::applyLavaDamage(lavaZone, registry, dt);
-    if (combatEnabled)
-        Systems::processCombat(registry, dt);
-    Systems::processDeath(registry);
-    Systems::tickAbilities(registry, dt);
-    Systems::updateProjectiles(registry, dt);
-    Systems::applyThrust(registry, dt);
-    Systems::applyVelocity(registry, dt);
-    Systems::applySeparation(registry);
-    Systems::clampToBounds(registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
+    m_lavaZone.update(dt);
+    Systems::applyLavaDamage(m_lavaZone, m_registry, dt);
+    if (m_combatEnabled)
+        Systems::processCombat(m_registry, dt);
+    Systems::processDeath(m_registry);
+    Systems::tickAbilities(m_registry, dt);
+    Systems::updateProjectiles(m_registry, dt);
+    Systems::applyThrust(m_registry, dt);
+    Systems::applyVelocity(m_registry, dt);
+    Systems::applySeparation(m_registry);
+    Systems::clampToBounds(m_registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
 
-    spatialGrid.update(registry);
+    m_spatialGrid.update(m_registry);
 
-    snapshotTimer_ += dt;
-    if (snapshotTimer_ >= SNAPSHOT_INTERVAL) {
-        snapshotTimer_ -= SNAPSHOT_INTERVAL;
+    m_snapshotTimer += dt;
+    if (m_snapshotTimer >= kSnapshotInterval) {
+        m_snapshotTimer -= kSnapshotInterval;
         serverSendSnapshot();
     }
 }

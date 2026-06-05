@@ -77,10 +77,10 @@ Model::Model(
         throw std::runtime_error("Model contains no geometry: " + path);
     }
 
-    vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
-    indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
+    m_vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
+    m_indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
 
-    // Extract base color texture from the first primitive with a material
+    // Extract base color texture from the first primitive with a m_material
     fastgltf::DefaultBufferDataAdapter adapter;
     for (const auto &mesh : asset->meshes) {
         for (const auto &primitive : mesh.primitives) {
@@ -95,8 +95,8 @@ Model::Model(
             const auto &img = asset->images[*tex.imageIndex];
             if (const auto *bv = std::get_if<fastgltf::sources::BufferView>(&img.data)) {
                 auto bytes = adapter(asset.get(), bv->bufferViewIndex);
-                textureImage = std::make_shared<TextureImage>(device, physicalDevice, commandPool, graphicsQueue, std::span<const std::byte>(bytes.data(), bytes.size()));
-                material = std::make_shared<Material>(device, textureLayout, *textureImage);
+                m_textureImage = std::make_shared<TextureImage>(device, physicalDevice, commandPool, graphicsQueue, std::span<const std::byte>(bytes.data(), bytes.size()));
+                m_material = std::make_shared<Material>(device, textureLayout, *m_textureImage);
                 return;
             }
         }
@@ -109,10 +109,10 @@ Model::Model(
     const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout, const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices, std::shared_ptr<TextureImage> texture
 ) {
-    vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
-    indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
-    textureImage = std::move(texture);
-    material = std::make_shared<Material>(device, textureLayout, *textureImage);
+    m_vertexBuffer = std::make_shared<VertexBuffer>(device, physicalDevice, commandPool, graphicsQueue, vertices);
+    m_indexBuffer = std::make_shared<IndexBuffer>(device, physicalDevice, commandPool, graphicsQueue, indices);
+    m_textureImage = std::move(texture);
+    m_material = std::make_shared<Material>(device, textureLayout, *m_textureImage);
 }
 
 } // namespace VulkanHelpers

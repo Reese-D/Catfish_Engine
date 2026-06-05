@@ -18,16 +18,16 @@ class LavaZone {
     void update(float dt);
 
     bool isLava(glm::vec2 worldPos) const;
-    float getSafeRadius() const { return safeRadius_; }
-    float getDamagePerSecond() const { return damagePerSecond_; }
-    void setSafeRadius(float r) { safeRadius_ = r; }
+    float getSafeRadius() const { return m_safeRadius; }
+    float getDamagePerSecond() const { return m_damagePerSecond; }
+    void setSafeRadius(float r) { m_safeRadius = r; }
 
   private:
-    float safeRadius_;
-    float shrinkInterval_;
-    float shrinkAmount_;
-    float damagePerSecond_;
-    float shrinkTimer_{0.0f};
+    float m_safeRadius;
+    float m_shrinkInterval;
+    float m_shrinkAmount;
+    float m_damagePerSecond;
+    float m_shrinkTimer{0.0f};
 };
 
 } // namespace Systems

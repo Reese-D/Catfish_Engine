@@ -55,37 +55,37 @@ class RtsGameBase {
     void clientHandleConnectionRejected(const uint8_t *data, std::size_t size);
 
     // ECS
-    entt::registry registry;
-    VulkanHelpers::SpatialGrid spatialGrid{2.0f, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax}};
+    entt::registry m_registry;
+    VulkanHelpers::SpatialGrid m_spatialGrid{2.0f, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax}};
 
     // Optional features
-    std::optional<Systems::Pathfinder> pathfinder;
-    std::optional<Systems::FogOfWar> fogOfWar;
-    bool minimapEnabled{false};
-    bool combatEnabled{false};
+    std::optional<Systems::Pathfinder> m_pathfinder;
+    std::optional<Systems::FogOfWar> m_fogOfWar;
+    bool m_minimapEnabled{false};
+    bool m_combatEnabled{false};
 
-    Systems::LavaZone lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
+    Systems::LavaZone m_lavaZone{19.0f, 15.0f, 1.5f, 15.0f};
 
     // Networking
-    std::unique_ptr<Network::NetworkManager> networkManager_;
-    uint32_t nextNetworkId_{1};
-    uint32_t tick_{0};
-    float snapshotTimer_{0.0f};
-    static constexpr float SNAPSHOT_INTERVAL = 0.05f;
+    std::unique_ptr<Network::NetworkManager> m_networkManager;
+    uint32_t m_nextNetworkId{1};
+    uint32_t m_tick{0};
+    float m_snapshotTimer{0.0f};
+    static constexpr float kSnapshotInterval = 0.05f;
 
     // Server state
-    std::unordered_set<ENetPeer *> pendingPeers_;
-    std::unordered_map<ENetPeer *, uint32_t> peerToNetId_;
+    std::unordered_set<ENetPeer *> m_pendingPeers;
+    std::unordered_map<ENetPeer *, uint32_t> m_peerToNetId;
 
     // Shared reverse lookup
-    std::unordered_map<uint32_t, entt::entity> netIdToEntity_;
+    std::unordered_map<uint32_t, entt::entity> m_netIdToEntity;
 
     // Client state (set by clientHandleAssignment)
-    std::string networkStatusMessage_;
-    uint32_t myNetworkId_{0};
-    Components::FactionId myFaction_{Components::FactionId::Player};
+    std::string m_networkStatusMessage;
+    uint32_t m_myNetworkId{0};
+    Components::FactionId m_myFaction{Components::FactionId::Player};
 
-    bool closeRequested{false};
+    bool m_closeRequested{false};
 };
 
 } // namespace Game

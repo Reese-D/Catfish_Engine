@@ -19,7 +19,7 @@ void processOrders(entt::registry &registry, float deltaTime, const Pathfinder *
         const auto &speed = view.get<Components::MovementSpeed>(entity);
 
         std::visit(
-            Orders::overloaded{
+            Orders::Overloaded{
                 [&](Orders::MoveOrder &move) {
                     if (move.path.empty()) {
                         if (pathfinder) {

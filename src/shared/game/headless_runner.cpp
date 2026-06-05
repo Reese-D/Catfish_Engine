@@ -8,12 +8,12 @@ namespace VulkanHelpers {
 
 void HeadlessRunner::run(IServerGame &game) {
     game.initLogic();
-    std::cout << "[Server] Headless simulation running at " << tickHz_ << " Hz\n";
+    std::cout << "[Server] Headless simulation running at " << m_tickHz << " Hz\n";
 
     using Clock = std::chrono::steady_clock;
     using Duration = Clock::duration;
 
-    const float tick = 1.0f / tickHz_;
+    const float tick = 1.0f / m_tickHz;
     const Duration tickDur = std::chrono::duration_cast<Duration>(std::chrono::duration<float>(tick));
 
     auto nextTick = Clock::now();

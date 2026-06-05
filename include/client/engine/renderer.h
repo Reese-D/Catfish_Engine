@@ -24,7 +24,7 @@ class Renderer {
     Renderer(const Renderer &) = delete;
     Renderer &operator=(const Renderer &) = delete;
 
-    const vk::raii::CommandPool &getCommandPool() const { return *commandPool; }
+    const vk::raii::CommandPool &getCommandPool() const { return *m_commandPool; }
 
     bool drawFrame(
         const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
@@ -37,11 +37,11 @@ class Renderer {
         const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
     );
 
-    std::shared_ptr<vk::raii::CommandPool> commandPool;
-    std::shared_ptr<vk::raii::CommandBuffer> commandBuffer;
-    std::shared_ptr<vk::raii::Semaphore> imageAvailableSemaphore;
-    std::shared_ptr<vk::raii::Semaphore> renderFinishedSemaphore;
-    std::shared_ptr<vk::raii::Fence> inFlightFence;
+    std::shared_ptr<vk::raii::CommandPool> m_commandPool;
+    std::shared_ptr<vk::raii::CommandBuffer> m_commandBuffer;
+    std::shared_ptr<vk::raii::Semaphore> m_imageAvailableSemaphore;
+    std::shared_ptr<vk::raii::Semaphore> m_renderFinishedSemaphore;
+    std::shared_ptr<vk::raii::Fence> m_inFlightFence;
 };
 
 } // namespace VulkanHelpers

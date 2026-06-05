@@ -14,7 +14,7 @@
 namespace VulkanHelpers {
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const std::string &imagePath
 ) {
     int texWidth, texHeight, texChannels;
@@ -22,12 +22,12 @@ TextureImage::TextureImage(
     if (!pixels) {
         throw std::runtime_error("Failed to load texture: " + imagePath);
     }
-    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
+    upload(m_device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
     stbi_image_free(pixels);
 }
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     std::span<const std::byte> encodedBytes
 ) {
     int texWidth, texHeight, texChannels;
@@ -36,25 +36,25 @@ TextureImage::TextureImage(
     if (!pixels) {
         throw std::runtime_error("Failed to decode embedded texture");
     }
-    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
+    upload(m_device, physicalDevice, commandPool, graphicsQueue, pixels, texWidth, texHeight);
     stbi_image_free(pixels);
 }
 
 TextureImage::TextureImage(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const unsigned char *pixels, int width, int height
 ) {
-    upload(device, physicalDevice, commandPool, graphicsQueue, pixels, width, height);
+    upload(m_device, physicalDevice, commandPool, graphicsQueue, pixels, width, height);
 }
 
 void TextureImage::upload(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const unsigned char *pixels, int texWidth, int texHeight
 ) {
     vk::DeviceSize imageSize = static_cast<vk::DeviceSize>(texWidth) * texHeight * 4;
 
     auto stagingBuffer = vk::raii::Buffer{
-        device, vk::BufferCreateInfo{
+        m_device, vk::BufferCreateInfo{
                     .size = imageSize,
                     .usage = vk::BufferUsageFlagBits::eTransferSrc,
                     .sharingMode = vk::SharingMode::eExclusive,
@@ -62,7 +62,7 @@ void TextureImage::upload(
     };
     auto stagingReqs = stagingBuffer.getMemoryRequirements();
     auto stagingMemory = vk::raii::DeviceMemory{
-        device, vk::MemoryAllocateInfo{
+        m_device, vk::MemoryAllocateInfo{
                     .allocationSize = stagingReqs.size,
                     .memoryTypeIndex = findMemoryType(physicalDevice, stagingReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
                 }
@@ -73,8 +73,8 @@ void TextureImage::upload(
     std::memcpy(mapped, pixels, static_cast<size_t>(imageSize));
     stagingMemory.unmapMemory();
 
-    image = std::make_shared<vk::raii::Image>(
-        device, vk::ImageCreateInfo{
+    m_image = std::make_shared<vk::raii::Image>(
+        m_device, vk::ImageCreateInfo{
                     .imageType = vk::ImageType::e2D,
                     .format = vk::Format::eR8G8B8A8Srgb,
                     .extent =
@@ -92,14 +92,14 @@ void TextureImage::upload(
                     .initialLayout = vk::ImageLayout::eUndefined,
                 }
     );
-    auto imgReqs = image->getMemoryRequirements();
-    imageMemory = std::make_shared<vk::raii::DeviceMemory>(
-        device, vk::MemoryAllocateInfo{
+    auto imgReqs = m_image->getMemoryRequirements();
+    m_imageMemory = std::make_shared<vk::raii::DeviceMemory>(
+        m_device, vk::MemoryAllocateInfo{
                     .allocationSize = imgReqs.size,
                     .memoryTypeIndex = findMemoryType(physicalDevice, imgReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal),
                 }
     );
-    image->bindMemory(**imageMemory, 0);
+    m_image->bindMemory(**m_imageMemory, 0);
 
     auto colorRange = vk::ImageSubresourceRange{
         .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -110,7 +110,7 @@ void TextureImage::upload(
     };
 
     {
-        auto cmd = beginSingleTimeCommands(device, commandPool);
+        auto cmd = beginSingleTimeCommands(m_device, commandPool);
         auto barrier = vk::ImageMemoryBarrier2{
             .srcStageMask = vk::PipelineStageFlagBits2::eNone,
             .srcAccessMask = vk::AccessFlagBits2::eNone,
@@ -118,7 +118,7 @@ void TextureImage::upload(
             .dstAccessMask = vk::AccessFlagBits2::eTransferWrite,
             .oldLayout = vk::ImageLayout::eUndefined,
             .newLayout = vk::ImageLayout::eTransferDstOptimal,
-            .image = **image,
+            .image = **m_image,
             .subresourceRange = colorRange,
         };
         cmd.pipelineBarrier2(vk::DependencyInfo{.imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier});
@@ -126,7 +126,7 @@ void TextureImage::upload(
     }
 
     {
-        auto cmd = beginSingleTimeCommands(device, commandPool);
+        auto cmd = beginSingleTimeCommands(m_device, commandPool);
         auto region = vk::BufferImageCopy{
             .bufferOffset = 0,
             .bufferRowLength = 0,
@@ -141,12 +141,12 @@ void TextureImage::upload(
             .imageOffset = vk::Offset3D{0, 0, 0},
             .imageExtent = vk::Extent3D{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1},
         };
-        cmd.copyBufferToImage(*stagingBuffer, **image, vk::ImageLayout::eTransferDstOptimal, region);
+        cmd.copyBufferToImage(*stagingBuffer, **m_image, vk::ImageLayout::eTransferDstOptimal, region);
         endSingleTimeCommands(cmd, graphicsQueue);
     }
 
     {
-        auto cmd = beginSingleTimeCommands(device, commandPool);
+        auto cmd = beginSingleTimeCommands(m_device, commandPool);
         auto barrier = vk::ImageMemoryBarrier2{
             .srcStageMask = vk::PipelineStageFlagBits2::eTransfer,
             .srcAccessMask = vk::AccessFlagBits2::eTransferWrite,
@@ -154,16 +154,16 @@ void TextureImage::upload(
             .dstAccessMask = vk::AccessFlagBits2::eShaderRead,
             .oldLayout = vk::ImageLayout::eTransferDstOptimal,
             .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-            .image = **image,
+            .image = **m_image,
             .subresourceRange = colorRange,
         };
         cmd.pipelineBarrier2(vk::DependencyInfo{.imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier});
         endSingleTimeCommands(cmd, graphicsQueue);
     }
 
-    imageView = std::make_shared<vk::raii::ImageView>(
-        device, vk::ImageViewCreateInfo{
-                    .image = **image,
+    m_imageView = std::make_shared<vk::raii::ImageView>(
+        m_device, vk::ImageViewCreateInfo{
+                    .image = **m_image,
                     .viewType = vk::ImageViewType::e2D,
                     .format = vk::Format::eR8G8B8A8Srgb,
                     .subresourceRange = colorRange,
@@ -171,8 +171,8 @@ void TextureImage::upload(
     );
 
     auto limits = physicalDevice.getProperties().limits;
-    sampler = std::make_shared<vk::raii::Sampler>(
-        device, vk::SamplerCreateInfo{
+    m_sampler = std::make_shared<vk::raii::Sampler>(
+        m_device, vk::SamplerCreateInfo{
                     .magFilter = vk::Filter::eLinear,
                     .minFilter = vk::Filter::eLinear,
                     .mipmapMode = vk::SamplerMipmapMode::eLinear,

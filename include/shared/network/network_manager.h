@@ -11,9 +11,9 @@
 namespace Network {
 
 // Channels
-constexpr enet_uint8 CHAN_UNRELIABLE = 0;
-constexpr enet_uint8 CHAN_RELIABLE = 1;
-constexpr std::size_t NUM_CHANNELS = 2;
+constexpr enet_uint8 kChanUnreliable = 0;
+constexpr enet_uint8 kChanReliable = 1;
+constexpr std::size_t kNumChannels = 2;
 
 class NetworkManager {
   public:
@@ -47,20 +47,20 @@ class NetworkManager {
     void sendToServerUnreliable(const std::vector<uint8_t> &data);
     void sendToServerReliable(const std::vector<uint8_t> &data);
 
-    bool isServer() const { return role_ == Role::Server; }
-    bool isClient() const { return role_ == Role::Client; }
-    bool isConnected() const { return serverConnected_; }
-    int peerCount() const { return static_cast<int>(peers_.size()); }
+    bool isServer() const { return m_role == Role::Server; }
+    bool isClient() const { return m_role == Role::Client; }
+    bool isConnected() const { return m_serverConnected; }
+    int peerCount() const { return static_cast<int>(m_peers.size()); }
 
   private:
     void sendPacket(ENetPeer *peer, const std::vector<uint8_t> &data, enet_uint8 channel, bool reliable);
 
-    enum class Role { None, Server, Client } role_{Role::None};
+    enum class Role { None, Server, Client } m_role{Role::None};
 
-    ENetHost *host_{nullptr};
-    ENetPeer *serverPeer_{nullptr}; // client's connection to the server
-    std::vector<ENetPeer *> peers_; // server's connected clients
-    bool serverConnected_{false};
+    ENetHost *m_host{nullptr};
+    ENetPeer *m_serverPeer{nullptr}; // client's connection to the server
+    std::vector<ENetPeer *> m_peers; // server's connected clients
+    bool m_serverConnected{false};
 };
 
 } // namespace Network

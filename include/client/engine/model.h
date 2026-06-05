@@ -32,16 +32,16 @@ class Model {
     Model(const Model &) = delete;
     Model &operator=(const Model &) = delete;
 
-    const VertexBuffer &getVertexBuffer() const { return *vertexBuffer; }
-    const IndexBuffer &getIndexBuffer() const { return *indexBuffer; }
-    const TextureImage &getTextureImage() const { return *textureImage; }
-    const Material &getMaterial() const { return *material; }
+    const VertexBuffer &getVertexBuffer() const { return *m_vertexBuffer; }
+    const IndexBuffer &getIndexBuffer() const { return *m_indexBuffer; }
+    const TextureImage &getTextureImage() const { return *m_textureImage; }
+    const Material &getMaterial() const { return *m_material; }
 
   private:
-    std::shared_ptr<VertexBuffer> vertexBuffer;
-    std::shared_ptr<IndexBuffer> indexBuffer;
-    std::shared_ptr<TextureImage> textureImage;
-    std::shared_ptr<Material> material;
+    std::shared_ptr<VertexBuffer> m_vertexBuffer;
+    std::shared_ptr<IndexBuffer> m_indexBuffer;
+    std::shared_ptr<TextureImage> m_textureImage;
+    std::shared_ptr<Material> m_material;
 };
 
 } // namespace VulkanHelpers

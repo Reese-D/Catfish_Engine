@@ -24,7 +24,7 @@ struct HoldOrder {};
 using Order = std::variant<MoveOrder, AttackOrder, HoldOrder>;
 
 // Standard visitor helper for std::visit
-template <class... Ts> struct overloaded : Ts... {
+template <class... Ts> struct Overloaded : Ts... {
     using Ts::operator()...;
 };
 

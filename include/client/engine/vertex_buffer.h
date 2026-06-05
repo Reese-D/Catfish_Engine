@@ -29,13 +29,13 @@ class VertexBuffer {
     VertexBuffer(const VertexBuffer &) = delete;
     VertexBuffer &operator=(const VertexBuffer &) = delete;
 
-    std::shared_ptr<vk::raii::Buffer> getBuffer() const { return vertexBuffer; }
-    uint32_t getVertexCount() const { return vertexCount; }
+    std::shared_ptr<vk::raii::Buffer> getBuffer() const { return m_vertexBuffer; }
+    uint32_t getVertexCount() const { return m_vertexCount; }
 
   private:
-    std::shared_ptr<vk::raii::Buffer> vertexBuffer;
-    std::shared_ptr<vk::raii::DeviceMemory> vertexBufferMemory;
-    uint32_t vertexCount{0};
+    std::shared_ptr<vk::raii::Buffer> m_vertexBuffer;
+    std::shared_ptr<vk::raii::DeviceMemory> m_vertexBufferMemory;
+    uint32_t m_vertexCount{0};
 };
 
 } // namespace VulkanHelpers

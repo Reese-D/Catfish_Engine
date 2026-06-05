@@ -24,7 +24,7 @@ class FogOfWar {
     bool isVisible(glm::vec2 worldPos) const;
 
     // Grid accessors for the renderer
-    glm::ivec2 dims() const { return dims_; }
+    glm::ivec2 dims() const { return m_dims; }
     glm::vec2 cellWorldMin(glm::ivec2 cell) const;
     glm::vec2 cellWorldMax(glm::ivec2 cell) const;
 
@@ -33,11 +33,11 @@ class FogOfWar {
     bool inBounds(glm::ivec2 cell) const;
     std::size_t cellIndex(glm::ivec2 cell) const;
 
-    float cellSize_;
-    float sightRadius_;
-    glm::vec2 worldMin_;
-    glm::ivec2 dims_;
-    std::vector<FogState> grid_;
+    float m_cellSize;
+    float m_sightRadius;
+    glm::vec2 m_worldMin;
+    glm::ivec2 m_dims;
+    std::vector<FogState> m_grid;
 };
 
 } // namespace Systems

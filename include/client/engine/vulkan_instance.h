@@ -19,15 +19,15 @@ class Instance {
     Instance(const Instance &) = delete;
     Instance &operator=(const Instance &) = delete;
 
-    std::shared_ptr<vk::raii::Instance> getInstance() const { return instance; }
+    std::shared_ptr<vk::raii::Instance> getInstance() const { return m_instance; }
     std::vector<const char *> getRequiredInstanceExtensions();
-    std::shared_ptr<vk::raii::Context> getContext() const { return context; }
+    std::shared_ptr<vk::raii::Context> getContext() const { return m_context; }
 
   private:
     void createInstance(const std::shared_ptr<Window> &window);
 
-    std::shared_ptr<vk::raii::Context> context;
-    std::shared_ptr<vk::raii::Instance> instance;
+    std::shared_ptr<vk::raii::Context> m_context;
+    std::shared_ptr<vk::raii::Instance> m_instance;
 };
 
 } // namespace VulkanHelpers

@@ -87,7 +87,7 @@ void MenuSystem::beginFrame() {
 }
 
 MenuAction MenuSystem::drawMainMenu(vk::Extent2D extent) {
-    if (gameplayStarted) {
+    if (m_gameplayStarted) {
         return MenuAction::None;
     }
 
@@ -121,7 +121,7 @@ MenuAction MenuSystem::drawMainMenu(vk::Extent2D extent) {
     const ImVec2 buttonSize{panelWidth - 48.0f, 42.0f};
     ImGui::SetCursorPosX(24.0f);
     if (ImGui::Button("Play", buttonSize)) {
-        gameplayStarted = true;
+        m_gameplayStarted = true;
         action = MenuAction::Play;
     }
 
@@ -138,14 +138,14 @@ MenuAction MenuSystem::drawMainMenu(vk::Extent2D extent) {
 }
 
 void MenuSystem::drawOverlay(float deltaTime) {
-    if (!gameplayStarted || !showOverlay) {
+    if (!m_gameplayStarted || !m_showOverlay) {
         return;
     }
 
     ImGui::SetNextWindowPos(ImVec2{10.0f, 10.0f}, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.35f);
     ImGui::Begin(
-        "Overlay", &showOverlay,
+        "Overlay", &m_showOverlay,
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav
     );
     ImGui::Text("FPS %.1f", deltaTime > 0.0f ? 1.0f / deltaTime : 0.0f);

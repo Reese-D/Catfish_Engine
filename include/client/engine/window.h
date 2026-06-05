@@ -17,14 +17,14 @@ class Window {
     Window &operator=(const Window &) = delete;
     Window &operator=(Window &&) = delete;
 
-    GLFWwindow *getWindow() const { return window; }
+    GLFWwindow *getWindow() const { return m_window; }
     bool shouldClose() const;
     void requestClose() const;
     void pollEvents() const;
     void waitEvents() const;
 
-    uint32_t getWidth() const { return width; }
-    uint32_t getHeight() const { return height; }
+    uint32_t getWidth() const { return m_width; }
+    uint32_t getHeight() const { return m_height; }
     std::pair<int, int> getFramebufferSize() const;
 
     std::vector<const char *> getRequiredInstanceExtensions() const;
@@ -39,10 +39,10 @@ class Window {
     static void scrollCallback(GLFWwindow *win, double xoffset, double yoffset);
     static void windowSizeCallback(GLFWwindow *win, int width, int height);
 
-    GLFWwindow *window;
-    uint32_t width;
-    uint32_t height;
-    float scrollDelta{0.0f};
+    GLFWwindow *m_window;
+    uint32_t m_width;
+    uint32_t m_height;
+    float m_scrollDelta{0.0f};
 };
 } // namespace VulkanHelpers
 #endif // WINDOW_H

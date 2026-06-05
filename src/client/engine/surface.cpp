@@ -14,9 +14,9 @@ namespace VulkanHelpers {
 Surface::Surface(const vk::raii::Instance &instance, const Window &window) {
     VkSurfaceKHR rawSurface{};
     if (glfwCreateWindowSurface(*instance, window.getWindow(), nullptr, &rawSurface) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create window surface");
+        throw std::runtime_error("Failed to create window m_surface");
     }
-    surface = std::make_shared<vk::raii::SurfaceKHR>(instance, rawSurface);
+    m_surface = std::make_shared<vk::raii::SurfaceKHR>(instance, rawSurface);
 }
 
 } // namespace VulkanHelpers

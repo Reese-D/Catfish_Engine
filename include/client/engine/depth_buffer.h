@@ -18,18 +18,18 @@ class DepthBuffer {
 
     void recreate(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D extent);
 
-    vk::Image getImage() const { return **image; }
-    vk::ImageView getImageView() const { return **imageView; }
-    vk::Format getFormat() const { return format; }
+    vk::Image getImage() const { return **m_image; }
+    vk::ImageView getImageView() const { return **m_imageView; }
+    vk::Format getFormat() const { return m_format; }
 
   private:
     void create(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D extent);
     static vk::Format findDepthFormat(const vk::raii::PhysicalDevice &physicalDevice);
 
-    std::shared_ptr<vk::raii::Image> image;
-    std::shared_ptr<vk::raii::DeviceMemory> imageMemory;
-    std::shared_ptr<vk::raii::ImageView> imageView;
-    vk::Format format{};
+    std::shared_ptr<vk::raii::Image> m_image;
+    std::shared_ptr<vk::raii::DeviceMemory> m_imageMemory;
+    std::shared_ptr<vk::raii::ImageView> m_imageView;
+    vk::Format m_format{};
 };
 
 } // namespace VulkanHelpers

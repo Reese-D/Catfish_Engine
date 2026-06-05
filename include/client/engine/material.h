@@ -19,11 +19,11 @@ class Material {
     Material(const Material &) = delete;
     Material &operator=(const Material &) = delete;
 
-    vk::DescriptorSet getDescriptorSet() const { return **descriptorSet; }
+    vk::DescriptorSet getDescriptorSet() const { return **m_descriptorSet; }
 
   private:
-    std::shared_ptr<vk::raii::DescriptorPool> descriptorPool;
-    std::shared_ptr<vk::raii::DescriptorSet> descriptorSet;
+    std::shared_ptr<vk::raii::DescriptorPool> m_descriptorPool;
+    std::shared_ptr<vk::raii::DescriptorSet> m_descriptorSet;
 };
 
 } // namespace VulkanHelpers

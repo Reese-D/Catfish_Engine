@@ -45,9 +45,9 @@ LogicalDevice::LogicalDevice(const vk::raii::PhysicalDevice &physicalDevice, uin
         .ppEnabledExtensionNames = deviceExtensions.data(),
     };
 
-    device = std::make_shared<vk::raii::Device>(physicalDevice, deviceCreateInfo);
-    graphicsQueue = std::make_shared<vk::raii::Queue>(*device, graphicsFamily, 0);
-    presentQueue = std::make_shared<vk::raii::Queue>(*device, presentFamily, 0);
+    m_device = std::make_shared<vk::raii::Device>(physicalDevice, deviceCreateInfo);
+    m_graphicsQueue = std::make_shared<vk::raii::Queue>(*m_device, graphicsFamily, 0);
+    m_presentQueue = std::make_shared<vk::raii::Queue>(*m_device, presentFamily, 0);
 }
 
 } // namespace VulkanHelpers

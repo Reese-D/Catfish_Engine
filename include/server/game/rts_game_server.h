@@ -10,7 +10,7 @@ class RtsGameServer : public RtsGameBase, public VulkanHelpers::IServerGame {
   public:
     void initLogic() override;
     void update(float dt) override;
-    bool wantsClose() const override { return closeRequested; }
+    bool wantsClose() const override { return m_closeRequested; }
 };
 
 } // namespace Game

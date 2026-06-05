@@ -9,11 +9,11 @@ namespace VulkanHelpers {
 // Calls initLogic() once, then ticks the game at a fixed rate.
 class HeadlessRunner {
   public:
-    explicit HeadlessRunner(float tickHz = 60.0f) : tickHz_(tickHz) {}
+    explicit HeadlessRunner(float tickHz = 60.0f) : m_tickHz(tickHz) {}
     void run(IServerGame &game);
 
   private:
-    float tickHz_;
+    float m_tickHz;
 };
 
 } // namespace VulkanHelpers

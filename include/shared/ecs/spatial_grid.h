@@ -28,11 +28,11 @@ class SpatialGrid {
     bool inBounds(glm::ivec2 cell) const;
     std::size_t cellIndex(glm::ivec2 cell) const;
 
-    float cellSize;
-    glm::vec2 gridMin;
-    glm::ivec2 gridDims;
+    float m_cellSize;
+    glm::vec2 m_gridMin;
+    glm::ivec2 m_gridDims;
 
-    std::vector<std::vector<entt::entity>> cells;
+    std::vector<std::vector<entt::entity>> m_cells;
 };
 
 } // namespace VulkanHelpers

@@ -16,14 +16,14 @@ class LogicalDevice {
     LogicalDevice(const LogicalDevice &) = delete;
     LogicalDevice &operator=(const LogicalDevice &) = delete;
 
-    std::shared_ptr<vk::raii::Device> getDevice() const { return device; }
-    std::shared_ptr<vk::raii::Queue> getGraphicsQueue() const { return graphicsQueue; }
-    std::shared_ptr<vk::raii::Queue> getPresentQueue() const { return presentQueue; }
+    std::shared_ptr<vk::raii::Device> getDevice() const { return m_device; }
+    std::shared_ptr<vk::raii::Queue> getGraphicsQueue() const { return m_graphicsQueue; }
+    std::shared_ptr<vk::raii::Queue> getPresentQueue() const { return m_presentQueue; }
 
   private:
-    std::shared_ptr<vk::raii::Device> device;
-    std::shared_ptr<vk::raii::Queue> graphicsQueue;
-    std::shared_ptr<vk::raii::Queue> presentQueue;
+    std::shared_ptr<vk::raii::Device> m_device;
+    std::shared_ptr<vk::raii::Queue> m_graphicsQueue;
+    std::shared_ptr<vk::raii::Queue> m_presentQueue;
 };
 
 } // namespace VulkanHelpers

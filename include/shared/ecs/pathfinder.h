@@ -25,10 +25,10 @@ class Pathfinder {
     bool hasLineOfSight(glm::vec2 a, glm::vec2 b) const;
     std::vector<glm::vec3> smooth(const std::vector<glm::vec3> &raw) const;
 
-    float cellSize_;
-    glm::vec2 worldMin_;
-    glm::ivec2 dims_;
-    std::vector<bool> blocked_;
+    float m_cellSize;
+    glm::vec2 m_worldMin;
+    glm::ivec2 m_dims;
+    std::vector<bool> m_blocked;
 };
 
 } // namespace Systems

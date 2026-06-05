@@ -15,9 +15,9 @@ PhysicalDevice::PhysicalDevice(const vk::raii::Instance &instance, const vk::rai
     if (it == devices.end()) {
         throw std::runtime_error("No suitable GPU found");
     }
-    physicalDevice = std::make_shared<vk::raii::PhysicalDevice>(std::move(*it));
-    graphicsQueueFamilyIndex = findGraphicsQueueFamily(*physicalDevice);
-    presentQueueFamilyIndex = findPresentQueueFamily(*physicalDevice, surface);
+    m_physicalDevice = std::make_shared<vk::raii::PhysicalDevice>(std::move(*it));
+    m_graphicsQueueFamilyIndex = findGraphicsQueueFamily(*m_physicalDevice);
+    m_presentQueueFamilyIndex = findPresentQueueFamily(*m_physicalDevice, surface);
 }
 
 bool PhysicalDevice::isDeviceSuitable(const vk::raii::PhysicalDevice &device, const vk::raii::SurfaceKHR &surface) {

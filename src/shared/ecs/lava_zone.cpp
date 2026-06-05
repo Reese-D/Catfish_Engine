@@ -5,20 +5,20 @@
 namespace Systems {
 
 LavaZone::LavaZone(float initialRadius, float shrinkInterval, float shrinkAmount, float damagePerSecond)
-    : safeRadius_(initialRadius), shrinkInterval_(shrinkInterval), shrinkAmount_(shrinkAmount), damagePerSecond_(damagePerSecond) {}
+    : m_safeRadius(initialRadius), m_shrinkInterval(shrinkInterval), m_shrinkAmount(shrinkAmount), m_damagePerSecond(damagePerSecond) {}
 
 void LavaZone::update(float dt) {
-    shrinkTimer_ += dt;
-    if (shrinkTimer_ >= shrinkInterval_) {
-        shrinkTimer_ -= shrinkInterval_;
-        safeRadius_ = std::max(0.0f, safeRadius_ - shrinkAmount_);
+    m_shrinkTimer += dt;
+    if (m_shrinkTimer >= m_shrinkInterval) {
+        m_shrinkTimer -= m_shrinkInterval;
+        m_safeRadius = std::max(0.0f, m_safeRadius - m_shrinkAmount);
     }
 }
 
 bool LavaZone::isLava(glm::vec2 worldPos) const {
     float dx = worldPos.x;
     float dy = worldPos.y;
-    return (dx * dx + dy * dy) > (safeRadius_ * safeRadius_);
+    return (dx * dx + dy * dy) > (m_safeRadius * m_safeRadius);
 }
 
 } // namespace Systems
