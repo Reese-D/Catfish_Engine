@@ -23,6 +23,9 @@ jobs:
             libsimdjson-dev \
             libglm-dev
 
+      - name: Mark compiled shaders as up-to-date
+        run: touch shaders/vert.spv shaders/frag.spv
+
       - name: Build (static client libs)
         run: |
           make catfish_client catfish_server \
