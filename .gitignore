@@ -6,7 +6,6 @@ bin/
 *.so
 *.dylib
 compile_commands.json
-shaders/*.spv
 catfish_server
 catfish_client
 
