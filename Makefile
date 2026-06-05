@@ -129,9 +129,11 @@ CLIENT_SRCS = \
 
 CLIENT_OBJS = $(CLIENT_SRCS:.cpp=.o)
 
+# Default: dynamic linking for local dev. CI overrides this with static flags.
+CLIENT_LIBS = -lvulkan -lglfw third_party/fastgltf/libfastgltf.a -lsimdjson
+
 catfish_client: shaders $(CLIENT_OBJS) libcatfish_shared.a $(ENET_OBJS)
-	$(CXX) $(CLIENT_OBJS) libcatfish_shared.a $(ENET_OBJS) \
-	  -o $@ -lvulkan -lglfw third_party/fastgltf/libfastgltf.a -lsimdjson
+	$(CXX) $(CLIENT_OBJS) libcatfish_shared.a $(ENET_OBJS) -o $@ $(CLIENT_LIBS)
 
 $(CLIENT_OBJS): %.o: %.cpp
 	$(CXX) $(BASEFLAGS) $(CLIENT_INC) -c $< -o $@

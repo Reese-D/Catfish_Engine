@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-18
+        run: |
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          chmod +x /tmp/llvm.sh
+          sudo /tmp/llvm.sh 18
+          sudo apt-get install -y clang-18
+
+      - name: Install runtime/dev libraries
+        run: |
+          sudo apt-get install -y \
+            libvulkan-dev \
+            libglfw3-dev \
+            libsimdjson-dev
+
+      - name: Build (static client libs)
+        run: |
+          make catfish_client catfish_server \
+            CXX=clang++-18 CC=clang-18 \
+            CLIENT_LIBS="-lvulkan \
+              -Wl,-Bstatic -l:libglfw3.a -l:libsimdjson.a -Wl,-Bdynamic \
+              third_party/fastgltf/libfastgltf.a \
+              -static-libstdc++ -static-libgcc"
+
+      - name: Verify static linking
+        run: |
+          echo "=== catfish_client dynamic deps ==="
+          ldd catfish_client
+          echo "=== catfish_server dynamic deps ==="
+          ldd catfish_server
+
+      - name: Package tarball
+        run: |
+          DEST=catfish-engine-${{ github.ref_name }}-linux-x86_64
+          mkdir -p "$DEST/shaders" "$DEST/models"
+          cp catfish_client catfish_server "$DEST/"
+          cp shaders/vert.spv shaders/frag.spv "$DEST/shaders/"
+          cp models/goblin.glb "$DEST/models/"
+          tar czf "${DEST}.tar.gz" "$DEST/"
+
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: catfish-engine-${{ github.ref_name }}-linux-x86_64.tar.gz
