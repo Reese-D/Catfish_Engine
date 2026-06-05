@@ -1,7 +1,7 @@
 # Catfish Engine — split server/client build
 
-CXX = clang++
-CC  = clang
+CXX = /usr/lib/llvm21/bin/clang++
+CC  = /usr/lib/llvm21/bin/clang-21
 
 all: catfish_server catfish_client
 

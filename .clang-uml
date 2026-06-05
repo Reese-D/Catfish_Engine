@@ -1,0 +1,102 @@
+compilation_database_dir: .
+output_directory: diagrams
+add_compile_flags:
+  - -resource-dir=/usr/lib/llvm21/lib/clang/21
+diagrams:
+
+  # Vulkan device/pipeline stack owned by Engine
+  vulkan_stack:
+    type: class
+    glob:
+      - src/client/engine/*.cpp
+    using_namespace:
+      - VulkanHelpers
+    include:
+      namespaces:
+        - VulkanHelpers
+    exclude:
+      namespaces:
+        - std
+        - vk
+        - glm
+
+  # Game abstraction layer: runners, interfaces, and game implementations
+  game_classes:
+    type: class
+    glob:
+      - src/client/game/*.cpp
+      - src/server/game/*.cpp
+      - src/shared/game/*.cpp
+    using_namespace:
+      - VulkanHelpers
+      - Game
+    include:
+      namespaces:
+        - Game
+        - VulkanHelpers
+    exclude:
+      namespaces:
+        - std
+        - vk
+        - glm
+        - entt
+
+  # ECS components and systems (shared + client)
+  ecs:
+    type: class
+    glob:
+      - src/shared/ecs/*.cpp
+      - src/client/ecs/*.cpp
+    using_namespace:
+      - Components
+      - Systems
+      - Orders
+    include:
+      namespaces:
+        - Components
+        - Systems
+        - Orders
+    exclude:
+      namespaces:
+        - std
+        - glm
+
+  # Networking layer
+  networking:
+    type: class
+    glob:
+      - src/shared/network/*.cpp
+    using_namespace:
+      - Network
+    include:
+      namespaces:
+        - Network
+    exclude:
+      namespaces:
+        - std
+
+  # Top-level namespace/package structure across the whole codebase
+  packages:
+    type: package
+    glob:
+      - src/client/engine/*.cpp
+      - src/client/ecs/*.cpp
+      - src/client/game/*.cpp
+      - src/server/game/*.cpp
+      - src/shared/ecs/*.cpp
+      - src/shared/game/*.cpp
+      - src/shared/network/*.cpp
+    include:
+      namespaces:
+        - VulkanHelpers
+        - Game
+        - Network
+        - Components
+        - Systems
+        - Orders
+    exclude:
+      namespaces:
+        - std
+        - vk
+        - glm
+        - entt

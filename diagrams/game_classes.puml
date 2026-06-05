@@ -1,0 +1,573 @@
+@startuml
+class "Window" as C_0010651813274497913986
+class C_0010651813274497913986 {
++Window(uint32_t width, uint32_t height, const char * title) : void
++Window(const Window &) = deleted : void
++Window(Window &&) = deleted : void
++~Window() : void
+..
++operator=(const Window &) = deleted : Window &
++operator=(Window &&) = deleted : Window &
+..
++consumeScrollDelta() : float
++getFramebufferSize() const : std::pair<int,int>
++getHeight() const : uint32_t
++getMousePosition() const : std::pair<double,double>
++getRequiredInstanceExtensions() const : std::vector<const char *>
++getWidth() const : uint32_t
++getWindow() const : GLFWwindow *
++isKeyPressed(int key) const : bool
++isMouseButtonPressed(int button) const : bool
++pollEvents() const : void
++requestClose() const : void
+{static} -scrollCallback(GLFWwindow * win, double xoffset, double yoffset) : void
++shouldClose() const : bool
++waitEvents() const : void
+{static} -windowSizeCallback(GLFWwindow * win, int width, int height) : void
+__
+-height : uint32_t
+-scrollDelta : float
+-width : uint32_t
+-window : GLFWwindow *
+}
+class "SwapChain" as C_0006379009548850625377
+class C_0006379009548850625377 {
++SwapChain(const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, const vk::raii::SurfaceKHR & surface, uint32_t graphicsFamily, uint32_t presentFamily, const Window & window) : void
++SwapChain(const SwapChain &) = deleted : void
++~SwapChain() constexpr = default : void
+..
++operator=(const SwapChain &) = deleted : SwapChain &
+..
+{static} -chooseExtent(const vk::SurfaceCapabilitiesKHR & capabilities, const Window & window) : vk::Extent2D
+{static} -choosePresentMode(const std::vector<vk::PresentModeKHR> & modes) : vk::PresentModeKHR
+{static} -chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> & formats) : vk::SurfaceFormatKHR
+-create(const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, const vk::raii::SurfaceKHR & surface, uint32_t graphicsFamily, uint32_t presentFamily, const Window & window) : void
+-createImageViews(const vk::raii::Device & device) : void
++getExtent() const : vk::Extent2D
++getFormat() const : vk::Format
++getImageViews() const : const std::vector<vk::raii::ImageView> &
++getImages() const : const std::vector<vk::Image> &
++getSwapChain() const : std::shared_ptr<vk::raii::SwapchainKHR>
++recreate(const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, const vk::raii::SurfaceKHR & surface, uint32_t graphicsFamily, uint32_t presentFamily, const Window & window) : void
+__
+-extent : vk::Extent2D
+-format : vk::Format
+-imageViews : std::vector<vk::raii::ImageView>
+-images : std::vector<vk::Image>
+-swapChain : std::shared_ptr<vk::raii::SwapchainKHR>
+}
+enum "MenuAction" as C_0010936828615179132501
+enum C_0010936828615179132501 {
+None
+Play
+Exit
+}
+class "MenuSystem" as C_0012453234650733976693
+class C_0012453234650733976693 {
++MenuSystem(const Window & window, const vk::raii::Instance & instance, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, uint32_t graphicsQueueFamilyIndex, const vk::raii::Queue & graphicsQueue, const SwapChain & swapChain, vk::Format depthFormat) : void
++MenuSystem(const MenuSystem &) = deleted : void
++~MenuSystem() : void
+..
++operator=(const MenuSystem &) = deleted : MenuSystem &
+..
++beginFrame() : void
++drawMainMenu(vk::Extent2D extent) : MenuAction
++drawOverlay(float deltaTime) : void
++isGameplayStarted() const : bool
++onSwapChainRecreated(const SwapChain & swapChain) : void
++render(vk::CommandBuffer commandBuffer) : void
++wantsKeyboard() const : bool
++wantsMouse() const : bool
+__
+-gameplayStarted : bool
+-showOverlay : bool
+}
+class "DepthBuffer" as C_0010012693743833055757
+class C_0010012693743833055757 {
++DepthBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
++DepthBuffer(const DepthBuffer &) = deleted : void
++~DepthBuffer() constexpr = default : void
+..
++operator=(const DepthBuffer &) = deleted : DepthBuffer &
+..
+-create(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
+{static} -findDepthFormat(const vk::raii::PhysicalDevice & physicalDevice) : vk::Format
++getFormat() const : vk::Format
++getImage() const : vk::Image
++getImageView() const : vk::ImageView
++recreate(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
+__
+-format : vk::Format
+-image : std::shared_ptr<vk::raii::Image>
+-imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-imageView : std::shared_ptr<vk::raii::ImageView>
+}
+class "DrawCall" as C_0018137609043828252581
+class C_0018137609043828252581 {
+__
++materialSet : vk::DescriptorSet
++model : const Model *
++transform : glm::mat4
+}
+class "GraphicsPipeline" as C_0006355463886622039298
+class C_0006355463886622039298 {
++GraphicsPipeline(const vk::raii::Device & device, vk::Format swapChainFormat, vk::Format depthFormat) : void
++GraphicsPipeline(const GraphicsPipeline &) = deleted : void
++~GraphicsPipeline() constexpr = default : void
+..
++operator=(const GraphicsPipeline &) = deleted : GraphicsPipeline &
+..
+{static} -createShaderModule(const vk::raii::Device & device, const std::vector<char> & code) : vk::raii::ShaderModule
++getPipeline() const : std::shared_ptr<vk::raii::Pipeline>
++getPipelineLayout() const : std::shared_ptr<vk::raii::PipelineLayout>
++getTextureLayout() const : std::shared_ptr<vk::raii::DescriptorSetLayout>
++getUboLayout() const : std::shared_ptr<vk::raii::DescriptorSetLayout>
+{static} -readShaderFile(const std::string & filename) : std::vector<char>
+__
+-pipeline : std::shared_ptr<vk::raii::Pipeline>
+-pipelineLayout : std::shared_ptr<vk::raii::PipelineLayout>
+-textureLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
+-uboLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
+}
+class "LogicalDevice" as C_0005824195213410611621
+class C_0005824195213410611621 {
++LogicalDevice(const vk::raii::PhysicalDevice & physicalDevice, uint32_t graphicsFamily, uint32_t presentFamily) : void
++LogicalDevice(const LogicalDevice &) = deleted : void
++~LogicalDevice() constexpr = default : void
+..
++operator=(const LogicalDevice &) = deleted : LogicalDevice &
+..
++getDevice() const : std::shared_ptr<vk::raii::Device>
++getGraphicsQueue() const : std::shared_ptr<vk::raii::Queue>
++getPresentQueue() const : std::shared_ptr<vk::raii::Queue>
+__
+-device : std::shared_ptr<vk::raii::Device>
+-graphicsQueue : std::shared_ptr<vk::raii::Queue>
+-presentQueue : std::shared_ptr<vk::raii::Queue>
+}
+class "PhysicalDevice" as C_0005451956293659002050
+class C_0005451956293659002050 {
++PhysicalDevice(const vk::raii::Instance & instance, const vk::raii::SurfaceKHR & surface) : void
++PhysicalDevice(const PhysicalDevice &) = deleted : void
++~PhysicalDevice() constexpr = default : void
+..
++operator=(const PhysicalDevice &) = deleted : PhysicalDevice &
+..
+{static} -findGraphicsQueueFamily(const vk::raii::PhysicalDevice & device) : uint32_t
+{static} -findPresentQueueFamily(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : uint32_t
++getGraphicsQueueFamilyIndex() const : uint32_t
++getPhysicalDevice() const : std::shared_ptr<vk::raii::PhysicalDevice>
++getPresentQueueFamilyIndex() const : uint32_t
+{static} -isDeviceSuitable(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : bool
+__
+-graphicsQueueFamilyIndex : uint32_t
+-physicalDevice : std::shared_ptr<vk::raii::PhysicalDevice>
+-presentQueueFamilyIndex : uint32_t
+}
+class "UniformBufferObject" as C_0001278512758287525207
+class C_0001278512758287525207 {
+__
++proj : glm::mat4
++view : glm::mat4
+}
+class "UniformBuffer" as C_0005072411779978189213
+class C_0005072411779978189213 {
++UniformBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::DescriptorSetLayout & uboLayout) : void
++UniformBuffer(const UniformBuffer &) = deleted : void
++~UniformBuffer() constexpr = default : void
+..
++operator=(const UniformBuffer &) = deleted : UniformBuffer &
+..
++getDescriptorSet() const : vk::DescriptorSet
++update(const glm::mat4 & view, const glm::mat4 & proj) : void
+__
+-buffer : std::shared_ptr<vk::raii::Buffer>
+-bufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+-mappedData : void *
+}
+class "Renderer" as C_0005052045876160408151
+class C_0005052045876160408151 {
++Renderer(const vk::raii::Device & device, uint32_t graphicsQueueFamilyIndex) : void
++Renderer(const Renderer &) = deleted : void
++~Renderer() constexpr = default : void
+..
++operator=(const Renderer &) = deleted : Renderer &
+..
++drawFrame(const vk::raii::Device & device, const SwapChain & swapChain, const GraphicsPipeline & pipeline, const vk::raii::Queue & graphicsQueue, const vk::raii::Queue & presentQueue, const std::vector<DrawCall> & drawCalls, const UniformBuffer & uniformBuffer, const DepthBuffer & depthBuffer, const std::function<void (vk::CommandBuffer)> & drawUi = = {}) : bool
++getCommandPool() const : const vk::raii::CommandPool &
+-recordCommandBuffer(uint32_t imageIndex, const SwapChain & swapChain, const GraphicsPipeline & pipeline, const std::vector<DrawCall> & drawCalls, vk::DescriptorSet descriptorSet, const DepthBuffer & depthBuffer, const std::function<void (vk::CommandBuffer)> & drawUi) : void
+__
+-commandBuffer : std::shared_ptr<vk::raii::CommandBuffer>
+-commandPool : std::shared_ptr<vk::raii::CommandPool>
+-imageAvailableSemaphore : std::shared_ptr<vk::raii::Semaphore>
+-inFlightFence : std::shared_ptr<vk::raii::Fence>
+-renderFinishedSemaphore : std::shared_ptr<vk::raii::Semaphore>
+}
+class "Surface" as C_0005863257036258362083
+class C_0005863257036258362083 {
++Surface(const vk::raii::Instance & instance, const Window & window) : void
++Surface(const Surface &) = deleted : void
++~Surface() constexpr = default : void
+..
++operator=(const Surface &) = deleted : Surface &
+..
++getSurface() const : std::shared_ptr<vk::raii::SurfaceKHR>
+__
+-surface : std::shared_ptr<vk::raii::SurfaceKHR>
+}
+class "Instance" as C_0011288043459417146257
+class C_0011288043459417146257 {
++Instance(const std::shared_ptr<Window> & window) : void
++Instance(const Instance &) = deleted : void
++~Instance() : void
+..
++operator=(const Instance &) = deleted : Instance &
+..
+-createInstance(const std::shared_ptr<Window> & window) : void
++getContext() const : std::shared_ptr<vk::raii::Context>
++getInstance() const : std::shared_ptr<vk::raii::Instance>
++getRequiredInstanceExtensions() : std::vector<const char *>
+__
+-context : std::shared_ptr<vk::raii::Context>
+-instance : std::shared_ptr<vk::raii::Instance>
+}
+class "ResourceContext" as C_0001960953195291840437
+class C_0001960953195291840437 {
+__
++commandPool : const vk::raii::CommandPool &
++depthFormat : vk::Format
++device : vk::raii::Device &
++graphicsQueue : vk::raii::Queue &
++graphicsQueueFamilyIndex : uint32_t
++instance : vk::raii::Instance &
++physicalDevice : vk::raii::PhysicalDevice &
++swapChain : const SwapChain &
++textureLayout : vk::raii::DescriptorSetLayout &
++uboLayout : vk::raii::DescriptorSetLayout &
++window : Window &
+}
+class "FrameOutput" as C_0015269314027499786472
+class C_0015269314027499786472 {
+__
++draws : std::vector<DrawCall>
++proj : glm::mat4
++view : glm::mat4
+}
+abstract "IGame" as C_0009452704245009550282
+abstract C_0009452704245009550282 {
++~IGame() constexpr = default : void
+..
+{abstract} +initGraphics(const ResourceContext & ctx) = 0 : void
+{abstract} +initLogic() = 0 : void
+{abstract} +onSwapChainRecreated(const SwapChain & swapChain) = 0 : void
+{abstract} +renderImGui(vk::CommandBuffer cmd) = 0 : void
+{abstract} +update(float dt, vk::Extent2D extent) = 0 : FrameOutput
+{abstract} +wantsClose() const = 0 : bool
+{abstract} +wantsKeyboard() const = 0 : bool
+{abstract} +wantsMouse() const = 0 : bool
+__
+}
+class "Engine" as C_0003317574026222630704
+class C_0003317574026222630704 {
+{static} -debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT, vk::DebugUtilsMessageTypeFlagsEXT, const vk::DebugUtilsMessengerCallbackDataEXT *, void *) : vk::Bool32
+-initAll() : void
+-makeResourceContext() : ResourceContext
+-recreateSwapChain(IGame & game) : void
++run(IGame & game) : void
+__
+-debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
+-depthBuffer : std::shared_ptr<DepthBuffer>
+-graphicsPipeline : std::shared_ptr<GraphicsPipeline>
+-logicalDevice : std::shared_ptr<LogicalDevice>
+-physicalDevice : std::shared_ptr<PhysicalDevice>
+-renderer : std::shared_ptr<Renderer>
+-surface : std::shared_ptr<Surface>
+-swapChain : std::shared_ptr<SwapChain>
+-uniformBuffer : std::shared_ptr<UniformBuffer>
+-vulkanInstance : std::shared_ptr<Instance>
+-window : std::shared_ptr<Window>
+}
+class "IndexBuffer" as C_0014751868707796848257
+class C_0014751868707796848257 {
++IndexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<uint32_t> & indices) : void
++IndexBuffer(const IndexBuffer &) = deleted : void
++~IndexBuffer() constexpr = default : void
+..
++operator=(const IndexBuffer &) = deleted : IndexBuffer &
+..
++getBuffer() const : std::shared_ptr<vk::raii::Buffer>
++getIndexCount() const : uint32_t
+__
+-indexBuffer : std::shared_ptr<vk::raii::Buffer>
+-indexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-indexCount : uint32_t
+}
+class "TextureImage" as C_0009707668883210252009
+class C_0009707668883210252009 {
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::string & imagePath) : void
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, std::span<const std::byte> encodedBytes) : void
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int width, int height) : void
++TextureImage(const TextureImage &) = deleted : void
++~TextureImage() constexpr = default : void
+..
++operator=(const TextureImage &) = deleted : TextureImage &
+..
++getImageView() const : vk::ImageView
++getSampler() const : vk::Sampler
+-upload(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int texWidth, int texHeight) : void
+__
+-image : std::shared_ptr<vk::raii::Image>
+-imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-imageView : std::shared_ptr<vk::raii::ImageView>
+-sampler : std::shared_ptr<vk::raii::Sampler>
+}
+class "Material" as C_0013651829107650321354
+class C_0013651829107650321354 {
++Material(const vk::raii::Device & device, const vk::raii::DescriptorSetLayout & textureLayout, const TextureImage & texture) : void
++Material(const Material &) = deleted : void
++~Material() constexpr = default : void
+..
++operator=(const Material &) = deleted : Material &
+..
++getDescriptorSet() const : vk::DescriptorSet
+__
+-descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+}
+class "Vertex" as C_0014226397048828503840
+class C_0014226397048828503840 {
+{static} +getAttributeDescriptions() : std::vector<vk::VertexInputAttributeDescription>
+{static} +getBindingDescription() : vk::VertexInputBindingDescription
+__
++color : float[3]
++pos : float[3]
++texCoord : float[2]
+}
+class "VertexBuffer" as C_0017971525486362296134
+class C_0017971525486362296134 {
++VertexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<Vertex> & vertices) : void
++VertexBuffer(const VertexBuffer &) = deleted : void
++~VertexBuffer() constexpr = default : void
+..
++operator=(const VertexBuffer &) = deleted : VertexBuffer &
+..
++getBuffer() const : std::shared_ptr<vk::raii::Buffer>
++getVertexCount() const : uint32_t
+__
+-vertexBuffer : std::shared_ptr<vk::raii::Buffer>
+-vertexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-vertexCount : uint32_t
+}
+class "Model" as C_0011538933711035525166
+class C_0011538933711035525166 {
++Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::string & path) : void
++Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::vector<Vertex> & vertices, const std::vector<uint32_t> & indices, std::shared_ptr<TextureImage> texture) : void
++Model(const Model &) = deleted : void
++~Model() constexpr = default : void
+..
++operator=(const Model &) = deleted : Model &
+..
++getIndexBuffer() const : const IndexBuffer &
++getMaterial() const : const Material &
++getTextureImage() const : const TextureImage &
++getVertexBuffer() const : const VertexBuffer &
+__
+-indexBuffer : std::shared_ptr<IndexBuffer>
+-material : std::shared_ptr<Material>
+-textureImage : std::shared_ptr<TextureImage>
+-vertexBuffer : std::shared_ptr<VertexBuffer>
+}
+class "HudResources" as C_0002637540883211553554
+class C_0002637540883211553554 {
+__
++barBackground : std::shared_ptr<Model>
++barGreen : std::shared_ptr<Model>
++barRed : std::shared_ptr<Model>
++barYellow : std::shared_ptr<Model>
+}
+class "SpatialGrid" as C_0014288524029206385474
+class C_0014288524029206385474 {
++SpatialGrid(float cellSize, glm::vec2 min, glm::vec2 max) : void
+..
+-cellIndex(glm::ivec2 cell) const : std::size_t
+-inBounds(glm::ivec2 cell) const : bool
++queryRadius(glm::vec2 center, float radius) const : std::vector<entt::entity>
++queryRect(glm::vec2 min, glm::vec2 max) const : std::vector<entt::entity>
++update(entt::registry & registry) : void
+-worldToCell(glm::vec2 pos) const : glm::ivec2
+__
+-cellSize : float
+-cells : std::vector<std::vector<entt::entity>>
+-gridDims : glm::ivec2
+-gridMin : glm::vec2
+}
+class "::Game::RtsGameBase" as C_0005382467571400427800
+class C_0005382467571400427800 {
++~RtsGameBase() constexpr = default : void
+..
+#clientHandleAssignment(const uint8_t * data, std::size_t size) : void
+#clientHandleConnectionRejected(const uint8_t * data, std::size_t size) : void
+#clientHandleDisconnect(const uint8_t * data, std::size_t size) : void
++enableCombat() : void
++enableFogOfWar(glm::vec2 worldMin = = {-20, -20}, glm::vec2 worldMax = = {20, 20}, float cellSize = 1.0f, float sightRadius = 5.0f) : void
++enableMinimap() : void
++enablePathfinding(glm::vec2 worldMin = = {-20, -20}, glm::vec2 worldMax = = {20, 20}, float cellSize = 0.25f) : void
+#onClientConnect(ENetPeer * peer) : void
+#onClientDisconnect(ENetPeer * peer) : void
++respawnUnit(Components::FactionId faction, glm::vec3 position) : entt::entity
+#serverHandleHello(const uint8_t * data, std::size_t size, ENetPeer * peer) : void
+#serverHandleInput(const uint8_t * data, std::size_t size, ENetPeer * peer) : void
+#serverSendConnectionRejected(ENetPeer * peer, RejectionReason reason) : void
+#serverSendDisconnect(ENetPeer * peer, DisconnectReason reason) : void
+#serverSendSnapshot() : void
++setupAsClient(std::string host, uint16_t port = 1234) : void
++setupAsServer(uint16_t port = 1234) : void
+#spawnUnit(glm::vec3 position, Components::FactionId faction = Components::FactionId::Player) : entt::entity
+__
+{static} #SNAPSHOT_INTERVAL : const float
+#closeRequested : bool
+#combatEnabled : bool
+#fogOfWar : std::optional<Systems::FogOfWar>
+#lavaZone : Systems::LavaZone
+#minimapEnabled : bool
+#myFaction_ : Components::FactionId
+#myNetworkId_ : uint32_t
+#netIdToEntity_ : std::unordered_map<uint32_t,entt::entity>
+#networkManager_ : std::unique_ptr<Network::NetworkManager>
+#networkStatusMessage_ : std::string
+#nextNetworkId_ : uint32_t
+#pathfinder : std::optional<Systems::Pathfinder>
+#peerToNetId_ : std::unordered_map<ENetPeer *,uint32_t>
+#pendingPeers_ : std::unordered_set<ENetPeer *>
+#registry : entt::registry
+#snapshotTimer_ : float
+#spatialGrid : SpatialGrid
+#tick_ : uint32_t
+}
+class "::Game::RtsGameClient" as C_0008376703335330237129
+class C_0008376703335330237129 {
+-clientApplySnapshot(const uint8_t * data, std::size_t size) : void
+-clientCaptureAndSendInput(vk::Extent2D extent) : void
++initGraphics(const ResourceContext & ctx) : void
++initLogic() : void
++onSwapChainRecreated(const SwapChain & swapChain) : void
++renderImGui(vk::CommandBuffer cmd) : void
++update(float dt, vk::Extent2D extent) : FrameOutput
++wantsClose() const : bool
++wantsKeyboard() const : bool
++wantsMouse() const : bool
+__
+-hudResources : HudResources
+-lavaTileModel : std::shared_ptr<Model>
+-menuSystem : std::shared_ptr<MenuSystem>
+-prevKeyE_ : bool
+-prevKeyQ_ : bool
+-prevMouseRight_ : bool
+-projectileModel : std::shared_ptr<Model>
+-selectionRingModel : std::shared_ptr<Model>
+-terrain : std::shared_ptr<Terrain>
+-unitModel : std::shared_ptr<Model>
+-window : Window *
+}
+class "::Game::RtsGameServer" as C_0018213947923232815510
+class C_0018213947923232815510 {
++initLogic() : void
++update(float dt) : void
++wantsClose() const : bool
+__
+}
+class "Terrain" as C_0017957192035051550548
+class C_0017957192035051550548 {
++Terrain(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, float extent = 20.0f, int cells = 40) : void
++Terrain(const Terrain &) = deleted : void
++~Terrain() constexpr = default : void
+..
++operator=(const Terrain &) = deleted : Terrain &
+..
++getModel() const : const Model &
++getModelPtr() const : std::shared_ptr<Model>
+__
+-model : std::shared_ptr<Model>
+}
+abstract "IServerGame" as C_0017164768605243912586
+abstract C_0017164768605243912586 {
++~IServerGame() constexpr = default : void
+..
+{abstract} +initLogic() = 0 : void
+{abstract} +update(float dt) = 0 : void
+{abstract} +wantsClose() const = 0 : bool
+__
+}
+class "HeadlessRunner" as C_0010896594729784619167
+class C_0010896594729784619167 {
++HeadlessRunner(float tickHz = 60.0f) : void
+..
++run(IServerGame & game) : void
+__
+-tickHz_ : float
+}
+C_0006379009548850625377 ..> C_0010651813274497913986
+C_0012453234650733976693 ..> C_0010651813274497913986
+C_0012453234650733976693 ..> C_0006379009548850625377
+C_0012453234650733976693 ..> C_0010936828615179132501
+C_0018137609043828252581 --> C_0011538933711035525166 : +model
+C_0005052045876160408151 ..> C_0006379009548850625377
+C_0005052045876160408151 ..> C_0006355463886622039298
+C_0005052045876160408151 ..> C_0018137609043828252581
+C_0005052045876160408151 ..> C_0005072411779978189213
+C_0005052045876160408151 ..> C_0010012693743833055757
+C_0005863257036258362083 ..> C_0010651813274497913986
+C_0011288043459417146257 ..> C_0010651813274497913986
+C_0001960953195291840437 --> C_0010651813274497913986 : +window
+C_0001960953195291840437 --> C_0006379009548850625377 : +swapChain
+C_0015269314027499786472 o-- C_0018137609043828252581 : +draws
+C_0009452704245009550282 ..> C_0001960953195291840437
+C_0009452704245009550282 ..> C_0015269314027499786472
+C_0009452704245009550282 ..> C_0006379009548850625377
+C_0003317574026222630704 ..> C_0009452704245009550282
+C_0003317574026222630704 ..> C_0001960953195291840437
+C_0003317574026222630704 --> C_0010651813274497913986 : -window
+C_0003317574026222630704 --> C_0011288043459417146257 : -vulkanInstance
+C_0003317574026222630704 --> C_0005863257036258362083 : -surface
+C_0003317574026222630704 --> C_0005451956293659002050 : -physicalDevice
+C_0003317574026222630704 --> C_0005824195213410611621 : -logicalDevice
+C_0003317574026222630704 --> C_0006379009548850625377 : -swapChain
+C_0003317574026222630704 --> C_0010012693743833055757 : -depthBuffer
+C_0003317574026222630704 --> C_0006355463886622039298 : -graphicsPipeline
+C_0003317574026222630704 --> C_0005052045876160408151 : -renderer
+C_0003317574026222630704 --> C_0005072411779978189213 : -uniformBuffer
+C_0013651829107650321354 ..> C_0009707668883210252009
+C_0017971525486362296134 ..> C_0014226397048828503840
+C_0011538933711035525166 ..> C_0014226397048828503840
+C_0011538933711035525166 --> C_0017971525486362296134 : -vertexBuffer
+C_0011538933711035525166 --> C_0014751868707796848257 : -indexBuffer
+C_0011538933711035525166 --> C_0009707668883210252009 : -textureImage
+C_0011538933711035525166 --> C_0013651829107650321354 : -material
+C_0002637540883211553554 --> C_0011538933711035525166 : +barBackground
+C_0002637540883211553554 --> C_0011538933711035525166 : +barGreen
+C_0002637540883211553554 --> C_0011538933711035525166 : +barYellow
+C_0002637540883211553554 --> C_0011538933711035525166 : +barRed
+C_0005382467571400427800 o-- C_0014288524029206385474 : #spatialGrid
+C_0008376703335330237129 ..> C_0001960953195291840437
+C_0008376703335330237129 ..> C_0015269314027499786472
+C_0008376703335330237129 ..> C_0006379009548850625377
+C_0008376703335330237129 --> C_0010651813274497913986 : -window
+C_0008376703335330237129 --> C_0011538933711035525166 : -unitModel
+C_0008376703335330237129 --> C_0017957192035051550548 : -terrain
+C_0008376703335330237129 --> C_0011538933711035525166 : -selectionRingModel
+C_0008376703335330237129 --> C_0011538933711035525166 : -projectileModel
+C_0008376703335330237129 --> C_0011538933711035525166 : -lavaTileModel
+C_0008376703335330237129 o-- C_0002637540883211553554 : -hudResources
+C_0008376703335330237129 --> C_0012453234650733976693 : -menuSystem
+C_0005382467571400427800 <|-- C_0008376703335330237129
+C_0009452704245009550282 <|-- C_0008376703335330237129
+C_0005382467571400427800 <|-- C_0018213947923232815510
+C_0017164768605243912586 <|-- C_0018213947923232815510
+C_0017957192035051550548 --> C_0011538933711035525166 : -model
+C_0010896594729784619167 ..> C_0017164768605243912586
+
+'Generated with clang-uml, version 0.6.2
+'LLVM version clang version 21.1.8
+@enduml

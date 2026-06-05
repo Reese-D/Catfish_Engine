@@ -1,0 +1,223 @@
+@startuml
+class "::Orders::MoveOrder" as C_0005757499361428985735
+class C_0005757499361428985735 {
+__
++destination : glm::vec3
++path : std::vector<glm::vec3>
++pathIndex : std::size_t
+}
+class "::Orders::AttackOrder" as C_0012397072655281743603
+class C_0012397072655281743603 {
+__
++target : entt::entity
+}
+class "::Orders::HoldOrder" as C_0009552925337030819218
+class C_0009552925337030819218 {
+__
+}
+class "::Orders::overloaded<Ts...>" as C_0011533219250591622676
+class C_0011533219250591622676 {
+__
+}
+class "Transform" as C_0014390578102969976690
+class C_0014390578102969976690 {
+__
++position : glm::vec3
++rotation : glm::quat
++scale : glm::vec3
+}
+class "Camera" as C_0000341229092776838197
+class C_0000341229092776838197 {
+__
++far_ : float
++fov : float
++near_ : float
++position : glm::vec3
++proj : glm::mat4
++target : glm::vec3
++view : glm::mat4
+}
+class "Selectable" as C_0009770965696381960734
+class C_0009770965696381960734 {
+__
+}
+class "Selected" as C_0015082652833003581836
+class C_0015082652833003581836 {
+__
+}
+class "AlwaysSelected" as C_0013084161284175880552
+class C_0013084161284175880552 {
+__
+}
+class "NetworkId" as C_0006015757994000294342
+class C_0006015757994000294342 {
+__
++id : uint32_t
+}
+enum "FactionId" as C_0004994604356823158663
+enum C_0004994604356823158663 {
+Player
+Enemy
+}
+class "Faction" as C_0015050995392399123881
+class C_0015050995392399123881 {
+__
++id : FactionId
+}
+class "Health" as C_0012546191963696133496
+class C_0012546191963696133496 {
+__
++current : float
++max : float
+}
+class "Combat" as C_0001557133801935469719
+class C_0001557133801935469719 {
+__
++cooldown : float
++damage : float
++range : float
++timer : float
+}
+class "MovementSpeed" as C_0003555581093080881005
+class C_0003555581093080881005 {
+__
++speed : float
+}
+enum "AbilityId" as C_0010679667696659961155
+enum C_0010679667696659961155 {
+Projectile
+GravityWell
+}
+class "AbilitySlot" as C_0012242891140311331755
+class C_0012242891140311331755 {
+__
++activationDelay : float
++cooldown : float
++id : AbilityId
++knockbackForce : float
++projectileSpeed : float
++pullRadius : float
++pullStrength : float
++timer : float
+}
+class "AbilitySet" as C_0012852188854763741650
+class C_0012852188854763741650 {
+__
++slots : std::vector<AbilitySlot>
+}
+class "GravityWell" as C_0016726316454535996131
+class C_0016726316454535996131 {
+__
++activationDelay : float
++activationTimer : float
++pullRadius : float
++pullStrength : float
+}
+class "Projectile" as C_0011096487991586811114
+class C_0011096487991586811114 {
+__
++hitRadius : float
++knockbackForce : float
++lifetime : float
++ownerFaction : FactionId
++velocity : glm::vec3
+}
+class "Velocity" as C_0005861116712608492566
+class C_0005861116712608492566 {
+__
++vel : glm::vec2
+}
+class "ThrustDirection" as C_0001291828844681935286
+class C_0001291828844681935286 {
+__
++dir : glm::vec2
++force : float
+}
+class "OrderQueue" as C_0007803059161790278070
+class C_0007803059161790278070 {
++empty() const : bool
++enqueue(Orders::Order order) : void
++enqueueImmediate(Orders::Order order) : void
+__
++orders : std::deque<Orders::Order>
+}
+class "::Systems::Pathfinder" as C_0017866721754923545363
+class C_0017866721754923545363 {
++Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : void
+..
+-cellIndex(glm::ivec2 cell) const : std::size_t
++findPath(glm::vec2 start, glm::vec2 end) const : std::vector<glm::vec3>
+-hasLineOfSight(glm::vec2 a, glm::vec2 b) const : bool
+-inBounds(glm::ivec2 cell) const : bool
+-isWalkable(glm::ivec2 cell) const : bool
++setBlocked(glm::vec2 worldPos, bool blocked) : void
+-smooth(const std::vector<glm::vec3> & raw) const : std::vector<glm::vec3>
+-toCell(glm::vec2 worldPos) const : glm::ivec2
+-toWorld(glm::ivec2 cell) const : glm::vec2
+__
+-blocked_ : std::vector<bool>
+-cellSize_ : float
+-dims_ : glm::ivec2
+-worldMin_ : glm::vec2
+}
+enum "::Systems::FogState" as C_0012216546572491495928
+enum C_0012216546572491495928 {
+Hidden
+Fogged
+Visible
+}
+class "::Systems::FogOfWar" as C_0005924637862725797854
+class C_0005924637862725797854 {
++FogOfWar(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize, float sightRadius) : void
+..
+-cellIndex(glm::ivec2 cell) const : std::size_t
++cellWorldMax(glm::ivec2 cell) const : glm::vec2
++cellWorldMin(glm::ivec2 cell) const : glm::vec2
++dims() const : glm::ivec2
+-inBounds(glm::ivec2 cell) const : bool
++isVisible(glm::vec2 worldPos) const : bool
++stateAt(glm::vec2 worldPos) const : FogState
++stateAt(glm::ivec2 cell) const : FogState
+-toCell(glm::vec2 worldPos) const : glm::ivec2
++update(entt::registry & registry, FactionId viewerFaction = Components::FactionId::Player) : void
+__
+-cellSize_ : float
+-dims_ : glm::ivec2
+-grid_ : std::vector<FogState>
+-sightRadius_ : float
+-worldMin_ : glm::vec2
+}
+class "::Systems::LavaZone" as C_0013715199801381909725
+class C_0013715199801381909725 {
++LavaZone(float initialRadius, float shrinkInterval, float shrinkAmount, float damagePerSecond) : void
+..
++getDamagePerSecond() const : float
++getSafeRadius() const : float
++isLava(glm::vec2 worldPos) const : bool
++setSafeRadius(float r) : void
++update(float dt) : void
+__
+-damagePerSecond_ : float
+-safeRadius_ : float
+-shrinkAmount_ : float
+-shrinkInterval_ : float
+-shrinkTimer_ : float
+}
+class "RenderMesh" as C_0006268705222776442241
+class C_0006268705222776442241 {
+__
++model : std::shared_ptr<VulkanHelpers::Model>
+}
+C_0015050995392399123881 o-- C_0004994604356823158663 : +id
+C_0012242891140311331755 o-- C_0010679667696659961155 : +id
+C_0012852188854763741650 o-- C_0012242891140311331755 : +slots
+C_0011096487991586811114 o-- C_0004994604356823158663 : +ownerFaction
+C_0007803059161790278070 o-- C_0005757499361428985735 : +orders
+C_0007803059161790278070 o-- C_0012397072655281743603 : +orders
+C_0007803059161790278070 o-- C_0009552925337030819218 : +orders
+C_0005924637862725797854 ..> C_0004994604356823158663
+C_0005924637862725797854 o-- C_0012216546572491495928 : -grid_
+
+'Generated with clang-uml, version 0.6.2
+'LLVM version clang version 21.1.8
+@enduml
