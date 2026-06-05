@@ -186,7 +186,7 @@ void Renderer::recordCommandBuffer(
         // Bind per-draw material (set 1 — texture)
         m_commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **pipeline.getPipelineLayout(), 1, {draw.materialSet}, {});
 
-        m_commandBuffer->pushConstants(**pipeline.getPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4), &draw.transform);
+        m_commandBuffer->pushConstants<glm::mat4>(**pipeline.getPipelineLayout(), vk::ShaderStageFlagBits::eVertex, 0, draw.transform);
         m_commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});
         m_commandBuffer->bindIndexBuffer(**draw.model->getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
         m_commandBuffer->drawIndexed(draw.model->getIndexBuffer().getIndexCount(), 1, 0, 0, 0);

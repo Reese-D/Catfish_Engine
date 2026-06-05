@@ -54,7 +54,7 @@ MenuSystem::MenuSystem(
     };
 
     ImGui_ImplVulkan_InitInfo initInfo = {};
-    initInfo.ApiVersion = VK_API_VERSION_1_4;
+    initInfo.ApiVersion = VK_MAKE_API_VERSION(0, 1, 4, 0);
     initInfo.Instance = *instance;
     initInfo.PhysicalDevice = *physicalDevice;
     initInfo.Device = *device;
