@@ -9,23 +9,23 @@
 
 namespace VulkanHelpers {
 
-DepthBuffer::DepthBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D m_extent) { create(device, physicalDevice, m_extent); }
+DepthBuffer::DepthBuffer(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D mExtent) { create(device, physicalDevice, mExtent); }
 
-void DepthBuffer::recreate(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D m_extent) {
+void DepthBuffer::recreate(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D mExtent) {
     m_imageView.reset();
     m_imageMemory.reset();
     m_image.reset();
-    create(device, physicalDevice, m_extent);
+    create(device, physicalDevice, mExtent);
 }
 
-void DepthBuffer::create(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D m_extent) {
+void DepthBuffer::create(const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, vk::Extent2D mExtent) {
     m_format = findDepthFormat(physicalDevice);
 
     m_image = std::make_shared<vk::raii::Image>(
         device, vk::ImageCreateInfo{
                     .imageType = vk::ImageType::e2D,
                     .format = m_format,
-                    .extent = vk::Extent3D{.width = m_extent.width, .height = m_extent.height, .depth = 1},
+                    .extent = vk::Extent3D{.width = mExtent.width, .height = mExtent.height, .depth = 1},
                     .mipLevels = 1,
                     .arrayLayers = 1,
                     .samples = vk::SampleCountFlagBits::e1,

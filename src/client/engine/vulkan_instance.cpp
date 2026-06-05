@@ -11,7 +11,7 @@ Instance::~Instance() = default;
 
 void Instance::createInstance(const std::shared_ptr<Window> &window) {
     m_context = std::make_shared<vk::raii::Context>();
-    constexpr vk::ApplicationInfo appInfo{
+    constexpr vk::ApplicationInfo kAppInfo{
         .pApplicationName = "Hello Triangle",
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName = "No Engine",
@@ -40,7 +40,7 @@ void Instance::createInstance(const std::shared_ptr<Window> &window) {
         }
     }
 
-    vk::InstanceCreateInfo createInfo{.pApplicationInfo = &appInfo, .enabledExtensionCount = glfwExtensionCount, .ppEnabledExtensionNames = glfwExtensions.data()};
+    vk::InstanceCreateInfo createInfo{.pApplicationInfo = &kAppInfo, .enabledExtensionCount = glfwExtensionCount, .ppEnabledExtensionNames = glfwExtensions.data()};
     m_instance = std::make_shared<vk::raii::Instance>(*m_context, createInfo);
 }
 

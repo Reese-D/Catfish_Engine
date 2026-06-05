@@ -10,38 +10,38 @@
 namespace Systems {
 
 void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, float deltaTime) {
-    constexpr float panSpeed = 3.0f;  // world units per second
-    constexpr float zoomSpeed = 4.0f; // world units per scroll tick
-    constexpr float minDist = 1.0f;
-    constexpr float maxDist = 30.0f;
+    constexpr float kPanSpeed = 3.0f;  // world units per second
+    constexpr float kZoomSpeed = 4.0f; // world units per scroll tick
+    constexpr float kMinDist = 1.0f;
+    constexpr float kMaxDist = 30.0f;
 
     auto view = registry.view<Components::Camera>();
     for (auto entity : view) {
         auto &cam = view.get<Components::Camera>(entity);
 
         // Pan — WASD/arrow keys or mouse at screen edge
-        constexpr float edgePx = 12.0f; // pixels from edge that trigger scroll
+        constexpr float kEdgePx = 12.0f; // pixels from edge that trigger scroll
         glm::vec3 pan{0.0f};
         if (window.isKeyPressed(GLFW_KEY_W) || window.isKeyPressed(GLFW_KEY_UP))
-            pan.y += panSpeed * deltaTime;
+            pan.y += kPanSpeed * deltaTime;
         if (window.isKeyPressed(GLFW_KEY_S) || window.isKeyPressed(GLFW_KEY_DOWN))
-            pan.y -= panSpeed * deltaTime;
+            pan.y -= kPanSpeed * deltaTime;
         if (window.isKeyPressed(GLFW_KEY_A) || window.isKeyPressed(GLFW_KEY_LEFT))
-            pan.x -= panSpeed * deltaTime;
+            pan.x -= kPanSpeed * deltaTime;
         if (window.isKeyPressed(GLFW_KEY_D) || window.isKeyPressed(GLFW_KEY_RIGHT))
-            pan.x += panSpeed * deltaTime;
+            pan.x += kPanSpeed * deltaTime;
 
         auto [mx, my] = window.getMousePosition();
         float fw = static_cast<float>(window.getWidth());
         float fh = static_cast<float>(window.getHeight());
-        if (mx < edgePx)
-            pan.x -= panSpeed * deltaTime;
-        if (mx > fw - edgePx)
-            pan.x += panSpeed * deltaTime;
-        if (my < edgePx)
-            pan.y += panSpeed * deltaTime;
-        if (my > fh - edgePx)
-            pan.y -= panSpeed * deltaTime;
+        if (mx < kEdgePx)
+            pan.x -= kPanSpeed * deltaTime;
+        if (mx > fw - kEdgePx)
+            pan.x += kPanSpeed * deltaTime;
+        if (my < kEdgePx)
+            pan.y += kPanSpeed * deltaTime;
+        if (my > fh - kEdgePx)
+            pan.y -= kPanSpeed * deltaTime;
 
         cam.position += pan;
         cam.target += pan;
@@ -51,7 +51,7 @@ void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, 
         if (std::abs(scroll) > 0.0f) {
             glm::vec3 arm = cam.position - cam.target;
             float dist = glm::length(arm);
-            float newDist = std::clamp(dist - scroll * zoomSpeed, minDist, maxDist);
+            float newDist = std::clamp(dist - scroll * kZoomSpeed, kMinDist, kMaxDist);
             cam.position = cam.target + glm::normalize(arm) * newDist;
         }
 

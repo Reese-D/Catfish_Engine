@@ -1,4 +1,66 @@
 @startuml
+class "::Systems::LavaZone" as C_0013715199801381909725
+class C_0013715199801381909725 {
++LavaZone(float initialRadius, float shrinkInterval, float shrinkAmount, float damagePerSecond) : void
+..
++getDamagePerSecond() const : float
++getSafeRadius() const : float
++isLava(glm::vec2 worldPos) const : bool
++setSafeRadius(float r) : void
++update(float dt) : void
+__
+-m_damagePerSecond : float
+-m_safeRadius : float
+-m_shrinkAmount : float
+-m_shrinkInterval : float
+-m_shrinkTimer : float
+}
+class "::Systems::Pathfinder" as C_0017866721754923545363
+class C_0017866721754923545363 {
++Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : void
+..
+-cellIndex(glm::ivec2 cell) const : std::size_t
++findPath(glm::vec2 start, glm::vec2 end) const : std::vector<glm::vec3>
+-hasLineOfSight(glm::vec2 a, glm::vec2 b) const : bool
+-inBounds(glm::ivec2 cell) const : bool
+-isWalkable(glm::ivec2 cell) const : bool
++setBlocked(glm::vec2 worldPos, bool blocked) : void
+-smooth(const std::vector<glm::vec3> & raw) const : std::vector<glm::vec3>
+-toCell(glm::vec2 worldPos) const : glm::ivec2
+-toWorld(glm::ivec2 cell) const : glm::vec2
+__
+-m_blocked : std::vector<bool>
+-m_cellSize : float
+-m_dims : glm::ivec2
+-m_worldMin : glm::vec2
+}
+enum "::Systems::FogState" as C_0012216546572491495928
+enum C_0012216546572491495928 {
+Hidden
+Fogged
+Visible
+}
+class "::Systems::FogOfWar" as C_0005924637862725797854
+class C_0005924637862725797854 {
++FogOfWar(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize, float sightRadius) : void
+..
+-cellIndex(glm::ivec2 cell) const : std::size_t
++cellWorldMax(glm::ivec2 cell) const : glm::vec2
++cellWorldMin(glm::ivec2 cell) const : glm::vec2
++dims() const : glm::ivec2
+-inBounds(glm::ivec2 cell) const : bool
++isVisible(glm::vec2 worldPos) const : bool
++stateAt(glm::vec2 worldPos) const : FogState
++stateAt(glm::ivec2 cell) const : FogState
+-toCell(glm::vec2 worldPos) const : glm::ivec2
++update(entt::registry & registry, FactionId viewerFaction = Components::FactionId::Player) : void
+__
+-m_cellSize : float
+-m_dims : glm::ivec2
+-m_grid : std::vector<FogState>
+-m_sightRadius : float
+-m_worldMin : glm::vec2
+}
 class "::Orders::MoveOrder" as C_0005757499361428985735
 class C_0005757499361428985735 {
 __
@@ -15,8 +77,8 @@ class "::Orders::HoldOrder" as C_0009552925337030819218
 class C_0009552925337030819218 {
 __
 }
-class "::Orders::overloaded<Ts...>" as C_0011533219250591622676
-class C_0011533219250591622676 {
+class "::Orders::Overloaded<Ts...>" as C_0003868718777513586851
+class C_0003868718777513586851 {
 __
 }
 class "Transform" as C_0014390578102969976690
@@ -141,73 +203,13 @@ class C_0007803059161790278070 {
 __
 +orders : std::deque<Orders::Order>
 }
-class "::Systems::Pathfinder" as C_0017866721754923545363
-class C_0017866721754923545363 {
-+Pathfinder(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize) : void
-..
--cellIndex(glm::ivec2 cell) const : std::size_t
-+findPath(glm::vec2 start, glm::vec2 end) const : std::vector<glm::vec3>
--hasLineOfSight(glm::vec2 a, glm::vec2 b) const : bool
--inBounds(glm::ivec2 cell) const : bool
--isWalkable(glm::ivec2 cell) const : bool
-+setBlocked(glm::vec2 worldPos, bool blocked) : void
--smooth(const std::vector<glm::vec3> & raw) const : std::vector<glm::vec3>
--toCell(glm::vec2 worldPos) const : glm::ivec2
--toWorld(glm::ivec2 cell) const : glm::vec2
-__
--blocked_ : std::vector<bool>
--cellSize_ : float
--dims_ : glm::ivec2
--worldMin_ : glm::vec2
-}
-enum "::Systems::FogState" as C_0012216546572491495928
-enum C_0012216546572491495928 {
-Hidden
-Fogged
-Visible
-}
-class "::Systems::FogOfWar" as C_0005924637862725797854
-class C_0005924637862725797854 {
-+FogOfWar(glm::vec2 worldMin, glm::vec2 worldMax, float cellSize, float sightRadius) : void
-..
--cellIndex(glm::ivec2 cell) const : std::size_t
-+cellWorldMax(glm::ivec2 cell) const : glm::vec2
-+cellWorldMin(glm::ivec2 cell) const : glm::vec2
-+dims() const : glm::ivec2
--inBounds(glm::ivec2 cell) const : bool
-+isVisible(glm::vec2 worldPos) const : bool
-+stateAt(glm::vec2 worldPos) const : FogState
-+stateAt(glm::ivec2 cell) const : FogState
--toCell(glm::vec2 worldPos) const : glm::ivec2
-+update(entt::registry & registry, FactionId viewerFaction = Components::FactionId::Player) : void
-__
--cellSize_ : float
--dims_ : glm::ivec2
--grid_ : std::vector<FogState>
--sightRadius_ : float
--worldMin_ : glm::vec2
-}
-class "::Systems::LavaZone" as C_0013715199801381909725
-class C_0013715199801381909725 {
-+LavaZone(float initialRadius, float shrinkInterval, float shrinkAmount, float damagePerSecond) : void
-..
-+getDamagePerSecond() const : float
-+getSafeRadius() const : float
-+isLava(glm::vec2 worldPos) const : bool
-+setSafeRadius(float r) : void
-+update(float dt) : void
-__
--damagePerSecond_ : float
--safeRadius_ : float
--shrinkAmount_ : float
--shrinkInterval_ : float
--shrinkTimer_ : float
-}
 class "RenderMesh" as C_0006268705222776442241
 class C_0006268705222776442241 {
 __
 +model : std::shared_ptr<VulkanHelpers::Model>
 }
+C_0005924637862725797854 ..> C_0004994604356823158663
+C_0005924637862725797854 o-- C_0012216546572491495928 : -m_grid
 C_0015050995392399123881 o-- C_0004994604356823158663 : +id
 C_0012242891140311331755 o-- C_0010679667696659961155 : +id
 C_0012852188854763741650 o-- C_0012242891140311331755 : +slots
@@ -215,8 +217,6 @@ C_0011096487991586811114 o-- C_0004994604356823158663 : +ownerFaction
 C_0007803059161790278070 o-- C_0005757499361428985735 : +orders
 C_0007803059161790278070 o-- C_0012397072655281743603 : +orders
 C_0007803059161790278070 o-- C_0009552925337030819218 : +orders
-C_0005924637862725797854 ..> C_0004994604356823158663
-C_0005924637862725797854 o-- C_0012216546572491495928 : -grid_
 
 'Generated with clang-uml, version 0.6.2
 'LLVM version clang version 21.1.8

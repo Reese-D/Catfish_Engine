@@ -11,38 +11,38 @@
 
 namespace VulkanHelpers {
 
-UniformBuffer::UniformBuffer(const vk::raii::Device &m_device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::DescriptorSetLayout &m_uboLayout) {
+UniformBuffer::UniformBuffer(const vk::raii::Device &mDevice, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::DescriptorSetLayout &mUboLayout) {
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
     m_buffer = std::make_shared<vk::raii::Buffer>(
-        m_device, vk::BufferCreateInfo{
-                    .size = bufferSize,
-                    .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-                    .sharingMode = vk::SharingMode::eExclusive,
-                }
+        mDevice, vk::BufferCreateInfo{
+                     .size = bufferSize,
+                     .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+                     .sharingMode = vk::SharingMode::eExclusive,
+                 }
     );
     auto memReqs = m_buffer->getMemoryRequirements();
     m_bufferMemory = std::make_shared<vk::raii::DeviceMemory>(
-        m_device, vk::MemoryAllocateInfo{
-                    .allocationSize = memReqs.size,
-                    .memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
-                }
+        mDevice, vk::MemoryAllocateInfo{
+                     .allocationSize = memReqs.size,
+                     .memoryTypeIndex = findMemoryType(physicalDevice, memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent),
+                 }
     );
     m_buffer->bindMemory(**m_bufferMemory, 0);
     m_mappedData = m_bufferMemory->mapMemory(0, bufferSize);
 
     auto poolSize = vk::DescriptorPoolSize{.type = vk::DescriptorType::eUniformBuffer, .descriptorCount = 1};
     m_descriptorPool = std::make_shared<vk::raii::DescriptorPool>(
-        m_device, vk::DescriptorPoolCreateInfo{
-                    .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-                    .maxSets = 1,
-                    .poolSizeCount = 1,
-                    .pPoolSizes = &poolSize,
-                }
+        mDevice, vk::DescriptorPoolCreateInfo{
+                     .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+                     .maxSets = 1,
+                     .poolSizeCount = 1,
+                     .pPoolSizes = &poolSize,
+                 }
     );
 
-    vk::DescriptorSetLayout rawLayout = *m_uboLayout;
-    auto sets = m_device.allocateDescriptorSets(
+    vk::DescriptorSetLayout rawLayout = *mUboLayout;
+    auto sets = mDevice.allocateDescriptorSets(
         vk::DescriptorSetAllocateInfo{
             .descriptorPool = **m_descriptorPool,
             .descriptorSetCount = 1,
@@ -56,7 +56,7 @@ UniformBuffer::UniformBuffer(const vk::raii::Device &m_device, const vk::raii::P
         .offset = 0,
         .range = sizeof(UniformBufferObject),
     };
-    m_device.updateDescriptorSets(
+    mDevice.updateDescriptorSets(
         vk::WriteDescriptorSet{
             .dstSet = **m_descriptorSet,
             .dstBinding = 0,

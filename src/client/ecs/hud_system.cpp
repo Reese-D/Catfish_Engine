@@ -71,15 +71,15 @@ HudResources createHudResources(
     const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout
 ) {
-    constexpr float W = 0.80f;  // bar width
-    constexpr float BH = 0.14f; // background height
-    constexpr float FH = 0.09f; // foreground height (inset)
+    constexpr float kW = 0.80f;  // bar width
+    constexpr float kBh = 0.14f; // background height
+    constexpr float kFh = 0.09f; // foreground height (inset)
 
     return HudResources{
-        .barBackground = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, W, BH, 50, 50, 50),
-        .barGreen = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, W, FH, 60, 200, 60),
-        .barYellow = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, W, FH, 220, 200, 40),
-        .barRed = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, W, FH, 220, 50, 50),
+        .barBackground = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, kW, kBh, 50, 50, 50),
+        .barGreen = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, kW, kFh, 60, 200, 60),
+        .barYellow = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, kW, kFh, 220, 200, 40),
+        .barRed = makeBarModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, kW, kFh, 220, 50, 50),
     };
 }
 
@@ -88,8 +88,8 @@ HudResources createHudResources(
 namespace Systems {
 
 void appendHealthBars(entt::registry &registry, std::vector<VulkanHelpers::DrawCall> &draws, const VulkanHelpers::HudResources &hud, const FogOfWar *fog) {
-    constexpr float barWidth = 0.80f;
-    constexpr float barZ = 1.60f; // world units above ground
+    constexpr float kBarWidth = 0.80f;
+    constexpr float kBarZ = 1.60f; // world units above ground
 
     for (auto entity : registry.view<Components::Health, Components::Transform>()) {
         if (fog) {
@@ -106,7 +106,7 @@ void appendHealthBars(entt::registry &registry, std::vector<VulkanHelpers::DrawC
 
         float ratio = (health.max > 0.0f) ? glm::clamp(health.current / health.max, 0.0f, 1.0f) : 0.0f;
 
-        glm::vec3 centre{t.position.x, t.position.y, barZ};
+        glm::vec3 centre{t.position.x, t.position.y, kBarZ};
 
         // Background — full width, slightly below foreground
         auto bgMat = glm::translate(glm::mat4(1.0f), centre);
@@ -116,8 +116,8 @@ void appendHealthBars(entt::registry &registry, std::vector<VulkanHelpers::DrawC
             continue;
 
         // Foreground — left-anchored, scaled in X by health ratio
-        float xOffset = barWidth * (ratio - 1.0f) * 0.5f; // shift left so bar fills from left edge
-        auto fgPos = glm::vec3(centre.x + xOffset, centre.y, barZ + 0.01f);
+        float xOffset = kBarWidth * (ratio - 1.0f) * 0.5f; // shift left so bar fills from left edge
+        auto fgPos = glm::vec3(centre.x + xOffset, centre.y, kBarZ + 0.01f);
         auto fgMat = glm::translate(glm::mat4(1.0f), fgPos) * glm::scale(glm::mat4(1.0f), glm::vec3(ratio, 1.0f, 1.0f));
 
         const VulkanHelpers::Model *fgModel = (ratio > 0.66f) ? hud.barGreen.get() : (ratio > 0.33f) ? hud.barYellow.get() : hud.barRed.get();

@@ -21,11 +21,11 @@ class C_0013483469987938214539 {
 +sendToServerUnreliable(const std::vector<uint8_t> & data) : void
 +startServer(uint16_t port, std::size_t maxPeers = 4) : bool
 __
--host_ : ENetHost *
--peers_ : std::vector<ENetPeer *>
--role_ : enum Role
--serverConnected_ : bool
--serverPeer_ : ENetPeer *
+-m_host : ENetHost *
+-m_peers : std::vector<ENetPeer *>
+-m_role : enum Role
+-m_serverConnected : bool
+-m_serverPeer : ENetPeer *
 }
 enum "NetworkManager::Role" as C_0017309929919130932823
 enum C_0017309929919130932823 {
@@ -33,7 +33,7 @@ None
 Server
 Client
 }
-C_0013483469987938214539 o-- C_0017309929919130932823 : -role_
+C_0013483469987938214539 o-- C_0017309929919130932823 : -m_role
 C_0017309929919130932823 --+ C_0013483469987938214539
 
 'Generated with clang-uml, version 0.6.2

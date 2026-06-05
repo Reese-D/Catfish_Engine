@@ -10,11 +10,8 @@ namespace Systems {
 
 // Spawns a projectile entity with simulation components only (no RenderMesh).
 // The client adds RenderMesh separately when it receives the entity via snapshot.
-entt::entity spawnProjectile(
-    entt::registry &registry, glm::vec3 origin, glm::vec3 velocity,
-    Components::FactionId ownerFaction, float knockbackForce,
-    float hitRadius = 0.4f, float lifetime = 6.0f
-);
+entt::entity
+spawnProjectile(entt::registry &registry, glm::vec3 origin, glm::vec3 velocity, Components::FactionId ownerFaction, float knockbackForce, float hitRadius = 0.4f, float lifetime = 6.0f);
 
 // Ticks AbilitySet cooldown timers.
 void tickAbilities(entt::registry &registry, float dt);

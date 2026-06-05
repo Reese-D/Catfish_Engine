@@ -12,22 +12,22 @@
 constexpr uint16_t kProtocolVersion = 2;
 
 enum class MessageType : uint8_t {
-    Snapshot           = 0x01, // server → client, unreliable
-    Input              = 0x02, // client → server, unreliable
-    PlayerAssignment   = 0x03, // server → client, reliable, sent once on connect
-    Disconnect         = 0x04, // server → client, reliable
+    Snapshot = 0x01,           // server → client, unreliable
+    Input = 0x02,              // client → server, unreliable
+    PlayerAssignment = 0x03,   // server → client, reliable, sent once on connect
+    Disconnect = 0x04,         // server → client, reliable
     ConnectionRejected = 0x05, // server → client, reliable
-    Hello              = 0x06, // client → server, reliable, sent once on connect
+    Hello = 0x06,              // client → server, reliable, sent once on connect
 };
 
 enum class DisconnectReason : uint8_t {
     ServerShuttingDown = 0x01,
-    Kicked             = 0x02,
-    GameOver           = 0x03,
+    Kicked = 0x02,
+    GameOver = 0x03,
 };
 
 enum class RejectionReason : uint8_t {
-    ServerFull      = 0x01,
+    ServerFull = 0x01,
     VersionMismatch = 0x02,
 };
 
@@ -61,26 +61,26 @@ struct SnapshotHeader {
 };
 
 namespace InputFlags {
-    constexpr uint8_t kMoveOrder   = 0x01;
-    constexpr uint8_t kFireAbility = 0x02;
-}
+constexpr uint8_t kMoveOrder = 0x01;
+constexpr uint8_t kFireAbility = 0x02;
+} // namespace InputFlags
 
 struct InputPacket {
-    uint8_t  msgType;     // MessageType::Input
+    uint8_t msgType; // MessageType::Input
     uint32_t tick;
-    uint8_t  flags;       // InputFlags bitmask
-    uint8_t  abilitySlot; // which AbilitySet slot to fire (when FireAbility set)
-    float    moveX, moveY, moveZ;
-    float    abilityX, abilityY, abilityZ;
+    uint8_t flags;       // InputFlags bitmask
+    uint8_t abilitySlot; // which AbilitySet slot to fire (when FireAbility set)
+    float moveX, moveY, moveZ;
+    float abilityX, abilityY, abilityZ;
 };
 
 struct PlayerAssignmentPacket {
-    uint8_t  msgType;        // MessageType::PlayerAssignment
-    uint32_t yourNetworkId;  // the NetworkId of the entity the client controls
+    uint8_t msgType;        // MessageType::PlayerAssignment
+    uint32_t yourNetworkId; // the NetworkId of the entity the client controls
 };
 
 struct HelloPacket {
-    uint8_t  msgType;         // MessageType::Hello
+    uint8_t msgType;          // MessageType::Hello
     uint16_t protocolVersion; // must equal PROTOCOL_VERSION
 };
 

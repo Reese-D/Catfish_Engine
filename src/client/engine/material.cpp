@@ -6,22 +6,22 @@
 
 namespace VulkanHelpers {
 
-Material::Material(const vk::raii::Device &m_device, const vk::raii::DescriptorSetLayout &m_textureLayout, const TextureImage &texture) {
+Material::Material(const vk::raii::Device &mDevice, const vk::raii::DescriptorSetLayout &mTextureLayout, const TextureImage &texture) {
     auto poolSize = vk::DescriptorPoolSize{
         .type = vk::DescriptorType::eCombinedImageSampler,
         .descriptorCount = 1,
     };
     m_descriptorPool = std::make_shared<vk::raii::DescriptorPool>(
-        m_device, vk::DescriptorPoolCreateInfo{
-                    .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-                    .maxSets = 1,
-                    .poolSizeCount = 1,
-                    .pPoolSizes = &poolSize,
-                }
+        mDevice, vk::DescriptorPoolCreateInfo{
+                     .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+                     .maxSets = 1,
+                     .poolSizeCount = 1,
+                     .pPoolSizes = &poolSize,
+                 }
     );
 
-    vk::DescriptorSetLayout rawLayout = *m_textureLayout;
-    auto sets = m_device.allocateDescriptorSets(
+    vk::DescriptorSetLayout rawLayout = *mTextureLayout;
+    auto sets = mDevice.allocateDescriptorSets(
         vk::DescriptorSetAllocateInfo{
             .descriptorPool = **m_descriptorPool,
             .descriptorSetCount = 1,
@@ -35,7 +35,7 @@ Material::Material(const vk::raii::Device &m_device, const vk::raii::DescriptorS
         .imageView = texture.getImageView(),
         .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
     };
-    m_device.updateDescriptorSets(
+    mDevice.updateDescriptorSets(
         vk::WriteDescriptorSet{
             .dstSet = **m_descriptorSet,
             .dstBinding = 0,

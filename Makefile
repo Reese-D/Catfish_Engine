@@ -1,7 +1,9 @@
 # Catfish Engine — split server/client build
 
-CXX = /usr/lib/llvm21/bin/clang++
-CC  = /usr/lib/llvm21/bin/clang-21
+CXX          = /usr/lib/llvm21/bin/clang++
+CC           = /usr/lib/llvm21/bin/clang-21
+CLANG_TIDY   = /usr/lib/llvm21/bin/clang-tidy
+CLANG_FORMAT = /usr/lib/llvm21/bin/clang-format
 
 all: catfish_server catfish_client
 
@@ -161,8 +163,36 @@ clean:
 	      libcatfish_shared.a catfish_server catfish_client \
 	      $(VERT_SPV) $(FRAG_SPV)
 
+# Project sources only (no third_party) — used by tidy and format
+PROJECT_SRCS = $(SHARED_SRCS) $(SERVER_SRCS) \
+  $(filter-out third_party/%,$(CLIENT_SRCS))
+
+PROJECT_FILES = $(shell find src include -name '*.cpp' -o -name '*.h' \
+  | grep -v third_party)
+
+# ---- Code quality targets ----------------------------------------------------
+
+# Run all enabled clang-tidy checks (report only)
+tidy:
+	$(CLANG_TIDY) $(PROJECT_SRCS)
+
+# Fix naming violations atomically across all translation units
+tidy-fix:
+	run-clang-tidy -clang-tidy-binary $(CLANG_TIDY) \
+	  -checks='-*,readability-identifier-naming' -fix \
+	  'src/.*\.cpp'
+
+# Apply clang-format in-place to all project sources and headers
 format:
-	clang-format -i src/**/*.cpp include/**/*.h
+	$(CLANG_FORMAT) -i $(PROJECT_FILES)
+
+# Generate .puml files into diagrams/
+uml:
+	clang-uml
+
+# Render .puml files to SVG (requires plantuml + graphviz)
+diagrams:
+	plantuml diagrams/*.puml
 
 local-install: catfish_server catfish_client
 	install -m 755 catfish_server catfish_client ./bin/
@@ -170,4 +200,4 @@ local-install: catfish_server catfish_client
 local-uninstall:
 	rm -f ./bin/catfish_server ./bin/catfish_client
 
-.PHONY: all clean format shaders local-install local-uninstall
+.PHONY: all clean tidy tidy-fix format uml diagrams shaders local-install local-uninstall

@@ -6,10 +6,10 @@ namespace VulkanHelpers {
 
 ValidationLayers::ValidationLayers() {
     // Initialize with the standard validation layer
-    validationLayers = {"VK_LAYER_KHRONOS_validation"};
+    m_validationLayers = {"VK_LAYER_KHRONOS_validation"};
 }
 
-std::vector<const char *> ValidationLayers::getRequiredLayers() const { return validationLayers; }
+std::vector<const char *> ValidationLayers::getRequiredLayers() const { return m_validationLayers; }
 
 bool ValidationLayers::areValidationLayersSupported(const std::vector<const char *> &validationLayers, const vk::raii::Context &context) const {
 
@@ -54,9 +54,9 @@ std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> ValidationLayers::createDebugM
 
     vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{.messageSeverity = severityFlags, .messageType = messageTypeFlags, .pfnUserCallback = debugCallback};
 
-    debugMessenger = std::make_shared<vk::raii::DebugUtilsMessengerEXT>(instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT));
+    m_debugMessenger = std::make_shared<vk::raii::DebugUtilsMessengerEXT>(instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT));
 
-    return debugMessenger;
+    return m_debugMessenger;
 }
 
 } // namespace VulkanHelpers

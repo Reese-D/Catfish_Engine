@@ -8,7 +8,7 @@
 
 #include <vulkan/vulkan.hpp>
 namespace VulkanHelpers {
-Window::Window(uint32_t m_width, uint32_t m_height, const char *title) : m_width(m_width), m_height(m_height) {
+Window::Window(uint32_t mWidth, uint32_t mHeight, const char *title) : m_width(mWidth), m_height(mHeight) {
 
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW");
@@ -17,7 +17,7 @@ Window::Window(uint32_t m_width, uint32_t m_height, const char *title) : m_width
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    m_window = glfwCreateWindow(m_width, m_height, title, nullptr, nullptr);
+    m_window = glfwCreateWindow(mWidth, mHeight, title, nullptr, nullptr);
 
     if (!m_window) {
         glfwTerminate();
@@ -37,9 +37,9 @@ Window::~Window() {
 }
 
 std::pair<int, int> Window::getFramebufferSize() const {
-    int m_width, m_height;
-    glfwGetFramebufferSize(m_window, &m_width, &m_height);
-    return {m_width, m_height};
+    int mWidth, mHeight;
+    glfwGetFramebufferSize(m_window, &mWidth, &mHeight);
+    return {mWidth, mHeight};
 }
 
 bool Window::shouldClose() const { return glfwWindowShouldClose(m_window); }
@@ -80,9 +80,9 @@ void Window::windowSizeCallback(GLFWwindow *win, int w, int h) {
 std::vector<const char *> Window::getRequiredInstanceExtensions() const {
     uint32_t extensionCount = 0;
     const char **extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
-    auto extension_vec = std::vector<const char *>(extensions, extensions + extensionCount);
-    extension_vec.push_back(vk::EXTDebugUtilsExtensionName);
+    auto extensionVec = std::vector<const char *>(extensions, extensions + extensionCount);
+    extensionVec.push_back(vk::EXTDebugUtilsExtensionName);
 
-    return extension_vec;
+    return extensionVec;
 }
 } // namespace VulkanHelpers

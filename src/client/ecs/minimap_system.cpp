@@ -14,23 +14,23 @@ namespace Systems {
 
 namespace {
 
-constexpr float WORLD_MIN  = WorldBounds::kMin;
-constexpr float WORLD_MAX  = WorldBounds::kMax;
-constexpr float WORLD_SIZE = WorldBounds::kMax - WorldBounds::kMin;
-constexpr float MM_SIZE = 180.0f;
-constexpr float MM_PADDING = 10.0f;
+constexpr float kWorldMin = WorldBounds::kMin;
+constexpr float kWorldMax = WorldBounds::kMax;
+constexpr float kWorldSize = WorldBounds::kMax - WorldBounds::kMin;
+constexpr float kMmSize = 180.0f;
+constexpr float kMmPadding = 10.0f;
 
 ImVec2 toMinimap(glm::vec2 worldPos, ImVec2 origin) {
     return {
-        origin.x + (worldPos.x - WORLD_MIN) / WORLD_SIZE * MM_SIZE,
-        origin.y + (WORLD_MAX - worldPos.y) / WORLD_SIZE * MM_SIZE,
+        origin.x + (worldPos.x - kWorldMin) / kWorldSize * kMmSize,
+        origin.y + (kWorldMax - worldPos.y) / kWorldSize * kMmSize,
     };
 }
 
 glm::vec2 fromMinimap(ImVec2 pixelPos, ImVec2 origin) {
     return {
-        WORLD_MIN + (pixelPos.x - origin.x) / MM_SIZE * WORLD_SIZE,
-        WORLD_MAX - (pixelPos.y - origin.y) / MM_SIZE * WORLD_SIZE,
+        kWorldMin + (pixelPos.x - origin.x) / kMmSize * kWorldSize,
+        kWorldMax - (pixelPos.y - origin.y) / kMmSize * kWorldSize,
     };
 }
 
@@ -67,22 +67,22 @@ void drawMinimap(const FogOfWar *fog, entt::registry &registry, vk::Extent2D ext
 
     const float fw = static_cast<float>(extent.width);
     const float fh = static_cast<float>(extent.height);
-    ImGui::SetNextWindowPos({fw - MM_SIZE - MM_PADDING * 2.0f, fh - MM_SIZE - MM_PADDING * 2.0f}, ImGuiCond_Always);
-    ImGui::SetNextWindowSize({MM_SIZE + MM_PADDING * 2.0f, MM_SIZE + MM_PADDING * 2.0f}, ImGuiCond_Always);
+    ImGui::SetNextWindowPos({fw - kMmSize - kMmPadding * 2.0f, fh - kMmSize - kMmPadding * 2.0f}, ImGuiCond_Always);
+    ImGui::SetNextWindowSize({kMmSize + kMmPadding * 2.0f, kMmSize + kMmPadding * 2.0f}, ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.85f);
     ImGui::Begin("##minimap", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
 
     ImVec2 winPos = ImGui::GetWindowPos();
-    ImVec2 origin = {winPos.x + MM_PADDING, winPos.y + MM_PADDING};
+    ImVec2 origin = {winPos.x + kMmPadding, winPos.y + kMmPadding};
     ImDrawList *dl = ImGui::GetWindowDrawList();
 
     // Terrain background
-    dl->AddRectFilled(origin, {origin.x + MM_SIZE, origin.y + MM_SIZE}, IM_COL32(45, 65, 35, 255));
+    dl->AddRectFilled(origin, {origin.x + kMmSize, origin.y + kMmSize}, IM_COL32(45, 65, 35, 255));
 
     // Fog cells (skipped when fog is disabled — everything shows as visible)
     if (fog) {
         auto dims = fog->dims();
-        float cellPixels = MM_SIZE / static_cast<float>(dims.x);
+        float cellPixels = kMmSize / static_cast<float>(dims.x);
         for (int y = 0; y < dims.y; ++y) {
             for (int x = 0; x < dims.x; ++x) {
                 FogState state = fog->stateAt(glm::ivec2{x, y});
@@ -99,7 +99,7 @@ void drawMinimap(const FogOfWar *fog, entt::registry &registry, vk::Extent2D ext
     }
 
     // Border
-    dl->AddRect(origin, {origin.x + MM_SIZE, origin.y + MM_SIZE}, IM_COL32(160, 160, 160, 220), 0.0f, 0, 1.5f);
+    dl->AddRect(origin, {origin.x + kMmSize, origin.y + kMmSize}, IM_COL32(160, 160, 160, 220), 0.0f, 0, 1.5f);
 
     // Camera frustum
     const glm::vec2 ndcCorners[4] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
@@ -133,8 +133,8 @@ void drawMinimap(const FogOfWar *fog, entt::registry &registry, vk::Extent2D ext
     // Click to pan camera
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
         glm::vec2 worldXY = fromMinimap(ImGui::GetMousePos(), origin);
-        worldXY.x = glm::clamp(worldXY.x, WORLD_MIN, WORLD_MAX);
-        worldXY.y = glm::clamp(worldXY.y, WORLD_MIN, WORLD_MAX);
+        worldXY.x = glm::clamp(worldXY.x, kWorldMin, kWorldMax);
+        worldXY.y = glm::clamp(worldXY.y, kWorldMin, kWorldMax);
 
         auto &mutableCam = registry.get<Components::Camera>(camEntity);
         glm::vec3 offset = mutableCam.position - mutableCam.target;

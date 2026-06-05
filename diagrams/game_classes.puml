@@ -25,10 +25,10 @@ class C_0010651813274497913986 {
 +waitEvents() const : void
 {static} -windowSizeCallback(GLFWwindow * win, int width, int height) : void
 __
--height : uint32_t
--scrollDelta : float
--width : uint32_t
--window : GLFWwindow *
+-m_height : uint32_t
+-m_scrollDelta : float
+-m_width : uint32_t
+-m_window : GLFWwindow *
 }
 class "SwapChain" as C_0006379009548850625377
 class C_0006379009548850625377 {
@@ -50,11 +50,11 @@ class C_0006379009548850625377 {
 +getSwapChain() const : std::shared_ptr<vk::raii::SwapchainKHR>
 +recreate(const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, const vk::raii::SurfaceKHR & surface, uint32_t graphicsFamily, uint32_t presentFamily, const Window & window) : void
 __
--extent : vk::Extent2D
--format : vk::Format
--imageViews : std::vector<vk::raii::ImageView>
--images : std::vector<vk::Image>
--swapChain : std::shared_ptr<vk::raii::SwapchainKHR>
+-m_extent : vk::Extent2D
+-m_format : vk::Format
+-m_imageViews : std::vector<vk::raii::ImageView>
+-m_images : std::vector<vk::Image>
+-m_swapChain : std::shared_ptr<vk::raii::SwapchainKHR>
 }
 enum "MenuAction" as C_0010936828615179132501
 enum C_0010936828615179132501 {
@@ -79,8 +79,8 @@ class C_0012453234650733976693 {
 +wantsKeyboard() const : bool
 +wantsMouse() const : bool
 __
--gameplayStarted : bool
--showOverlay : bool
+-m_gameplayStarted : bool
+-m_showOverlay : bool
 }
 class "DepthBuffer" as C_0010012693743833055757
 class C_0010012693743833055757 {
@@ -97,10 +97,10 @@ class C_0010012693743833055757 {
 +getImageView() const : vk::ImageView
 +recreate(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
 __
--format : vk::Format
--image : std::shared_ptr<vk::raii::Image>
--imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
--imageView : std::shared_ptr<vk::raii::ImageView>
+-m_format : vk::Format
+-m_image : std::shared_ptr<vk::raii::Image>
+-m_imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_imageView : std::shared_ptr<vk::raii::ImageView>
 }
 class "DrawCall" as C_0018137609043828252581
 class C_0018137609043828252581 {
@@ -124,10 +124,10 @@ class C_0006355463886622039298 {
 +getUboLayout() const : std::shared_ptr<vk::raii::DescriptorSetLayout>
 {static} -readShaderFile(const std::string & filename) : std::vector<char>
 __
--pipeline : std::shared_ptr<vk::raii::Pipeline>
--pipelineLayout : std::shared_ptr<vk::raii::PipelineLayout>
--textureLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
--uboLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
+-m_pipeline : std::shared_ptr<vk::raii::Pipeline>
+-m_pipelineLayout : std::shared_ptr<vk::raii::PipelineLayout>
+-m_textureLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
+-m_uboLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
 }
 class "LogicalDevice" as C_0005824195213410611621
 class C_0005824195213410611621 {
@@ -141,9 +141,9 @@ class C_0005824195213410611621 {
 +getGraphicsQueue() const : std::shared_ptr<vk::raii::Queue>
 +getPresentQueue() const : std::shared_ptr<vk::raii::Queue>
 __
--device : std::shared_ptr<vk::raii::Device>
--graphicsQueue : std::shared_ptr<vk::raii::Queue>
--presentQueue : std::shared_ptr<vk::raii::Queue>
+-m_device : std::shared_ptr<vk::raii::Device>
+-m_graphicsQueue : std::shared_ptr<vk::raii::Queue>
+-m_presentQueue : std::shared_ptr<vk::raii::Queue>
 }
 class "PhysicalDevice" as C_0005451956293659002050
 class C_0005451956293659002050 {
@@ -160,9 +160,9 @@ class C_0005451956293659002050 {
 +getPresentQueueFamilyIndex() const : uint32_t
 {static} -isDeviceSuitable(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : bool
 __
--graphicsQueueFamilyIndex : uint32_t
--physicalDevice : std::shared_ptr<vk::raii::PhysicalDevice>
--presentQueueFamilyIndex : uint32_t
+-m_graphicsQueueFamilyIndex : uint32_t
+-m_physicalDevice : std::shared_ptr<vk::raii::PhysicalDevice>
+-m_presentQueueFamilyIndex : uint32_t
 }
 class "UniformBufferObject" as C_0001278512758287525207
 class C_0001278512758287525207 {
@@ -181,11 +181,11 @@ class C_0005072411779978189213 {
 +getDescriptorSet() const : vk::DescriptorSet
 +update(const glm::mat4 & view, const glm::mat4 & proj) : void
 __
--buffer : std::shared_ptr<vk::raii::Buffer>
--bufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
--descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
--mappedData : void *
+-m_buffer : std::shared_ptr<vk::raii::Buffer>
+-m_bufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-m_descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+-m_mappedData : void *
 }
 class "Renderer" as C_0005052045876160408151
 class C_0005052045876160408151 {
@@ -199,11 +199,11 @@ class C_0005052045876160408151 {
 +getCommandPool() const : const vk::raii::CommandPool &
 -recordCommandBuffer(uint32_t imageIndex, const SwapChain & swapChain, const GraphicsPipeline & pipeline, const std::vector<DrawCall> & drawCalls, vk::DescriptorSet descriptorSet, const DepthBuffer & depthBuffer, const std::function<void (vk::CommandBuffer)> & drawUi) : void
 __
--commandBuffer : std::shared_ptr<vk::raii::CommandBuffer>
--commandPool : std::shared_ptr<vk::raii::CommandPool>
--imageAvailableSemaphore : std::shared_ptr<vk::raii::Semaphore>
--inFlightFence : std::shared_ptr<vk::raii::Fence>
--renderFinishedSemaphore : std::shared_ptr<vk::raii::Semaphore>
+-m_commandBuffer : std::shared_ptr<vk::raii::CommandBuffer>
+-m_commandPool : std::shared_ptr<vk::raii::CommandPool>
+-m_imageAvailableSemaphore : std::shared_ptr<vk::raii::Semaphore>
+-m_inFlightFence : std::shared_ptr<vk::raii::Fence>
+-m_renderFinishedSemaphore : std::shared_ptr<vk::raii::Semaphore>
 }
 class "Surface" as C_0005863257036258362083
 class C_0005863257036258362083 {
@@ -215,7 +215,7 @@ class C_0005863257036258362083 {
 ..
 +getSurface() const : std::shared_ptr<vk::raii::SurfaceKHR>
 __
--surface : std::shared_ptr<vk::raii::SurfaceKHR>
+-m_surface : std::shared_ptr<vk::raii::SurfaceKHR>
 }
 class "Instance" as C_0011288043459417146257
 class C_0011288043459417146257 {
@@ -230,8 +230,8 @@ class C_0011288043459417146257 {
 +getInstance() const : std::shared_ptr<vk::raii::Instance>
 +getRequiredInstanceExtensions() : std::vector<const char *>
 __
--context : std::shared_ptr<vk::raii::Context>
--instance : std::shared_ptr<vk::raii::Instance>
+-m_context : std::shared_ptr<vk::raii::Context>
+-m_instance : std::shared_ptr<vk::raii::Instance>
 }
 class "ResourceContext" as C_0001960953195291840437
 class C_0001960953195291840437 {
@@ -277,17 +277,17 @@ class C_0003317574026222630704 {
 -recreateSwapChain(IGame & game) : void
 +run(IGame & game) : void
 __
--debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
--depthBuffer : std::shared_ptr<DepthBuffer>
--graphicsPipeline : std::shared_ptr<GraphicsPipeline>
--logicalDevice : std::shared_ptr<LogicalDevice>
--physicalDevice : std::shared_ptr<PhysicalDevice>
--renderer : std::shared_ptr<Renderer>
--surface : std::shared_ptr<Surface>
--swapChain : std::shared_ptr<SwapChain>
--uniformBuffer : std::shared_ptr<UniformBuffer>
--vulkanInstance : std::shared_ptr<Instance>
--window : std::shared_ptr<Window>
+-m_debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
+-m_depthBuffer : std::shared_ptr<DepthBuffer>
+-m_graphicsPipeline : std::shared_ptr<GraphicsPipeline>
+-m_logicalDevice : std::shared_ptr<LogicalDevice>
+-m_physicalDevice : std::shared_ptr<PhysicalDevice>
+-m_renderer : std::shared_ptr<Renderer>
+-m_surface : std::shared_ptr<Surface>
+-m_swapChain : std::shared_ptr<SwapChain>
+-m_uniformBuffer : std::shared_ptr<UniformBuffer>
+-m_vulkanInstance : std::shared_ptr<Instance>
+-m_window : std::shared_ptr<Window>
 }
 class "IndexBuffer" as C_0014751868707796848257
 class C_0014751868707796848257 {
@@ -300,9 +300,9 @@ class C_0014751868707796848257 {
 +getBuffer() const : std::shared_ptr<vk::raii::Buffer>
 +getIndexCount() const : uint32_t
 __
--indexBuffer : std::shared_ptr<vk::raii::Buffer>
--indexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--indexCount : uint32_t
+-m_indexBuffer : std::shared_ptr<vk::raii::Buffer>
+-m_indexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_indexCount : uint32_t
 }
 class "TextureImage" as C_0009707668883210252009
 class C_0009707668883210252009 {
@@ -318,10 +318,10 @@ class C_0009707668883210252009 {
 +getSampler() const : vk::Sampler
 -upload(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int texWidth, int texHeight) : void
 __
--image : std::shared_ptr<vk::raii::Image>
--imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
--imageView : std::shared_ptr<vk::raii::ImageView>
--sampler : std::shared_ptr<vk::raii::Sampler>
+-m_image : std::shared_ptr<vk::raii::Image>
+-m_imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_imageView : std::shared_ptr<vk::raii::ImageView>
+-m_sampler : std::shared_ptr<vk::raii::Sampler>
 }
 class "Material" as C_0013651829107650321354
 class C_0013651829107650321354 {
@@ -333,8 +333,8 @@ class C_0013651829107650321354 {
 ..
 +getDescriptorSet() const : vk::DescriptorSet
 __
--descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
--descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+-m_descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-m_descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
 }
 class "Vertex" as C_0014226397048828503840
 class C_0014226397048828503840 {
@@ -356,9 +356,9 @@ class C_0017971525486362296134 {
 +getBuffer() const : std::shared_ptr<vk::raii::Buffer>
 +getVertexCount() const : uint32_t
 __
--vertexBuffer : std::shared_ptr<vk::raii::Buffer>
--vertexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--vertexCount : uint32_t
+-m_vertexBuffer : std::shared_ptr<vk::raii::Buffer>
+-m_vertexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_vertexCount : uint32_t
 }
 class "Model" as C_0011538933711035525166
 class C_0011538933711035525166 {
@@ -374,10 +374,10 @@ class C_0011538933711035525166 {
 +getTextureImage() const : const TextureImage &
 +getVertexBuffer() const : const VertexBuffer &
 __
--indexBuffer : std::shared_ptr<IndexBuffer>
--material : std::shared_ptr<Material>
--textureImage : std::shared_ptr<TextureImage>
--vertexBuffer : std::shared_ptr<VertexBuffer>
+-m_indexBuffer : std::shared_ptr<IndexBuffer>
+-m_material : std::shared_ptr<Material>
+-m_textureImage : std::shared_ptr<TextureImage>
+-m_vertexBuffer : std::shared_ptr<VertexBuffer>
 }
 class "HudResources" as C_0002637540883211553554
 class C_0002637540883211553554 {
@@ -398,10 +398,10 @@ class C_0014288524029206385474 {
 +update(entt::registry & registry) : void
 -worldToCell(glm::vec2 pos) const : glm::ivec2
 __
--cellSize : float
--cells : std::vector<std::vector<entt::entity>>
--gridDims : glm::ivec2
--gridMin : glm::vec2
+-m_cellSize : float
+-m_cells : std::vector<std::vector<entt::entity>>
+-m_gridDims : glm::ivec2
+-m_gridMin : glm::vec2
 }
 class "::Game::RtsGameBase" as C_0005382467571400427800
 class C_0005382467571400427800 {
@@ -426,25 +426,25 @@ class C_0005382467571400427800 {
 +setupAsServer(uint16_t port = 1234) : void
 #spawnUnit(glm::vec3 position, Components::FactionId faction = Components::FactionId::Player) : entt::entity
 __
-{static} #SNAPSHOT_INTERVAL : const float
-#closeRequested : bool
-#combatEnabled : bool
-#fogOfWar : std::optional<Systems::FogOfWar>
-#lavaZone : Systems::LavaZone
-#minimapEnabled : bool
-#myFaction_ : Components::FactionId
-#myNetworkId_ : uint32_t
-#netIdToEntity_ : std::unordered_map<uint32_t,entt::entity>
-#networkManager_ : std::unique_ptr<Network::NetworkManager>
-#networkStatusMessage_ : std::string
-#nextNetworkId_ : uint32_t
-#pathfinder : std::optional<Systems::Pathfinder>
-#peerToNetId_ : std::unordered_map<ENetPeer *,uint32_t>
-#pendingPeers_ : std::unordered_set<ENetPeer *>
-#registry : entt::registry
-#snapshotTimer_ : float
-#spatialGrid : SpatialGrid
-#tick_ : uint32_t
+{static} #kSnapshotInterval : const float
+#m_closeRequested : bool
+#m_combatEnabled : bool
+#m_fogOfWar : std::optional<Systems::FogOfWar>
+#m_lavaZone : Systems::LavaZone
+#m_minimapEnabled : bool
+#m_myFaction : Components::FactionId
+#m_myNetworkId : uint32_t
+#m_netIdToEntity : std::unordered_map<uint32_t,entt::entity>
+#m_networkManager : std::unique_ptr<Network::NetworkManager>
+#m_networkStatusMessage : std::string
+#m_nextNetworkId : uint32_t
+#m_pathfinder : std::optional<Systems::Pathfinder>
+#m_peerToNetId : std::unordered_map<ENetPeer *,uint32_t>
+#m_pendingPeers : std::unordered_set<ENetPeer *>
+#m_registry : entt::registry
+#m_snapshotTimer : float
+#m_spatialGrid : SpatialGrid
+#m_tick : uint32_t
 }
 class "::Game::RtsGameClient" as C_0008376703335330237129
 class C_0008376703335330237129 {
@@ -459,17 +459,17 @@ class C_0008376703335330237129 {
 +wantsKeyboard() const : bool
 +wantsMouse() const : bool
 __
--hudResources : HudResources
--lavaTileModel : std::shared_ptr<Model>
--menuSystem : std::shared_ptr<MenuSystem>
--prevKeyE_ : bool
--prevKeyQ_ : bool
--prevMouseRight_ : bool
--projectileModel : std::shared_ptr<Model>
--selectionRingModel : std::shared_ptr<Model>
--terrain : std::shared_ptr<Terrain>
--unitModel : std::shared_ptr<Model>
--window : Window *
+-m_hudResources : HudResources
+-m_lavaTileModel : std::shared_ptr<Model>
+-m_menuSystem : std::shared_ptr<MenuSystem>
+-m_prevKeyE : bool
+-m_prevKeyQ : bool
+-m_prevMouseRight : bool
+-m_projectileModel : std::shared_ptr<Model>
+-m_selectionRingModel : std::shared_ptr<Model>
+-m_terrain : std::shared_ptr<Terrain>
+-m_unitModel : std::shared_ptr<Model>
+-m_window : Window *
 }
 class "::Game::RtsGameServer" as C_0018213947923232815510
 class C_0018213947923232815510 {
@@ -489,7 +489,7 @@ class C_0017957192035051550548 {
 +getModel() const : const Model &
 +getModelPtr() const : std::shared_ptr<Model>
 __
--model : std::shared_ptr<Model>
+-m_model : std::shared_ptr<Model>
 }
 abstract "IServerGame" as C_0017164768605243912586
 abstract C_0017164768605243912586 {
@@ -506,7 +506,7 @@ class C_0010896594729784619167 {
 ..
 +run(IServerGame & game) : void
 __
--tickHz_ : float
+-m_tickHz : float
 }
 C_0006379009548850625377 ..> C_0010651813274497913986
 C_0012453234650733976693 ..> C_0010651813274497913986
@@ -528,44 +528,44 @@ C_0009452704245009550282 ..> C_0015269314027499786472
 C_0009452704245009550282 ..> C_0006379009548850625377
 C_0003317574026222630704 ..> C_0009452704245009550282
 C_0003317574026222630704 ..> C_0001960953195291840437
-C_0003317574026222630704 --> C_0010651813274497913986 : -window
-C_0003317574026222630704 --> C_0011288043459417146257 : -vulkanInstance
-C_0003317574026222630704 --> C_0005863257036258362083 : -surface
-C_0003317574026222630704 --> C_0005451956293659002050 : -physicalDevice
-C_0003317574026222630704 --> C_0005824195213410611621 : -logicalDevice
-C_0003317574026222630704 --> C_0006379009548850625377 : -swapChain
-C_0003317574026222630704 --> C_0010012693743833055757 : -depthBuffer
-C_0003317574026222630704 --> C_0006355463886622039298 : -graphicsPipeline
-C_0003317574026222630704 --> C_0005052045876160408151 : -renderer
-C_0003317574026222630704 --> C_0005072411779978189213 : -uniformBuffer
+C_0003317574026222630704 --> C_0010651813274497913986 : -m_window
+C_0003317574026222630704 --> C_0011288043459417146257 : -m_vulkanInstance
+C_0003317574026222630704 --> C_0005863257036258362083 : -m_surface
+C_0003317574026222630704 --> C_0005451956293659002050 : -m_physicalDevice
+C_0003317574026222630704 --> C_0005824195213410611621 : -m_logicalDevice
+C_0003317574026222630704 --> C_0006379009548850625377 : -m_swapChain
+C_0003317574026222630704 --> C_0010012693743833055757 : -m_depthBuffer
+C_0003317574026222630704 --> C_0006355463886622039298 : -m_graphicsPipeline
+C_0003317574026222630704 --> C_0005052045876160408151 : -m_renderer
+C_0003317574026222630704 --> C_0005072411779978189213 : -m_uniformBuffer
 C_0013651829107650321354 ..> C_0009707668883210252009
 C_0017971525486362296134 ..> C_0014226397048828503840
 C_0011538933711035525166 ..> C_0014226397048828503840
-C_0011538933711035525166 --> C_0017971525486362296134 : -vertexBuffer
-C_0011538933711035525166 --> C_0014751868707796848257 : -indexBuffer
-C_0011538933711035525166 --> C_0009707668883210252009 : -textureImage
-C_0011538933711035525166 --> C_0013651829107650321354 : -material
+C_0011538933711035525166 --> C_0017971525486362296134 : -m_vertexBuffer
+C_0011538933711035525166 --> C_0014751868707796848257 : -m_indexBuffer
+C_0011538933711035525166 --> C_0009707668883210252009 : -m_textureImage
+C_0011538933711035525166 --> C_0013651829107650321354 : -m_material
 C_0002637540883211553554 --> C_0011538933711035525166 : +barBackground
 C_0002637540883211553554 --> C_0011538933711035525166 : +barGreen
 C_0002637540883211553554 --> C_0011538933711035525166 : +barYellow
 C_0002637540883211553554 --> C_0011538933711035525166 : +barRed
-C_0005382467571400427800 o-- C_0014288524029206385474 : #spatialGrid
+C_0005382467571400427800 o-- C_0014288524029206385474 : #m_spatialGrid
 C_0008376703335330237129 ..> C_0001960953195291840437
 C_0008376703335330237129 ..> C_0015269314027499786472
 C_0008376703335330237129 ..> C_0006379009548850625377
-C_0008376703335330237129 --> C_0010651813274497913986 : -window
-C_0008376703335330237129 --> C_0011538933711035525166 : -unitModel
-C_0008376703335330237129 --> C_0017957192035051550548 : -terrain
-C_0008376703335330237129 --> C_0011538933711035525166 : -selectionRingModel
-C_0008376703335330237129 --> C_0011538933711035525166 : -projectileModel
-C_0008376703335330237129 --> C_0011538933711035525166 : -lavaTileModel
-C_0008376703335330237129 o-- C_0002637540883211553554 : -hudResources
-C_0008376703335330237129 --> C_0012453234650733976693 : -menuSystem
+C_0008376703335330237129 --> C_0010651813274497913986 : -m_window
+C_0008376703335330237129 --> C_0011538933711035525166 : -m_unitModel
+C_0008376703335330237129 --> C_0017957192035051550548 : -m_terrain
+C_0008376703335330237129 --> C_0011538933711035525166 : -m_selectionRingModel
+C_0008376703335330237129 --> C_0011538933711035525166 : -m_projectileModel
+C_0008376703335330237129 --> C_0011538933711035525166 : -m_lavaTileModel
+C_0008376703335330237129 o-- C_0002637540883211553554 : -m_hudResources
+C_0008376703335330237129 --> C_0012453234650733976693 : -m_menuSystem
 C_0005382467571400427800 <|-- C_0008376703335330237129
 C_0009452704245009550282 <|-- C_0008376703335330237129
 C_0005382467571400427800 <|-- C_0018213947923232815510
 C_0017164768605243912586 <|-- C_0018213947923232815510
-C_0017957192035051550548 --> C_0011538933711035525166 : -model
+C_0017957192035051550548 --> C_0011538933711035525166 : -m_model
 C_0010896594729784619167 ..> C_0017164768605243912586
 
 'Generated with clang-uml, version 0.6.2

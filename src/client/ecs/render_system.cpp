@@ -3,8 +3,8 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "components.h"
-#include "render_components.h"
 #include "fog_of_war.h"
+#include "render_components.h"
 #include "render_system.h"
 
 namespace Systems {

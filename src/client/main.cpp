@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
         for (int i = 1; i < argc; ++i) {
             std::string_view arg(argv[i]);
             if (arg == "--host" && i + 1 < argc) {
-                host    = argv[++i];
+                host = argv[++i];
                 modeSet = true;
             } else if (arg == "--port" && i + 1 < argc) {
                 port = static_cast<uint16_t>(std::atoi(argv[++i]));

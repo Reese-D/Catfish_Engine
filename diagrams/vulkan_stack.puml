@@ -1,4 +1,94 @@
 @startuml
+class "IndexBuffer" as C_0014751868707796848257
+class C_0014751868707796848257 {
++IndexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<uint32_t> & indices) : void
++IndexBuffer(const IndexBuffer &) = deleted : void
++~IndexBuffer() constexpr = default : void
+..
++operator=(const IndexBuffer &) = deleted : IndexBuffer &
+..
++getBuffer() const : std::shared_ptr<vk::raii::Buffer>
++getIndexCount() const : uint32_t
+__
+-m_indexBuffer : std::shared_ptr<vk::raii::Buffer>
+-m_indexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_indexCount : uint32_t
+}
+class "TextureImage" as C_0009707668883210252009
+class C_0009707668883210252009 {
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::string & imagePath) : void
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, std::span<const std::byte> encodedBytes) : void
++TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int width, int height) : void
++TextureImage(const TextureImage &) = deleted : void
++~TextureImage() constexpr = default : void
+..
++operator=(const TextureImage &) = deleted : TextureImage &
+..
++getImageView() const : vk::ImageView
++getSampler() const : vk::Sampler
+-upload(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int texWidth, int texHeight) : void
+__
+-m_image : std::shared_ptr<vk::raii::Image>
+-m_imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_imageView : std::shared_ptr<vk::raii::ImageView>
+-m_sampler : std::shared_ptr<vk::raii::Sampler>
+}
+class "Material" as C_0013651829107650321354
+class C_0013651829107650321354 {
++Material(const vk::raii::Device & device, const vk::raii::DescriptorSetLayout & textureLayout, const TextureImage & texture) : void
++Material(const Material &) = deleted : void
++~Material() constexpr = default : void
+..
++operator=(const Material &) = deleted : Material &
+..
++getDescriptorSet() const : vk::DescriptorSet
+__
+-m_descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-m_descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+}
+class "Vertex" as C_0014226397048828503840
+class C_0014226397048828503840 {
+{static} +getAttributeDescriptions() : std::vector<vk::VertexInputAttributeDescription>
+{static} +getBindingDescription() : vk::VertexInputBindingDescription
+__
++color : float[3]
++pos : float[3]
++texCoord : float[2]
+}
+class "VertexBuffer" as C_0017971525486362296134
+class C_0017971525486362296134 {
++VertexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<Vertex> & vertices) : void
++VertexBuffer(const VertexBuffer &) = deleted : void
++~VertexBuffer() constexpr = default : void
+..
++operator=(const VertexBuffer &) = deleted : VertexBuffer &
+..
++getBuffer() const : std::shared_ptr<vk::raii::Buffer>
++getVertexCount() const : uint32_t
+__
+-m_vertexBuffer : std::shared_ptr<vk::raii::Buffer>
+-m_vertexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_vertexCount : uint32_t
+}
+class "Model" as C_0011538933711035525166
+class C_0011538933711035525166 {
++Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::string & path) : void
++Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::vector<Vertex> & vertices, const std::vector<uint32_t> & indices, std::shared_ptr<TextureImage> texture) : void
++Model(const Model &) = deleted : void
++~Model() constexpr = default : void
+..
++operator=(const Model &) = deleted : Model &
+..
++getIndexBuffer() const : const IndexBuffer &
++getMaterial() const : const Material &
++getTextureImage() const : const TextureImage &
++getVertexBuffer() const : const VertexBuffer &
+__
+-m_indexBuffer : std::shared_ptr<IndexBuffer>
+-m_material : std::shared_ptr<Material>
+-m_textureImage : std::shared_ptr<TextureImage>
+-m_vertexBuffer : std::shared_ptr<VertexBuffer>
+}
 class "DepthBuffer" as C_0010012693743833055757
 class C_0010012693743833055757 {
 +DepthBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
@@ -14,10 +104,45 @@ class C_0010012693743833055757 {
 +getImageView() const : vk::ImageView
 +recreate(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, vk::Extent2D extent) : void
 __
--format : vk::Format
--image : std::shared_ptr<vk::raii::Image>
--imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
--imageView : std::shared_ptr<vk::raii::ImageView>
+-m_format : vk::Format
+-m_image : std::shared_ptr<vk::raii::Image>
+-m_imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_imageView : std::shared_ptr<vk::raii::ImageView>
+}
+class "LogicalDevice" as C_0005824195213410611621
+class C_0005824195213410611621 {
++LogicalDevice(const vk::raii::PhysicalDevice & physicalDevice, uint32_t graphicsFamily, uint32_t presentFamily) : void
++LogicalDevice(const LogicalDevice &) = deleted : void
++~LogicalDevice() constexpr = default : void
+..
++operator=(const LogicalDevice &) = deleted : LogicalDevice &
+..
++getDevice() const : std::shared_ptr<vk::raii::Device>
++getGraphicsQueue() const : std::shared_ptr<vk::raii::Queue>
++getPresentQueue() const : std::shared_ptr<vk::raii::Queue>
+__
+-m_device : std::shared_ptr<vk::raii::Device>
+-m_graphicsQueue : std::shared_ptr<vk::raii::Queue>
+-m_presentQueue : std::shared_ptr<vk::raii::Queue>
+}
+class "PhysicalDevice" as C_0005451956293659002050
+class C_0005451956293659002050 {
++PhysicalDevice(const vk::raii::Instance & instance, const vk::raii::SurfaceKHR & surface) : void
++PhysicalDevice(const PhysicalDevice &) = deleted : void
++~PhysicalDevice() constexpr = default : void
+..
++operator=(const PhysicalDevice &) = deleted : PhysicalDevice &
+..
+{static} -findGraphicsQueueFamily(const vk::raii::PhysicalDevice & device) : uint32_t
+{static} -findPresentQueueFamily(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : uint32_t
++getGraphicsQueueFamilyIndex() const : uint32_t
++getPhysicalDevice() const : std::shared_ptr<vk::raii::PhysicalDevice>
++getPresentQueueFamilyIndex() const : uint32_t
+{static} -isDeviceSuitable(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : bool
+__
+-m_graphicsQueueFamilyIndex : uint32_t
+-m_physicalDevice : std::shared_ptr<vk::raii::PhysicalDevice>
+-m_presentQueueFamilyIndex : uint32_t
 }
 class "DrawCall" as C_0018137609043828252581
 class C_0018137609043828252581 {
@@ -41,45 +166,10 @@ class C_0006355463886622039298 {
 +getUboLayout() const : std::shared_ptr<vk::raii::DescriptorSetLayout>
 {static} -readShaderFile(const std::string & filename) : std::vector<char>
 __
--pipeline : std::shared_ptr<vk::raii::Pipeline>
--pipelineLayout : std::shared_ptr<vk::raii::PipelineLayout>
--textureLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
--uboLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
-}
-class "LogicalDevice" as C_0005824195213410611621
-class C_0005824195213410611621 {
-+LogicalDevice(const vk::raii::PhysicalDevice & physicalDevice, uint32_t graphicsFamily, uint32_t presentFamily) : void
-+LogicalDevice(const LogicalDevice &) = deleted : void
-+~LogicalDevice() constexpr = default : void
-..
-+operator=(const LogicalDevice &) = deleted : LogicalDevice &
-..
-+getDevice() const : std::shared_ptr<vk::raii::Device>
-+getGraphicsQueue() const : std::shared_ptr<vk::raii::Queue>
-+getPresentQueue() const : std::shared_ptr<vk::raii::Queue>
-__
--device : std::shared_ptr<vk::raii::Device>
--graphicsQueue : std::shared_ptr<vk::raii::Queue>
--presentQueue : std::shared_ptr<vk::raii::Queue>
-}
-class "PhysicalDevice" as C_0005451956293659002050
-class C_0005451956293659002050 {
-+PhysicalDevice(const vk::raii::Instance & instance, const vk::raii::SurfaceKHR & surface) : void
-+PhysicalDevice(const PhysicalDevice &) = deleted : void
-+~PhysicalDevice() constexpr = default : void
-..
-+operator=(const PhysicalDevice &) = deleted : PhysicalDevice &
-..
-{static} -findGraphicsQueueFamily(const vk::raii::PhysicalDevice & device) : uint32_t
-{static} -findPresentQueueFamily(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : uint32_t
-+getGraphicsQueueFamilyIndex() const : uint32_t
-+getPhysicalDevice() const : std::shared_ptr<vk::raii::PhysicalDevice>
-+getPresentQueueFamilyIndex() const : uint32_t
-{static} -isDeviceSuitable(const vk::raii::PhysicalDevice & device, const vk::raii::SurfaceKHR & surface) : bool
-__
--graphicsQueueFamilyIndex : uint32_t
--physicalDevice : std::shared_ptr<vk::raii::PhysicalDevice>
--presentQueueFamilyIndex : uint32_t
+-m_pipeline : std::shared_ptr<vk::raii::Pipeline>
+-m_pipelineLayout : std::shared_ptr<vk::raii::PipelineLayout>
+-m_textureLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
+-m_uboLayout : std::shared_ptr<vk::raii::DescriptorSetLayout>
 }
 class "Window" as C_0010651813274497913986
 class C_0010651813274497913986 {
@@ -107,10 +197,10 @@ class C_0010651813274497913986 {
 +waitEvents() const : void
 {static} -windowSizeCallback(GLFWwindow * win, int width, int height) : void
 __
--height : uint32_t
--scrollDelta : float
--width : uint32_t
--window : GLFWwindow *
+-m_height : uint32_t
+-m_scrollDelta : float
+-m_width : uint32_t
+-m_window : GLFWwindow *
 }
 class "SwapChain" as C_0006379009548850625377
 class C_0006379009548850625377 {
@@ -132,11 +222,11 @@ class C_0006379009548850625377 {
 +getSwapChain() const : std::shared_ptr<vk::raii::SwapchainKHR>
 +recreate(const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::Device & device, const vk::raii::SurfaceKHR & surface, uint32_t graphicsFamily, uint32_t presentFamily, const Window & window) : void
 __
--extent : vk::Extent2D
--format : vk::Format
--imageViews : std::vector<vk::raii::ImageView>
--images : std::vector<vk::Image>
--swapChain : std::shared_ptr<vk::raii::SwapchainKHR>
+-m_extent : vk::Extent2D
+-m_format : vk::Format
+-m_imageViews : std::vector<vk::raii::ImageView>
+-m_images : std::vector<vk::Image>
+-m_swapChain : std::shared_ptr<vk::raii::SwapchainKHR>
 }
 class "UniformBufferObject" as C_0001278512758287525207
 class C_0001278512758287525207 {
@@ -155,11 +245,11 @@ class C_0005072411779978189213 {
 +getDescriptorSet() const : vk::DescriptorSet
 +update(const glm::mat4 & view, const glm::mat4 & proj) : void
 __
--buffer : std::shared_ptr<vk::raii::Buffer>
--bufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
--descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
--mappedData : void *
+-m_buffer : std::shared_ptr<vk::raii::Buffer>
+-m_bufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
+-m_descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
+-m_descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
+-m_mappedData : void *
 }
 class "Renderer" as C_0005052045876160408151
 class C_0005052045876160408151 {
@@ -173,23 +263,24 @@ class C_0005052045876160408151 {
 +getCommandPool() const : const vk::raii::CommandPool &
 -recordCommandBuffer(uint32_t imageIndex, const SwapChain & swapChain, const GraphicsPipeline & pipeline, const std::vector<DrawCall> & drawCalls, vk::DescriptorSet descriptorSet, const DepthBuffer & depthBuffer, const std::function<void (vk::CommandBuffer)> & drawUi) : void
 __
--commandBuffer : std::shared_ptr<vk::raii::CommandBuffer>
--commandPool : std::shared_ptr<vk::raii::CommandPool>
--imageAvailableSemaphore : std::shared_ptr<vk::raii::Semaphore>
--inFlightFence : std::shared_ptr<vk::raii::Fence>
--renderFinishedSemaphore : std::shared_ptr<vk::raii::Semaphore>
+-m_commandBuffer : std::shared_ptr<vk::raii::CommandBuffer>
+-m_commandPool : std::shared_ptr<vk::raii::CommandPool>
+-m_imageAvailableSemaphore : std::shared_ptr<vk::raii::Semaphore>
+-m_inFlightFence : std::shared_ptr<vk::raii::Fence>
+-m_renderFinishedSemaphore : std::shared_ptr<vk::raii::Semaphore>
 }
-class "Surface" as C_0005863257036258362083
-class C_0005863257036258362083 {
-+Surface(const vk::raii::Instance & instance, const Window & window) : void
-+Surface(const Surface &) = deleted : void
-+~Surface() constexpr = default : void
+class "Terrain" as C_0017957192035051550548
+class C_0017957192035051550548 {
++Terrain(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, float extent = 20.0f, int cells = 40) : void
++Terrain(const Terrain &) = deleted : void
++~Terrain() constexpr = default : void
 ..
-+operator=(const Surface &) = deleted : Surface &
++operator=(const Terrain &) = deleted : Terrain &
 ..
-+getSurface() const : std::shared_ptr<vk::raii::SurfaceKHR>
++getModel() const : const Model &
++getModelPtr() const : std::shared_ptr<Model>
 __
--surface : std::shared_ptr<vk::raii::SurfaceKHR>
+-m_model : std::shared_ptr<Model>
 }
 class "Instance" as C_0011288043459417146257
 class C_0011288043459417146257 {
@@ -204,8 +295,33 @@ class C_0011288043459417146257 {
 +getInstance() const : std::shared_ptr<vk::raii::Instance>
 +getRequiredInstanceExtensions() : std::vector<const char *>
 __
--context : std::shared_ptr<vk::raii::Context>
--instance : std::shared_ptr<vk::raii::Instance>
+-m_context : std::shared_ptr<vk::raii::Context>
+-m_instance : std::shared_ptr<vk::raii::Instance>
+}
+class "Surface" as C_0005863257036258362083
+class C_0005863257036258362083 {
++Surface(const vk::raii::Instance & instance, const Window & window) : void
++Surface(const Surface &) = deleted : void
++~Surface() constexpr = default : void
+..
++operator=(const Surface &) = deleted : Surface &
+..
++getSurface() const : std::shared_ptr<vk::raii::SurfaceKHR>
+__
+-m_surface : std::shared_ptr<vk::raii::SurfaceKHR>
+}
+class "ValidationLayers" as C_0006000219774684817943
+class C_0006000219774684817943 {
++ValidationLayers() : void
++~ValidationLayers() constexpr = default : void
+..
++areRequiredExtensionsSupported(const std::vector<const char *> & requiredExtensions, const vk::raii::Context & context) const : bool
++areValidationLayersSupported(const std::vector<const char *> & validationLayers, const vk::raii::Context & context) const : bool
++createDebugMessenger(const vk::raii::Instance & instance, vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback) : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
++getRequiredLayers() const : std::vector<const char *>
+__
+-m_debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
+-m_validationLayers : std::vector<const char *>
 }
 class "ResourceContext" as C_0001960953195291840437
 class C_0001960953195291840437 {
@@ -251,134 +367,25 @@ class C_0003317574026222630704 {
 -recreateSwapChain(IGame & game) : void
 +run(IGame & game) : void
 __
--debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
--depthBuffer : std::shared_ptr<DepthBuffer>
--graphicsPipeline : std::shared_ptr<GraphicsPipeline>
--logicalDevice : std::shared_ptr<LogicalDevice>
--physicalDevice : std::shared_ptr<PhysicalDevice>
--renderer : std::shared_ptr<Renderer>
--surface : std::shared_ptr<Surface>
--swapChain : std::shared_ptr<SwapChain>
--uniformBuffer : std::shared_ptr<UniformBuffer>
--vulkanInstance : std::shared_ptr<Instance>
--window : std::shared_ptr<Window>
+-m_debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
+-m_depthBuffer : std::shared_ptr<DepthBuffer>
+-m_graphicsPipeline : std::shared_ptr<GraphicsPipeline>
+-m_logicalDevice : std::shared_ptr<LogicalDevice>
+-m_physicalDevice : std::shared_ptr<PhysicalDevice>
+-m_renderer : std::shared_ptr<Renderer>
+-m_surface : std::shared_ptr<Surface>
+-m_swapChain : std::shared_ptr<SwapChain>
+-m_uniformBuffer : std::shared_ptr<UniformBuffer>
+-m_vulkanInstance : std::shared_ptr<Instance>
+-m_window : std::shared_ptr<Window>
 }
-class "ValidationLayers" as C_0006000219774684817943
-class C_0006000219774684817943 {
-+ValidationLayers() : void
-+~ValidationLayers() constexpr = default : void
-..
-+areRequiredExtensionsSupported(const std::vector<const char *> & requiredExtensions, const vk::raii::Context & context) const : bool
-+areValidationLayersSupported(const std::vector<const char *> & validationLayers, const vk::raii::Context & context) const : bool
-+createDebugMessenger(const vk::raii::Instance & instance, vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback) : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
-+getRequiredLayers() const : std::vector<const char *>
-__
--debugMessenger : std::shared_ptr<vk::raii::DebugUtilsMessengerEXT>
--validationLayers : std::vector<const char *>
-}
-class "Model" as C_0011538933711035525166
-class C_0011538933711035525166 {
-+Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::string & path) : void
-+Model(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, const std::vector<Vertex> & vertices, const std::vector<uint32_t> & indices, std::shared_ptr<TextureImage> texture) : void
-+Model(const Model &) = deleted : void
-+~Model() constexpr = default : void
-..
-+operator=(const Model &) = deleted : Model &
-..
-+getIndexBuffer() const : const IndexBuffer &
-+getMaterial() const : const Material &
-+getTextureImage() const : const TextureImage &
-+getVertexBuffer() const : const VertexBuffer &
-__
--indexBuffer : std::shared_ptr<IndexBuffer>
--material : std::shared_ptr<Material>
--textureImage : std::shared_ptr<TextureImage>
--vertexBuffer : std::shared_ptr<VertexBuffer>
-}
-class "Vertex" as C_0014226397048828503840
-class C_0014226397048828503840 {
-{static} +getAttributeDescriptions() : std::vector<vk::VertexInputAttributeDescription>
-{static} +getBindingDescription() : vk::VertexInputBindingDescription
-__
-+color : float[3]
-+pos : float[3]
-+texCoord : float[2]
-}
-class "VertexBuffer" as C_0017971525486362296134
-class C_0017971525486362296134 {
-+VertexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<Vertex> & vertices) : void
-+VertexBuffer(const VertexBuffer &) = deleted : void
-+~VertexBuffer() constexpr = default : void
-..
-+operator=(const VertexBuffer &) = deleted : VertexBuffer &
-..
-+getBuffer() const : std::shared_ptr<vk::raii::Buffer>
-+getVertexCount() const : uint32_t
-__
--vertexBuffer : std::shared_ptr<vk::raii::Buffer>
--vertexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--vertexCount : uint32_t
-}
-class "IndexBuffer" as C_0014751868707796848257
-class C_0014751868707796848257 {
-+IndexBuffer(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::vector<uint32_t> & indices) : void
-+IndexBuffer(const IndexBuffer &) = deleted : void
-+~IndexBuffer() constexpr = default : void
-..
-+operator=(const IndexBuffer &) = deleted : IndexBuffer &
-..
-+getBuffer() const : std::shared_ptr<vk::raii::Buffer>
-+getIndexCount() const : uint32_t
-__
--indexBuffer : std::shared_ptr<vk::raii::Buffer>
--indexBufferMemory : std::shared_ptr<vk::raii::DeviceMemory>
--indexCount : uint32_t
-}
-class "TextureImage" as C_0009707668883210252009
-class C_0009707668883210252009 {
-+TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const std::string & imagePath) : void
-+TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, std::span<const std::byte> encodedBytes) : void
-+TextureImage(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int width, int height) : void
-+TextureImage(const TextureImage &) = deleted : void
-+~TextureImage() constexpr = default : void
-..
-+operator=(const TextureImage &) = deleted : TextureImage &
-..
-+getImageView() const : vk::ImageView
-+getSampler() const : vk::Sampler
--upload(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const unsigned char * pixels, int texWidth, int texHeight) : void
-__
--image : std::shared_ptr<vk::raii::Image>
--imageMemory : std::shared_ptr<vk::raii::DeviceMemory>
--imageView : std::shared_ptr<vk::raii::ImageView>
--sampler : std::shared_ptr<vk::raii::Sampler>
-}
-class "Material" as C_0013651829107650321354
-class C_0013651829107650321354 {
-+Material(const vk::raii::Device & device, const vk::raii::DescriptorSetLayout & textureLayout, const TextureImage & texture) : void
-+Material(const Material &) = deleted : void
-+~Material() constexpr = default : void
-..
-+operator=(const Material &) = deleted : Material &
-..
-+getDescriptorSet() const : vk::DescriptorSet
-__
--descriptorPool : std::shared_ptr<vk::raii::DescriptorPool>
--descriptorSet : std::shared_ptr<vk::raii::DescriptorSet>
-}
-class "Terrain" as C_0017957192035051550548
-class C_0017957192035051550548 {
-+Terrain(const vk::raii::Device & device, const vk::raii::PhysicalDevice & physicalDevice, const vk::raii::CommandPool & commandPool, const vk::raii::Queue & graphicsQueue, const vk::raii::DescriptorSetLayout & textureLayout, float extent = 20.0f, int cells = 40) : void
-+Terrain(const Terrain &) = deleted : void
-+~Terrain() constexpr = default : void
-..
-+operator=(const Terrain &) = deleted : Terrain &
-..
-+getModel() const : const Model &
-+getModelPtr() const : std::shared_ptr<Model>
-__
--model : std::shared_ptr<Model>
-}
+C_0013651829107650321354 ..> C_0009707668883210252009
+C_0017971525486362296134 ..> C_0014226397048828503840
+C_0011538933711035525166 ..> C_0014226397048828503840
+C_0011538933711035525166 --> C_0017971525486362296134 : -m_vertexBuffer
+C_0011538933711035525166 --> C_0014751868707796848257 : -m_indexBuffer
+C_0011538933711035525166 --> C_0009707668883210252009 : -m_textureImage
+C_0011538933711035525166 --> C_0013651829107650321354 : -m_material
 C_0018137609043828252581 --> C_0011538933711035525166 : +model
 C_0006379009548850625377 ..> C_0010651813274497913986
 C_0005052045876160408151 ..> C_0006379009548850625377
@@ -386,8 +393,9 @@ C_0005052045876160408151 ..> C_0006355463886622039298
 C_0005052045876160408151 ..> C_0018137609043828252581
 C_0005052045876160408151 ..> C_0005072411779978189213
 C_0005052045876160408151 ..> C_0010012693743833055757
-C_0005863257036258362083 ..> C_0010651813274497913986
+C_0017957192035051550548 --> C_0011538933711035525166 : -m_model
 C_0011288043459417146257 ..> C_0010651813274497913986
+C_0005863257036258362083 ..> C_0010651813274497913986
 C_0001960953195291840437 --> C_0010651813274497913986 : +window
 C_0001960953195291840437 --> C_0006379009548850625377 : +swapChain
 C_0015269314027499786472 o-- C_0018137609043828252581 : +draws
@@ -396,24 +404,16 @@ C_0009452704245009550282 ..> C_0015269314027499786472
 C_0009452704245009550282 ..> C_0006379009548850625377
 C_0003317574026222630704 ..> C_0009452704245009550282
 C_0003317574026222630704 ..> C_0001960953195291840437
-C_0003317574026222630704 --> C_0010651813274497913986 : -window
-C_0003317574026222630704 --> C_0011288043459417146257 : -vulkanInstance
-C_0003317574026222630704 --> C_0005863257036258362083 : -surface
-C_0003317574026222630704 --> C_0005451956293659002050 : -physicalDevice
-C_0003317574026222630704 --> C_0005824195213410611621 : -logicalDevice
-C_0003317574026222630704 --> C_0006379009548850625377 : -swapChain
-C_0003317574026222630704 --> C_0010012693743833055757 : -depthBuffer
-C_0003317574026222630704 --> C_0006355463886622039298 : -graphicsPipeline
-C_0003317574026222630704 --> C_0005052045876160408151 : -renderer
-C_0003317574026222630704 --> C_0005072411779978189213 : -uniformBuffer
-C_0011538933711035525166 ..> C_0014226397048828503840
-C_0011538933711035525166 --> C_0017971525486362296134 : -vertexBuffer
-C_0011538933711035525166 --> C_0014751868707796848257 : -indexBuffer
-C_0011538933711035525166 --> C_0009707668883210252009 : -textureImage
-C_0011538933711035525166 --> C_0013651829107650321354 : -material
-C_0017971525486362296134 ..> C_0014226397048828503840
-C_0013651829107650321354 ..> C_0009707668883210252009
-C_0017957192035051550548 --> C_0011538933711035525166 : -model
+C_0003317574026222630704 --> C_0010651813274497913986 : -m_window
+C_0003317574026222630704 --> C_0011288043459417146257 : -m_vulkanInstance
+C_0003317574026222630704 --> C_0005863257036258362083 : -m_surface
+C_0003317574026222630704 --> C_0005451956293659002050 : -m_physicalDevice
+C_0003317574026222630704 --> C_0005824195213410611621 : -m_logicalDevice
+C_0003317574026222630704 --> C_0006379009548850625377 : -m_swapChain
+C_0003317574026222630704 --> C_0010012693743833055757 : -m_depthBuffer
+C_0003317574026222630704 --> C_0006355463886622039298 : -m_graphicsPipeline
+C_0003317574026222630704 --> C_0005052045876160408151 : -m_renderer
+C_0003317574026222630704 --> C_0005072411779978189213 : -m_uniformBuffer
 
 'Generated with clang-uml, version 0.6.2
 'LLVM version clang version 21.1.8

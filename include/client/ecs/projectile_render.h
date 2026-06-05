@@ -11,8 +11,7 @@ namespace Systems {
 
 // Creates the flat disc mesh used to render projectiles.
 std::shared_ptr<VulkanHelpers::Model> createProjectileModel(
-    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice,
-    const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 

@@ -9,11 +9,7 @@
 
 namespace Systems {
 
-entt::entity spawnProjectile(
-    entt::registry &registry, glm::vec3 origin, glm::vec3 velocity,
-    Components::FactionId ownerFaction, float knockbackForce,
-    float hitRadius, float lifetime
-) {
+entt::entity spawnProjectile(entt::registry &registry, glm::vec3 origin, glm::vec3 velocity, Components::FactionId ownerFaction, float knockbackForce, float hitRadius, float lifetime) {
     glm::vec3 dir = glm::length(velocity) > 0.001f ? glm::normalize(velocity) : glm::vec3{1, 0, 0};
     glm::vec3 spawnPos = origin + dir * (hitRadius + 0.1f);
 
@@ -46,7 +42,7 @@ void tickAbilities(entt::registry &registry, float dt) {
 }
 
 void updateProjectiles(entt::registry &registry, float dt) {
-    constexpr float WORLD_LIMIT = 25.0f;
+    constexpr float kWorldLimit = 25.0f;
 
     std::vector<entt::entity> toDestroy;
 
@@ -62,7 +58,7 @@ void updateProjectiles(entt::registry &registry, float dt) {
 
         t.position += proj.velocity * dt;
 
-        if (std::abs(t.position.x) > WORLD_LIMIT || std::abs(t.position.y) > WORLD_LIMIT) {
+        if (std::abs(t.position.x) > kWorldLimit || std::abs(t.position.y) > kWorldLimit) {
             toDestroy.push_back(projEntity);
             continue;
         }

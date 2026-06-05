@@ -8,7 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "render_components.h"
 #include "camera_system.h"
 #include "fog_of_war.h"
 #include "fog_system.h"
@@ -18,6 +17,7 @@
 #include "minimap_system.h"
 #include "network_messages.h"
 #include "projectile_render.h"
+#include "render_components.h"
 #include "render_system.h"
 #include "selection_ring.h"
 #include "selection_system.h"
@@ -29,15 +29,14 @@ void RtsGameClient::initLogic() {}
 void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
     m_window = &ctx.window;
 
-    m_unitModel        = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
-    m_terrain          = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    m_projectileModel  = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    m_lavaTileModel    = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
-    m_hudResources     = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_unitModel = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
+    m_terrain = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_projectileModel = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_lavaTileModel = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_hudResources = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_selectionRingModel = VulkanHelpers::createSelectionRingModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_menuSystem = std::make_shared<VulkanHelpers::MenuSystem>(
-        ctx.window, ctx.instance, ctx.physicalDevice, ctx.device,
-        ctx.graphicsQueueFamilyIndex, ctx.graphicsQueue, ctx.swapChain, ctx.depthFormat
+        ctx.window, ctx.instance, ctx.physicalDevice, ctx.device, ctx.graphicsQueueFamilyIndex, ctx.graphicsQueue, ctx.swapChain, ctx.depthFormat
     );
 
     auto camEntity = m_registry.create();
@@ -79,12 +78,17 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     if (m_networkManager) {
         m_networkManager->poll(
             [this](const uint8_t *data, std::size_t size, ENetPeer *) {
-                if (size == 0) return;
+                if (size == 0)
+                    return;
                 auto type = static_cast<MessageType>(data[0]);
-                if (type == MessageType::Snapshot)           clientApplySnapshot(data, size);
-                if (type == MessageType::PlayerAssignment)   clientHandleAssignment(data, size);
-                if (type == MessageType::Disconnect)         clientHandleDisconnect(data, size);
-                if (type == MessageType::ConnectionRejected) clientHandleConnectionRejected(data, size);
+                if (type == MessageType::Snapshot)
+                    clientApplySnapshot(data, size);
+                if (type == MessageType::PlayerAssignment)
+                    clientHandleAssignment(data, size);
+                if (type == MessageType::Disconnect)
+                    clientHandleDisconnect(data, size);
+                if (type == MessageType::ConnectionRejected)
+                    clientHandleConnectionRejected(data, size);
             },
             [this](ENetPeer *) {
                 HelloPacket pkt{};
@@ -143,7 +147,7 @@ void RtsGameClient::onSwapChainRecreated(const VulkanHelpers::SwapChain &swapCha
         m_menuSystem->onSwapChainRecreated(swapChain);
 }
 
-bool RtsGameClient::wantsMouse()    const { return m_menuSystem && m_menuSystem->wantsMouse(); }
+bool RtsGameClient::wantsMouse() const { return m_menuSystem && m_menuSystem->wantsMouse(); }
 bool RtsGameClient::wantsKeyboard() const { return m_menuSystem && m_menuSystem->wantsKeyboard(); }
 
 // ---- Client network handlers (GPU-aware) -----------------------------------
@@ -163,7 +167,8 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
     std::unordered_set<uint32_t> seenUnits;
     for (uint8_t i = 0; i < hdr.entityCount; ++i) {
         EntitySnapshot es{};
-        if (!r.read(es)) break;
+        if (!r.read(es))
+            break;
         seenUnits.insert(es.netId);
 
         auto it = knownUnits.find(es.netId);
@@ -192,7 +197,8 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
         } else {
             m_registry.get<Components::Transform>(it->second).position = {es.x, es.y, es.z};
             auto &h = m_registry.get<Components::Health>(it->second);
-            h.current = es.health; h.max = es.maxHealth;
+            h.current = es.health;
+            h.max = es.maxHealth;
         }
     }
     for (auto &[nid, e] : knownUnits) {
@@ -209,7 +215,8 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
     std::unordered_set<uint32_t> seenProj;
     for (uint8_t i = 0; i < hdr.projectileCount; ++i) {
         ProjectileSnapshot ps{};
-        if (!r.read(ps)) break;
+        if (!r.read(ps))
+            break;
         seenProj.insert(ps.netId);
 
         auto it = knownProj.find(ps.netId);
@@ -250,14 +257,14 @@ void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
         return;
 
     bool rightDown = m_window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
-    bool qDown     = m_window->isKeyPressed(GLFW_KEY_Q);
-    bool eDown     = m_window->isKeyPressed(GLFW_KEY_E);
+    bool qDown = m_window->isKeyPressed(GLFW_KEY_Q);
+    bool eDown = m_window->isKeyPressed(GLFW_KEY_E);
     bool rightJust = rightDown && !m_prevMouseRight;
-    bool qJust     = qDown     && !m_prevKeyQ;
-    bool eJust     = eDown     && !m_prevKeyE;
+    bool qJust = qDown && !m_prevKeyQ;
+    bool eJust = eDown && !m_prevKeyE;
     m_prevMouseRight = rightDown;
-    m_prevKeyQ       = qDown;
-    m_prevKeyE       = eDown;
+    m_prevKeyQ = qDown;
+    m_prevKeyE = eDown;
 
     if (!rightJust && !qJust && !eJust)
         return;
@@ -271,33 +278,39 @@ void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
         return;
 
     auto [mx, my] = m_window->getMousePosition();
-    float ndcX = (2.0f * static_cast<float>(mx)) / static_cast<float>(extent.width)  - 1.0f;
+    float ndcX = (2.0f * static_cast<float>(mx)) / static_cast<float>(extent.width) - 1.0f;
     float ndcY = (2.0f * static_cast<float>(my)) / static_cast<float>(extent.height) - 1.0f;
     glm::mat4 invVP = glm::inverse(cam->proj * cam->view);
     glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, 0.0f, 1.0f);
-    glm::vec4 farW  = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+    glm::vec4 farW = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
     nearW /= nearW.w;
-    farW  /= farW.w;
+    farW /= farW.w;
     glm::vec3 dir = glm::normalize(glm::vec3(farW) - glm::vec3(nearW));
 
-    if (std::abs(dir.z) < 1e-6f) return;
+    if (std::abs(dir.z) < 1e-6f)
+        return;
     float t = -glm::vec3(nearW).z / dir.z;
-    if (t < 0.0f) return;
+    if (t < 0.0f)
+        return;
     glm::vec3 ground = glm::vec3(nearW) + t * dir;
 
-    bool      hasMoveOrder  = rightJust;
-    bool      fireAbility   = qJust || eJust;
-    uint8_t   abilitySlot   = eJust ? 1 : 0;
-    glm::vec3 moveTarget    = rightJust   ? ground : glm::vec3{};
+    bool hasMoveOrder = rightJust;
+    bool fireAbility = qJust || eJust;
+    uint8_t abilitySlot = eJust ? 1 : 0;
+    glm::vec3 moveTarget = rightJust ? ground : glm::vec3{};
     glm::vec3 abilityTarget = fireAbility ? ground : glm::vec3{};
 
     InputPacket pkt{};
-    pkt.msgType     = static_cast<uint8_t>(MessageType::Input);
-    pkt.tick        = m_tick;
-    pkt.flags       = (hasMoveOrder ? InputFlags::kMoveOrder : 0) | (fireAbility ? InputFlags::kFireAbility : 0);
+    pkt.msgType = static_cast<uint8_t>(MessageType::Input);
+    pkt.tick = m_tick;
+    pkt.flags = (hasMoveOrder ? InputFlags::kMoveOrder : 0) | (fireAbility ? InputFlags::kFireAbility : 0);
     pkt.abilitySlot = abilitySlot;
-    pkt.moveX = moveTarget.x;    pkt.moveY = moveTarget.y;    pkt.moveZ = moveTarget.z;
-    pkt.abilityX = abilityTarget.x; pkt.abilityY = abilityTarget.y; pkt.abilityZ = abilityTarget.z;
+    pkt.moveX = moveTarget.x;
+    pkt.moveY = moveTarget.y;
+    pkt.moveZ = moveTarget.z;
+    pkt.abilityX = abilityTarget.x;
+    pkt.abilityY = abilityTarget.y;
+    pkt.abilityZ = abilityTarget.z;
 
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
     m_networkManager->sendToServerUnreliable({raw, raw + sizeof(pkt)});

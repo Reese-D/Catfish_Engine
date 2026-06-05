@@ -17,13 +17,15 @@ void RtsGameServer::update(float dt) {
     if (m_networkManager) {
         m_networkManager->poll(
             [this](const uint8_t *data, std::size_t size, ENetPeer *peer) {
-                if (size == 0) return;
+                if (size == 0)
+                    return;
                 auto type = static_cast<MessageType>(data[0]);
-                if (type == MessageType::Input) serverHandleInput(data, size, peer);
-                if (type == MessageType::Hello)  serverHandleHello(data, size, peer);
+                if (type == MessageType::Input)
+                    serverHandleInput(data, size, peer);
+                if (type == MessageType::Hello)
+                    serverHandleHello(data, size, peer);
             },
-            [this](ENetPeer *peer) { onClientConnect(peer); },
-            [this](ENetPeer *peer) { onClientDisconnect(peer); }
+            [this](ENetPeer *peer) { onClientConnect(peer); }, [this](ENetPeer *peer) { onClientDisconnect(peer); }
         );
     }
 

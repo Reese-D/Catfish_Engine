@@ -25,8 +25,8 @@ class ValidationLayers {
     std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> createDebugMessenger(const vk::raii::Instance &instance, vk::PFN_DebugUtilsMessengerCallbackEXT debugCallback);
 
   private:
-    std::vector<const char *> validationLayers;
-    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
+    std::vector<const char *> m_validationLayers;
+    std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debugMessenger;
 };
 
 } // namespace VulkanHelpers

@@ -27,8 +27,8 @@ void Engine::run(IGame &game) {
         m_uniformBuffer->update(output.view, output.proj);
 
         if (m_renderer->drawFrame(
-                *m_logicalDevice->getDevice(), *m_swapChain, *m_graphicsPipeline, *m_logicalDevice->getGraphicsQueue(), *m_logicalDevice->getPresentQueue(), output.draws, *m_uniformBuffer,
-                *m_depthBuffer, [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
+                *m_logicalDevice->getDevice(), *m_swapChain, *m_graphicsPipeline, *m_logicalDevice->getGraphicsQueue(), *m_logicalDevice->getPresentQueue(), output.draws,
+                *m_uniformBuffer, *m_depthBuffer, [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
             )) {
             recreateSwapChain(game);
         }
@@ -56,7 +56,8 @@ void Engine::initAll() {
     m_physicalDevice = std::make_shared<PhysicalDevice>(*m_vulkanInstance->getInstance(), *m_surface->getSurface());
 
     std::cout << "creating logical device...\n";
-    m_logicalDevice = std::make_shared<LogicalDevice>(*m_physicalDevice->getPhysicalDevice(), m_physicalDevice->getGraphicsQueueFamilyIndex(), m_physicalDevice->getPresentQueueFamilyIndex());
+    m_logicalDevice =
+        std::make_shared<LogicalDevice>(*m_physicalDevice->getPhysicalDevice(), m_physicalDevice->getGraphicsQueueFamilyIndex(), m_physicalDevice->getPresentQueueFamilyIndex());
 
     std::cout << "creating swap chain...\n";
     m_swapChain = std::make_shared<SwapChain>(

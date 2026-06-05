@@ -17,14 +17,14 @@
 
 namespace Game {
 
-static constexpr std::array<glm::vec3, 4> SPAWN_POSITIONS = {{
+static constexpr std::array<glm::vec3, 4> kSpawnPositions = {{
     {-3.0f, 0.0f, 0.0f},
-    { 3.0f, 0.0f, 0.0f},
+    {3.0f, 0.0f, 0.0f},
     {-3.0f, 3.0f, 0.0f},
-    { 3.0f, 3.0f, 0.0f},
+    {3.0f, 3.0f, 0.0f},
 }};
 
-static constexpr std::array<Components::FactionId, 2> SLOT_FACTIONS = {{
+static constexpr std::array<Components::FactionId, 2> kSlotFactions = {{
     Components::FactionId::Player,
     Components::FactionId::Enemy,
 }};
@@ -75,12 +75,14 @@ entt::entity RtsGameBase::spawnUnit(glm::vec3 position, Components::FactionId fa
     m_registry.emplace<Components::OrderQueue>(e);
     m_registry.emplace<Components::Faction>(e, Components::Faction{faction});
     m_registry.emplace<Components::Health>(e);
-    m_registry.emplace<Components::AbilitySet>(e, Components::AbilitySet{
-        .slots = {
-            Components::AbilitySlot{Components::AbilityId::Projectile,  1.5f, 1.5f, 8.0f,  12.0f},
-            Components::AbilitySlot{Components::AbilityId::GravityWell, 4.0f, 4.0f, 2.0f,  0.0f,  15.0f, 5.0f, 0.5f},
-        }
-    });
+    m_registry.emplace<Components::AbilitySet>(
+        e, Components::AbilitySet{
+               .slots = {
+                   Components::AbilitySlot{Components::AbilityId::Projectile, 1.5f, 1.5f, 8.0f, 12.0f},
+                   Components::AbilitySlot{Components::AbilityId::GravityWell, 4.0f, 4.0f, 2.0f, 0.0f, 15.0f, 5.0f, 0.5f},
+               }
+           }
+    );
     if (m_combatEnabled)
         m_registry.emplace<Components::Combat>(e);
     auto netId = m_nextNetworkId++;
@@ -92,7 +94,7 @@ entt::entity RtsGameBase::spawnUnit(glm::vec3 position, Components::FactionId fa
 // ---- Network: server -------------------------------------------------------
 
 void RtsGameBase::onClientConnect(ENetPeer *peer) {
-    if (m_peerToNetId.size() + m_pendingPeers.size() >= SPAWN_POSITIONS.size()) {
+    if (m_peerToNetId.size() + m_pendingPeers.size() >= kSpawnPositions.size()) {
         std::cout << "[Server] Full — rejecting incoming connection\n";
         serverSendConnectionRejected(peer, RejectionReason::ServerFull);
         return;
@@ -122,7 +124,7 @@ void RtsGameBase::onClientDisconnect(ENetPeer *peer) {
 void RtsGameBase::serverSendConnectionRejected(ENetPeer *peer, RejectionReason reason) {
     ConnectionRejectedPacket pkt{};
     pkt.msgType = static_cast<uint8_t>(MessageType::ConnectionRejected);
-    pkt.reason  = static_cast<uint8_t>(reason);
+    pkt.reason = static_cast<uint8_t>(reason);
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
     m_networkManager->sendReliableTo(peer, {raw, raw + sizeof(pkt)});
     enet_peer_disconnect_later(peer, 0);
@@ -131,7 +133,7 @@ void RtsGameBase::serverSendConnectionRejected(ENetPeer *peer, RejectionReason r
 void RtsGameBase::serverSendDisconnect(ENetPeer *peer, DisconnectReason reason) {
     DisconnectPacket pkt{};
     pkt.msgType = static_cast<uint8_t>(MessageType::Disconnect);
-    pkt.reason  = static_cast<uint8_t>(reason);
+    pkt.reason = static_cast<uint8_t>(reason);
     const auto *raw = reinterpret_cast<const uint8_t *>(&pkt);
     m_networkManager->sendReliableTo(peer, {raw, raw + sizeof(pkt)});
     enet_peer_disconnect_later(peer, 0);
@@ -143,8 +145,7 @@ void RtsGameBase::serverHandleHello(const uint8_t *data, std::size_t size, ENetP
 
     const auto *pkt = reinterpret_cast<const HelloPacket *>(data);
     if (pkt->protocolVersion != kProtocolVersion) {
-        std::cout << "[Server] Version mismatch (client=" << pkt->protocolVersion
-                  << " server=" << kProtocolVersion << ") — rejecting\n";
+        std::cout << "[Server] Version mismatch (client=" << pkt->protocolVersion << " server=" << kProtocolVersion << ") — rejecting\n";
         serverSendConnectionRejected(peer, RejectionReason::VersionMismatch);
         return;
     }
@@ -152,8 +153,8 @@ void RtsGameBase::serverHandleHello(const uint8_t *data, std::size_t size, ENetP
     m_pendingPeers.erase(peer);
     std::size_t slot = m_peerToNetId.size();
 
-    auto faction = (slot < SLOT_FACTIONS.size()) ? SLOT_FACTIONS[slot] : Components::FactionId::Enemy;
-    auto unit = spawnUnit(SPAWN_POSITIONS[slot], faction);
+    auto faction = (slot < kSlotFactions.size()) ? kSlotFactions[slot] : Components::FactionId::Enemy;
+    auto unit = spawnUnit(kSpawnPositions[slot], faction);
     auto netId = m_registry.get<Components::NetworkId>(unit).id;
     m_peerToNetId[peer] = netId;
 
@@ -184,8 +185,11 @@ void RtsGameBase::serverSendSnapshot() {
         EntitySnapshot es{};
         es.netId = n.id;
         es.faction = static_cast<uint8_t>(f.id);
-        es.x = t.position.x; es.y = t.position.y; es.z = t.position.z;
-        es.health = h.current; es.maxHealth = h.max;
+        es.x = t.position.x;
+        es.y = t.position.y;
+        es.z = t.position.z;
+        es.health = h.current;
+        es.maxHealth = h.max;
         entities.push_back(es);
     }
 
@@ -196,16 +200,22 @@ void RtsGameBase::serverSendSnapshot() {
         ProjectileSnapshot ps{};
         ps.netId = n.id;
         ps.faction = static_cast<uint8_t>(p.ownerFaction);
-        ps.x = t.position.x; ps.y = t.position.y; ps.z = t.position.z;
-        ps.vx = p.velocity.x; ps.vy = p.velocity.y; ps.vz = p.velocity.z;
+        ps.x = t.position.x;
+        ps.y = t.position.y;
+        ps.z = t.position.z;
+        ps.vx = p.velocity.x;
+        ps.vy = p.velocity.y;
+        ps.vz = p.velocity.z;
         projectiles.push_back(ps);
     }
 
     hdr.entityCount = static_cast<uint8_t>(std::min(entities.size(), std::size_t{255}));
     hdr.projectileCount = static_cast<uint8_t>(std::min(projectiles.size(), std::size_t{255}));
     w.write(hdr);
-    for (auto i = 0u; i < hdr.entityCount; ++i) w.write(entities[i]);
-    for (auto i = 0u; i < hdr.projectileCount; ++i) w.write(projectiles[i]);
+    for (auto i = 0u; i < hdr.entityCount; ++i)
+        w.write(entities[i]);
+    for (auto i = 0u; i < hdr.projectileCount; ++i)
+        w.write(projectiles[i]);
 
     m_networkManager->broadcastUnreliable(w.buf());
 }
@@ -253,12 +263,14 @@ void RtsGameBase::serverHandleInput(const uint8_t *data, std::size_t size, ENetP
         auto proj = Systems::spawnProjectile(m_registry, t.position, velocity, f.id, slot.knockbackForce);
 
         if (slot.id == Components::AbilityId::GravityWell) {
-            m_registry.emplace<Components::GravityWell>(proj, Components::GravityWell{
-                .pullStrength    = slot.pullStrength,
-                .pullRadius      = slot.pullRadius,
-                .activationDelay = slot.activationDelay,
-            });
-            m_registry.get<Components::Projectile>(proj).lifetime  = 5.0f;
+            m_registry.emplace<Components::GravityWell>(
+                proj, Components::GravityWell{
+                          .pullStrength = slot.pullStrength,
+                          .pullRadius = slot.pullRadius,
+                          .activationDelay = slot.activationDelay,
+                      }
+            );
+            m_registry.get<Components::Projectile>(proj).lifetime = 5.0f;
             m_registry.get<Components::Projectile>(proj).hitRadius = 0.6f;
         }
 
@@ -297,10 +309,18 @@ void RtsGameBase::clientHandleDisconnect(const uint8_t *data, std::size_t size) 
         return;
     const auto *pkt = reinterpret_cast<const DisconnectPacket *>(data);
     switch (static_cast<DisconnectReason>(pkt->reason)) {
-    case DisconnectReason::ServerShuttingDown: m_networkStatusMessage = "Server shut down."; break;
-    case DisconnectReason::Kicked:             m_networkStatusMessage = "You were kicked.";  break;
-    case DisconnectReason::GameOver:           m_networkStatusMessage = "Game over.";        break;
-    default:                                   m_networkStatusMessage = "Disconnected.";     break;
+    case DisconnectReason::ServerShuttingDown:
+        m_networkStatusMessage = "Server shut down.";
+        break;
+    case DisconnectReason::Kicked:
+        m_networkStatusMessage = "You were kicked.";
+        break;
+    case DisconnectReason::GameOver:
+        m_networkStatusMessage = "Game over.";
+        break;
+    default:
+        m_networkStatusMessage = "Disconnected.";
+        break;
     }
     std::cout << "[Client] Disconnected: " << m_networkStatusMessage << "\n";
 }
@@ -310,9 +330,15 @@ void RtsGameBase::clientHandleConnectionRejected(const uint8_t *data, std::size_
         return;
     const auto *pkt = reinterpret_cast<const ConnectionRejectedPacket *>(data);
     switch (static_cast<RejectionReason>(pkt->reason)) {
-    case RejectionReason::ServerFull:      m_networkStatusMessage = "Server is full.";      break;
-    case RejectionReason::VersionMismatch: m_networkStatusMessage = "Version mismatch.";    break;
-    default:                               m_networkStatusMessage = "Connection rejected."; break;
+    case RejectionReason::ServerFull:
+        m_networkStatusMessage = "Server is full.";
+        break;
+    case RejectionReason::VersionMismatch:
+        m_networkStatusMessage = "Version mismatch.";
+        break;
+    default:
+        m_networkStatusMessage = "Connection rejected.";
+        break;
     }
     std::cout << "[Client] Connection rejected: " << m_networkStatusMessage << "\n";
 }

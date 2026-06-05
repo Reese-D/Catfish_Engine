@@ -9,8 +9,8 @@
 namespace Systems {
 
 void applySeparation(entt::registry &registry) {
-    constexpr float minDist = 0.8f; // minimum separation between unit centres
-    constexpr float factor = 0.35f; // fraction of overlap resolved per frame
+    constexpr float kMinDist = 0.8f; // minimum separation between unit centres
+    constexpr float kFactor = 0.35f; // fraction of overlap resolved per frame
 
     // Snapshot positions — we apply forces after all comparisons
     std::vector<std::pair<entt::entity, glm::vec2>> snapshot;
@@ -25,8 +25,8 @@ void applySeparation(entt::registry &registry) {
         for (std::size_t j = i + 1; j < snapshot.size(); ++j) {
             glm::vec2 delta = snapshot[i].second - snapshot[j].second;
             float dist = glm::length(delta);
-            if (dist > 0.001f && dist < minDist) {
-                glm::vec2 push = glm::normalize(delta) * (minDist - dist) * factor;
+            if (dist > 0.001f && dist < kMinDist) {
+                glm::vec2 push = glm::normalize(delta) * (kMinDist - dist) * kFactor;
                 forces[i] += push;
                 forces[j] -= push;
             }
@@ -69,8 +69,10 @@ void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 world
         t.position.y = glm::clamp(t.position.y, worldMin.y, worldMax.y);
         if ((hitX || hitY) && registry.all_of<Components::Velocity>(entity)) {
             auto &v = registry.get<Components::Velocity>(entity);
-            if (hitX) v.vel.x = 0.0f;
-            if (hitY) v.vel.y = 0.0f;
+            if (hitX)
+                v.vel.x = 0.0f;
+            if (hitY)
+                v.vel.y = 0.0f;
         }
     }
 }

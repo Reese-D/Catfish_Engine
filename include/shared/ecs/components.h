@@ -11,9 +11,9 @@
 #include "orders.h"
 
 namespace WorldBounds {
-    inline constexpr float kMin = -20.0f;
-    inline constexpr float kMax =  20.0f;
-}
+inline constexpr float kMin = -20.0f;
+inline constexpr float kMax = 20.0f;
+} // namespace WorldBounds
 
 namespace Components {
 
@@ -67,7 +67,7 @@ struct MovementSpeed {
 };
 
 enum class AbilityId : uint8_t {
-    Projectile  = 0,
+    Projectile = 0,
     GravityWell = 1,
 };
 

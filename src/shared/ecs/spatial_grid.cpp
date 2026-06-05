@@ -7,10 +7,10 @@
 
 namespace VulkanHelpers {
 
-SpatialGrid::SpatialGrid(float m_cellSize, glm::vec2 min, glm::vec2 max) : m_cellSize(m_cellSize), m_gridMin(min) {
+SpatialGrid::SpatialGrid(float mCellSize, glm::vec2 min, glm::vec2 max) : m_cellSize(mCellSize), m_gridMin(min) {
     m_gridDims = {
-        static_cast<int>(std::ceil((max.x - min.x) / m_cellSize)),
-        static_cast<int>(std::ceil((max.y - min.y) / m_cellSize)),
+        static_cast<int>(std::ceil((max.x - min.x) / mCellSize)),
+        static_cast<int>(std::ceil((max.y - min.y) / mCellSize)),
     };
     m_cells.resize(static_cast<std::size_t>(m_gridDims.x) * m_gridDims.y);
 }

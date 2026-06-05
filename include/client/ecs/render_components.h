@@ -1,8 +1,8 @@
 #ifndef RENDER_COMPONENTS_H
 #define RENDER_COMPONENTS_H
 
-#include <memory>
 #include "model.h"
+#include <memory>
 
 namespace Components {
 
