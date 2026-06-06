@@ -44,6 +44,7 @@ class RtsGameClient : public RtsGameBase, public VulkanHelpers::IGame {
     bool m_prevMouseRight{false};
     bool m_prevKeyQ{false};
     bool m_prevKeyE{false};
+    bool m_prevKeyF{false};
 };
 
 } // namespace Game

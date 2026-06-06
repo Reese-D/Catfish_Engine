@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <imgui.h>
+
 #include "camera_system.h"
 #include "fog_of_war.h"
 #include "fog_system.h"
@@ -106,8 +108,30 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     ++m_tick;
     m_elapsedTime += dt;
 
+    // Follow-camera toggle: F key or button click.
+    bool fDown = m_window && m_window->isKeyPressed(GLFW_KEY_F);
+    bool toggleFollow = fDown && !m_prevKeyF;
+    m_prevKeyF = fDown;
+
+    // Draw follow-camera button (top-left corner).
+    bool followActive = false;
+    for (auto e : m_registry.view<Components::Camera>()) {
+        followActive = m_registry.get<Components::Camera>(e).followPlayer;
+        break;
+    }
+    ImGui::SetNextWindowPos({10.0f, 50.0f}, ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.6f);
+    ImGui::Begin("##followcam", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav);
+    if (followActive)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.2f, 1.0f));
+    if (ImGui::Button(followActive ? "Follow: ON  [F]" : "Follow: OFF [F]"))
+        toggleFollow = true;
+    if (followActive)
+        ImGui::PopStyleColor();
+    ImGui::End();
+
     if (m_window && (!m_menuSystem || !m_menuSystem->wantsKeyboard()))
-        Systems::updateCameraInput(m_registry, *m_window, dt);
+        Systems::updateCameraInput(m_registry, *m_window, dt, toggleFollow);
     if (m_window && (!m_menuSystem || !m_menuSystem->wantsMouse()))
         clientCaptureAndSendInput(extent);
     Systems::updateCamera(m_registry, extent);

@@ -9,7 +9,7 @@
 
 namespace Systems {
 
-void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, float deltaTime) {
+void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, float deltaTime, bool toggleFollow) {
     constexpr float kPanSpeed = 3.0f;  // world units per second
     constexpr float kZoomSpeed = 4.0f; // world units per scroll tick
     constexpr float kMinDist = 1.0f;
@@ -42,6 +42,12 @@ void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, 
             pan.y += kPanSpeed * deltaTime;
         if (my > fh - kEdgePx)
             pan.y -= kPanSpeed * deltaTime;
+
+        if (toggleFollow)
+            cam.followPlayer = !cam.followPlayer;
+        // Any manual pan cancels follow mode.
+        if (glm::length(pan) > 0.0f)
+            cam.followPlayer = false;
 
         cam.position += pan;
         cam.target += pan;
