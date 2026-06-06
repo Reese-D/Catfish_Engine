@@ -12,6 +12,7 @@
 #include "depth_buffer.h"
 #include "draw_call.h"
 #include "graphics_pipeline.h"
+#include "projectile_pipeline.h"
 #include "logical_device.h"
 #include "physical_device.h"
 #include "renderer.h"
@@ -42,6 +43,7 @@ struct ResourceContext {
 // Per-frame data returned by the game to the engine.
 struct FrameOutput {
     std::vector<DrawCall> draws;
+    std::vector<ProjectileDrawCall> projectileDraws;
     glm::mat4 view{1.0f};
     glm::mat4 proj{1.0f};
 };
@@ -87,6 +89,7 @@ class Engine {
     std::shared_ptr<SwapChain> m_swapChain;
     std::shared_ptr<DepthBuffer> m_depthBuffer;
     std::shared_ptr<GraphicsPipeline> m_graphicsPipeline;
+    std::shared_ptr<ProjectilePipeline> m_projectilePipeline;
     std::shared_ptr<Renderer> m_renderer;
     std::shared_ptr<UniformBuffer> m_uniformBuffer;
 };

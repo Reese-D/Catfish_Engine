@@ -5,6 +5,7 @@
 
 #include "depth_buffer.h"
 #include "model.h"
+#include "projectile_pipeline.h"
 #include "renderer.h"
 
 namespace VulkanHelpers {
@@ -37,7 +38,8 @@ Renderer::Renderer(const vk::raii::Device &device, uint32_t graphicsQueueFamilyI
 
 bool Renderer::drawFrame(
     const vk::raii::Device &device, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const vk::raii::Queue &graphicsQueue, const vk::raii::Queue &presentQueue,
-    const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer, const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
+    const std::vector<DrawCall> &drawCalls, const UniformBuffer &uniformBuffer, const DepthBuffer &depthBuffer, const ProjectilePipeline *projectilePipeline,
+    const std::vector<ProjectileDrawCall> &projectileDrawCalls, const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     (void)device.waitForFences(**m_inFlightFence, vk::True, UINT64_MAX);
 
@@ -56,7 +58,7 @@ bool Renderer::drawFrame(
     device.resetFences(**m_inFlightFence);
 
     m_commandBuffer->reset();
-    recordCommandBuffer(imageIndex, swapChain, pipeline, drawCalls, uniformBuffer.getDescriptorSet(), depthBuffer, drawUi);
+    recordCommandBuffer(imageIndex, swapChain, pipeline, drawCalls, uniformBuffer.getDescriptorSet(), depthBuffer, projectilePipeline, projectileDrawCalls, drawUi);
 
     vk::Semaphore waitSem = **m_imageAvailableSemaphore;
     vk::Semaphore signalSem = **m_renderFinishedSemaphore;
@@ -93,7 +95,8 @@ bool Renderer::drawFrame(
 
 void Renderer::recordCommandBuffer(
     uint32_t imageIndex, const SwapChain &swapChain, const GraphicsPipeline &pipeline, const std::vector<DrawCall> &drawCalls, vk::DescriptorSet descriptorSet,
-    const DepthBuffer &depthBuffer, const std::function<void(vk::CommandBuffer)> &drawUi
+    const DepthBuffer &depthBuffer, const ProjectilePipeline *projectilePipeline, const std::vector<ProjectileDrawCall> &projectileDrawCalls,
+    const std::function<void(vk::CommandBuffer)> &drawUi
 ) {
     m_commandBuffer->begin(vk::CommandBufferBeginInfo{});
 
@@ -190,6 +193,30 @@ void Renderer::recordCommandBuffer(
         m_commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});
         m_commandBuffer->bindIndexBuffer(**draw.model->getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
         m_commandBuffer->drawIndexed(draw.model->getIndexBuffer().getIndexCount(), 1, 0, 0, 0);
+    }
+
+    if (projectilePipeline && !projectileDrawCalls.empty()) {
+        struct ProjectilePushData {
+            glm::mat4 transform;
+            float time;
+            uint32_t shaderType;
+        };
+
+        m_commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, **projectilePipeline->getPipeline());
+        m_commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **projectilePipeline->getPipelineLayout(), 0, {descriptorSet}, {});
+
+        for (const auto &draw : projectileDrawCalls) {
+            m_commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **projectilePipeline->getPipelineLayout(), 1, {draw.materialSet}, {});
+
+            ProjectilePushData pushData{draw.transform, draw.time, draw.shaderType};
+            m_commandBuffer->pushConstants(
+                **projectilePipeline->getPipelineLayout(), vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(ProjectilePushData), &pushData
+            );
+
+            m_commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});
+            m_commandBuffer->bindIndexBuffer(**draw.model->getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
+            m_commandBuffer->drawIndexed(draw.model->getIndexBuffer().getIndexCount(), 1, 0, 0, 0);
+        }
     }
 
     if (drawUi) {

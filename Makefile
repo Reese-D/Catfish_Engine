@@ -109,6 +109,7 @@ CLIENT_SRCS = \
   src/client/engine/surface.cpp \
   src/client/engine/swap_chain.cpp \
   src/client/engine/graphics_pipeline.cpp \
+  src/client/engine/projectile_pipeline.cpp \
   src/client/engine/renderer.cpp \
   src/client/engine/vulkan_utils.cpp \
   src/client/engine/vertex_buffer.cpp \
@@ -140,17 +141,26 @@ $(CLIENT_OBJS): %.o: %.cpp
 
 # ---- Shaders -----------------------------------------------------------------
 
-SHADER_SRC   = shaders/shader.slang
-VERT_SPV     = shaders/vert.spv
-FRAG_SPV     = shaders/frag.spv
-SLANGC_FLAGS = -target spirv -matrix-layout-column-major
+SHADER_SRC            = shaders/shader.slang
+VERT_SPV              = shaders/vert.spv
+FRAG_SPV              = shaders/frag.spv
+PROJECTILE_SHADER_SRC = shaders/projectile.slang
+PROJECTILE_VERT_SPV   = shaders/projectile_vert.spv
+PROJECTILE_FRAG_SPV   = shaders/projectile_frag.spv
+SLANGC_FLAGS          = -target spirv -matrix-layout-column-major
 
-shaders: $(VERT_SPV) $(FRAG_SPV)
+shaders: $(VERT_SPV) $(FRAG_SPV) $(PROJECTILE_VERT_SPV) $(PROJECTILE_FRAG_SPV)
 
 $(VERT_SPV): $(SHADER_SRC)
 	slangc $(SLANGC_FLAGS) -entry vertexMain $< -o $@
 
 $(FRAG_SPV): $(SHADER_SRC)
+	slangc $(SLANGC_FLAGS) -entry fragmentMain $< -o $@
+
+$(PROJECTILE_VERT_SPV): $(PROJECTILE_SHADER_SRC)
+	slangc $(SLANGC_FLAGS) -entry vertexMain $< -o $@
+
+$(PROJECTILE_FRAG_SPV): $(PROJECTILE_SHADER_SRC)
 	slangc $(SLANGC_FLAGS) -entry fragmentMain $< -o $@
 
 # ---- ENet C compile ----------------------------------------------------------
@@ -163,7 +173,7 @@ $(ENET_OBJS): %.o: %.c
 clean:
 	rm -f $(SHARED_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) $(ENET_OBJS) \
 	      libcatfish_shared.a catfish_server catfish_client \
-	      $(VERT_SPV) $(FRAG_SPV)
+	      $(VERT_SPV) $(FRAG_SPV) $(PROJECTILE_VERT_SPV) $(PROJECTILE_FRAG_SPV)
 
 # Project sources only (no third_party) — used by tidy and format
 PROJECT_SRCS = $(SHARED_SRCS) $(SERVER_SRCS) \

@@ -200,6 +200,7 @@ void RtsGameBase::serverSendSnapshot() {
         ProjectileSnapshot ps{};
         ps.netId = n.id;
         ps.faction = static_cast<uint8_t>(p.ownerFaction);
+        ps.type = m_registry.all_of<Components::GravityWell>(e) ? 1u : 0u;
         ps.x = t.position.x;
         ps.y = t.position.y;
         ps.z = t.position.z;

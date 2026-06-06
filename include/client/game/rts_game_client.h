@@ -34,7 +34,10 @@ class RtsGameClient : public RtsGameBase, public VulkanHelpers::IGame {
     std::shared_ptr<VulkanHelpers::Terrain> m_terrain;
     std::shared_ptr<VulkanHelpers::Model> m_selectionRingModel;
     std::shared_ptr<VulkanHelpers::Model> m_projectileModel;
+    std::shared_ptr<VulkanHelpers::Model> m_gravityWellModel;
     std::shared_ptr<VulkanHelpers::Model> m_lavaTileModel;
+
+    float m_elapsedTime{0.0f};
     VulkanHelpers::HudResources m_hudResources;
     std::shared_ptr<VulkanHelpers::MenuSystem> m_menuSystem;
 

@@ -16,6 +16,7 @@
 #include "lava_render.h"
 #include "minimap_system.h"
 #include "network_messages.h"
+#include "components.h"
 #include "projectile_render.h"
 #include "render_components.h"
 #include "render_system.h"
@@ -32,6 +33,7 @@ void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
     m_unitModel = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
     m_terrain = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_projectileModel = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_gravityWellModel = Systems::createGravityWellModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_lavaTileModel = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_hudResources = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_selectionRingModel = VulkanHelpers::createSelectionRingModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
@@ -102,6 +104,7 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     }
 
     ++m_tick;
+    m_elapsedTime += dt;
 
     if (m_window && (!m_menuSystem || !m_menuSystem->wantsKeyboard()))
         Systems::updateCameraInput(m_registry, *m_window, dt);
@@ -119,6 +122,8 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     Systems::appendLavaDrawCalls(m_lavaZone, out.draws, *m_lavaTileModel);
     Systems::appendSelectionRings(m_registry, out.draws, *m_selectionRingModel, fog);
     Systems::appendHealthBars(m_registry, out.draws, m_hudResources, fog);
+    if (m_projectileModel && m_gravityWellModel)
+        Systems::appendProjectileDrawCalls(m_registry, out.projectileDraws, *m_projectileModel, *m_gravityWellModel, m_elapsedTime);
 
     if (m_menuSystem)
         m_menuSystem->drawOverlay(dt);
@@ -231,14 +236,14 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
                        .scale = {1, 1, 1},
                    }
             );
-            if (m_projectileModel)
-                m_registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{m_projectileModel});
             m_registry.emplace<Components::Projectile>(
                 e, Components::Projectile{
                        .ownerFaction = static_cast<Components::FactionId>(ps.faction),
                        .velocity = {ps.vx, ps.vy, ps.vz},
                    }
             );
+            if (ps.type == 1)
+                m_registry.emplace<Components::GravityWell>(e);
         } else {
             m_registry.get<Components::Transform>(it->second).position = {ps.x, ps.y, ps.z};
             m_registry.get<Components::Projectile>(it->second).velocity = {ps.vx, ps.vy, ps.vz};

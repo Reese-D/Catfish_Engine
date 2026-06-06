@@ -28,7 +28,8 @@ void Engine::run(IGame &game) {
 
         if (m_renderer->drawFrame(
                 *m_logicalDevice->getDevice(), *m_swapChain, *m_graphicsPipeline, *m_logicalDevice->getGraphicsQueue(), *m_logicalDevice->getPresentQueue(), output.draws,
-                *m_uniformBuffer, *m_depthBuffer, [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
+                *m_uniformBuffer, *m_depthBuffer, m_projectilePipeline.get(), output.projectileDraws,
+                [&](vk::CommandBuffer cmd) { game.renderImGui(cmd); }
             )) {
             recreateSwapChain(game);
         }
@@ -70,6 +71,11 @@ void Engine::initAll() {
 
     std::cout << "creating graphics pipeline...\n";
     m_graphicsPipeline = std::make_shared<GraphicsPipeline>(*m_logicalDevice->getDevice(), m_swapChain->getFormat(), m_depthBuffer->getFormat());
+
+    std::cout << "creating projectile pipeline...\n";
+    m_projectilePipeline = std::make_shared<ProjectilePipeline>(
+        *m_logicalDevice->getDevice(), m_swapChain->getFormat(), m_depthBuffer->getFormat(), **m_graphicsPipeline->getUboLayout(), **m_graphicsPipeline->getTextureLayout()
+    );
 
     std::cout << "creating m_renderer...\n";
     m_renderer = std::make_shared<Renderer>(*m_logicalDevice->getDevice(), m_physicalDevice->getGraphicsQueueFamilyIndex());
