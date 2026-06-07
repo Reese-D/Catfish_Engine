@@ -33,6 +33,7 @@ void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
     m_window = &ctx.window;
 
     m_unitModel = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/goblin.glb");
+    m_rockModel = std::make_shared<VulkanHelpers::Model>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout, "models/boulder.glb");
     m_terrain = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_projectileModel = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_gravityWellModel = Systems::createGravityWellModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
@@ -284,6 +285,43 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
     }
     for (auto &[nid, e] : knownProj) {
         if (!seenProj.count(nid) && m_registry.valid(e)) {
+            m_registry.destroy(e);
+            m_netIdToEntity.erase(nid);
+        }
+    }
+
+    std::unordered_map<uint32_t, entt::entity> knownRocks;
+    for (auto e : m_registry.view<Components::NetworkId, Components::Rock>())
+        knownRocks[m_registry.get<Components::NetworkId>(e).id] = e;
+
+    std::unordered_set<uint32_t> seenRocks;
+    for (uint8_t i = 0; i < hdr.rockCount; ++i) {
+        RockSnapshot rs{};
+        if (!r.read(rs))
+            break;
+        seenRocks.insert(rs.netId);
+
+        auto it = knownRocks.find(rs.netId);
+        if (it == knownRocks.end()) {
+            auto e = m_registry.create();
+            m_registry.emplace<Components::NetworkId>(e, Components::NetworkId{rs.netId});
+            m_netIdToEntity[rs.netId] = e;
+            m_registry.emplace<Components::Transform>(
+                e, Components::Transform{
+                       .position = {rs.x, rs.y, rs.z},
+                       .rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1, 0, 0)),
+                       .scale = {1.5f, 1.5f, 1.5f},
+                   }
+            );
+            m_registry.emplace<Components::Rock>(e);
+            if (m_rockModel)
+                m_registry.emplace<Components::RenderMesh>(e, Components::RenderMesh{m_rockModel});
+        } else {
+            m_registry.get<Components::Transform>(it->second).position = {rs.x, rs.y, rs.z};
+        }
+    }
+    for (auto &[nid, e] : knownRocks) {
+        if (!seenRocks.count(nid) && m_registry.valid(e)) {
             m_registry.destroy(e);
             m_netIdToEntity.erase(nid);
         }

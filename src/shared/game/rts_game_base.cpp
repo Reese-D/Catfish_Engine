@@ -95,6 +95,28 @@ entt::entity RtsGameBase::spawnUnit(glm::vec3 position, Components::FactionId fa
     return e;
 }
 
+entt::entity RtsGameBase::spawnRock(glm::vec3 position) {
+    auto e = m_registry.create();
+    m_registry.emplace<Components::Transform>(
+        e, Components::Transform{
+               .position = position,
+               .rotation = glm::quat{1.0f, 0.0f, 0.0f, 0.0f},
+               .scale = {1.5f, 1.5f, 1.5f},
+           }
+    );
+    m_registry.emplace<Components::Velocity>(e);
+    m_registry.emplace<Components::Mass>(e, Components::Mass{8.0f});
+    m_registry.emplace<Components::Friction>(e, Components::Friction{4.0f});
+    m_registry.emplace<Components::Rock>(e);
+    // Collider derived from boulder.glb bounds × scale 1.5:
+    // model X half ≈ 0.542, model-Z centre = −0.470 → world-Y offset after Rx(90°)
+    m_registry.emplace<Components::Collider>(e, Components::Collider{.radius = 0.81f, .offset = {0.0f, 0.70f}});
+    auto netId = m_nextNetworkId++;
+    m_registry.emplace<Components::NetworkId>(e, Components::NetworkId{netId});
+    m_netIdToEntity[netId] = e;
+    return e;
+}
+
 // ---- Network: server -------------------------------------------------------
 
 void RtsGameBase::onClientConnect(ENetPeer *peer) {
@@ -180,6 +202,7 @@ void RtsGameBase::serverSendSnapshot() {
 
     std::vector<EntitySnapshot> entities;
     std::vector<ProjectileSnapshot> projectiles;
+    std::vector<RockSnapshot> rocks;
 
     for (auto e : m_registry.view<Components::Transform, Components::Faction, Components::Health, Components::NetworkId>()) {
         const auto &t = m_registry.get<Components::Transform>(e);
@@ -216,13 +239,27 @@ void RtsGameBase::serverSendSnapshot() {
         projectiles.push_back(ps);
     }
 
+    for (auto e : m_registry.view<Components::Transform, Components::Rock, Components::NetworkId>()) {
+        const auto &t = m_registry.get<Components::Transform>(e);
+        const auto &n = m_registry.get<Components::NetworkId>(e);
+        RockSnapshot rs{};
+        rs.netId = n.id;
+        rs.x = t.position.x;
+        rs.y = t.position.y;
+        rs.z = t.position.z;
+        rocks.push_back(rs);
+    }
+
     hdr.entityCount = static_cast<uint8_t>(std::min(entities.size(), std::size_t{255}));
     hdr.projectileCount = static_cast<uint8_t>(std::min(projectiles.size(), std::size_t{255}));
+    hdr.rockCount = static_cast<uint8_t>(std::min(rocks.size(), std::size_t{255}));
     w.write(hdr);
     for (auto i = 0u; i < hdr.entityCount; ++i)
         w.write(entities[i]);
     for (auto i = 0u; i < hdr.projectileCount; ++i)
         w.write(projectiles[i]);
+    for (auto i = 0u; i < hdr.rockCount; ++i)
+        w.write(rocks[i]);
 
     m_networkManager->broadcastUnreliable(w.buf());
 }

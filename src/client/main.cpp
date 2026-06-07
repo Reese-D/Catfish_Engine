@@ -27,12 +27,13 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
+        VulkanHelpers::Engine engine;
+
         Game::RtsGameClient game;
         game.enableFogOfWar();
         game.enableMinimap();
         game.setupAsClient(std::move(host), port);
 
-        VulkanHelpers::Engine engine;
         engine.run(game);
 
     } catch (const std::exception &e) {

@@ -39,6 +39,7 @@ class RtsGameBase {
 
   protected:
     entt::entity spawnUnit(glm::vec3 position, Components::FactionId faction = Components::FactionId::Player);
+    entt::entity spawnRock(glm::vec3 position);
 
     // Server-side network event handlers
     void onClientConnect(ENetPeer *peer);

@@ -119,7 +119,24 @@ struct Projectile {
 };
 
 struct Velocity {
-    glm::vec2 vel{0.0f}; // persists indefinitely (frictionless surface)
+    glm::vec2 vel{0.0f};
+};
+
+struct Mass {
+    float value{1.0f}; // kg-equivalent; higher = harder to accelerate and knock back
+};
+
+struct Friction {
+    float coefficient{0.0f}; // velocity decay per second; 0 = frictionless
+};
+
+struct Rock {}; // tag: static terrain piece with physics
+
+// Explicit collision circle for entities whose mesh origin is not at the visual centre.
+// offset is in world-space units, applied to Transform.position to find the physics centre.
+struct Collider {
+    float radius{0.4f};
+    glm::vec2 offset{0.0f, 0.0f};
 };
 
 struct ThrustDirection {

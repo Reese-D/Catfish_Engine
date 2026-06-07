@@ -3,6 +3,7 @@ catfish_engine
 bin/
 *.o
 *.a
+*.d
 *.so
 *.dylib
 compile_commands.json

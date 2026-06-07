@@ -7,7 +7,7 @@
 
 namespace Systems {
 
-void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, float deltaTime, bool toggleFollow = false);
+void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, float deltaTime, bool toggleFollow = false, bool wasdEnabled = false);
 
 } // namespace Systems
 

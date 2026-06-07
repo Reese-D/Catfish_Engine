@@ -9,21 +9,20 @@
 namespace Systems {
 
 void applySeparation(entt::registry &registry) {
-    constexpr float kMinDist = 0.8f; // minimum separation between unit centres
-    constexpr float kFactor = 0.35f; // fraction of overlap resolved per frame
+    constexpr float kMinDist = 0.8f;
+    constexpr float kFactor = 0.35f;
 
-    // Snapshot positions — we apply forces after all comparisons
-    std::vector<std::pair<entt::entity, glm::vec2>> snapshot;
+    // --- Unit-unit separation ---
+    std::vector<std::pair<entt::entity, glm::vec2>> units;
     for (auto entity : registry.view<Components::Transform, Components::Selectable>()) {
         const auto &t = registry.get<Components::Transform>(entity);
-        snapshot.emplace_back(entity, glm::vec2{t.position.x, t.position.y});
+        units.emplace_back(entity, glm::vec2{t.position.x, t.position.y});
     }
 
-    std::vector<glm::vec2> forces(snapshot.size(), glm::vec2{0.0f});
-
-    for (std::size_t i = 0; i < snapshot.size(); ++i) {
-        for (std::size_t j = i + 1; j < snapshot.size(); ++j) {
-            glm::vec2 delta = snapshot[i].second - snapshot[j].second;
+    std::vector<glm::vec2> forces(units.size(), glm::vec2{0.0f});
+    for (std::size_t i = 0; i < units.size(); ++i) {
+        for (std::size_t j = i + 1; j < units.size(); ++j) {
+            glm::vec2 delta = units[i].second - units[j].second;
             float dist = glm::length(delta);
             if (dist > 0.001f && dist < kMinDist) {
                 glm::vec2 push = glm::normalize(delta) * (kMinDist - dist) * kFactor;
@@ -32,12 +31,46 @@ void applySeparation(entt::registry &registry) {
             }
         }
     }
-
-    for (std::size_t i = 0; i < snapshot.size(); ++i) {
+    for (std::size_t i = 0; i < units.size(); ++i) {
         if (glm::length(forces[i]) > 0.0f) {
-            auto &t = registry.get<Components::Transform>(snapshot[i].first);
+            auto &t = registry.get<Components::Transform>(units[i].first);
             t.position.x += forces[i].x;
             t.position.y += forces[i].y;
+        }
+    }
+
+    // --- Unit-rock separation (mass-weighted: unit takes most of the push) ---
+    constexpr float kUnitMass = 1.0f;
+    constexpr float kUnitRadius = kMinDist * 0.5f;
+    for (auto rockEntity : registry.view<Components::Transform, Components::Rock>()) {
+        auto &rt = registry.get<Components::Transform>(rockEntity);
+
+        // Use Collider if present; fall back to scale-derived estimate.
+        glm::vec2 colliderOffset{0.0f, 0.0f};
+        float rockRadius = rt.scale.x * kUnitRadius;
+        if (registry.all_of<Components::Collider>(rockEntity)) {
+            const auto &col = registry.get<Components::Collider>(rockEntity);
+            colliderOffset = col.offset;
+            rockRadius = col.radius;
+        }
+        const float minSep = kUnitRadius + rockRadius;
+        const float rockMass = registry.all_of<Components::Mass>(rockEntity)
+                                   ? registry.get<Components::Mass>(rockEntity).value
+                                   : kUnitMass;
+        const float totalMass = kUnitMass + rockMass;
+
+        for (auto unitEntity : registry.view<Components::Transform, Components::Selectable>()) {
+            auto &ut = registry.get<Components::Transform>(unitEntity);
+            glm::vec2 rockCenter{rt.position.x + colliderOffset.x, rt.position.y + colliderOffset.y};
+            glm::vec2 delta{ut.position.x - rockCenter.x, ut.position.y - rockCenter.y};
+            float dist = glm::length(delta);
+            if (dist > 0.001f && dist < minSep) {
+                glm::vec2 push = glm::normalize(delta) * (minSep - dist) * kFactor;
+                ut.position.x += push.x * rockMass / totalMass;
+                ut.position.y += push.y * rockMass / totalMass;
+                rt.position.x -= push.x * kUnitMass / totalMass;
+                rt.position.y -= push.y * kUnitMass / totalMass;
+            }
         }
     }
 }
@@ -61,7 +94,7 @@ void applyVelocity(entt::registry &registry, float dt) {
 }
 
 void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 worldMax) {
-    for (auto entity : registry.view<Components::Transform, Components::MovementSpeed>()) {
+    for (auto entity : registry.view<Components::Transform, Components::Velocity>()) {
         auto &t = registry.get<Components::Transform>(entity);
         bool hitX = t.position.x <= worldMin.x || t.position.x >= worldMax.x;
         bool hitY = t.position.y <= worldMin.y || t.position.y >= worldMax.y;
@@ -74,6 +107,17 @@ void clampToBounds(entt::registry &registry, glm::vec2 worldMin, glm::vec2 world
             if (hitY)
                 v.vel.y = 0.0f;
         }
+    }
+}
+
+void applyFriction(entt::registry &registry, float dt) {
+    for (auto entity : registry.view<Components::Velocity, Components::Friction>()) {
+        auto &v = registry.get<Components::Velocity>(entity);
+        const float coeff = registry.get<Components::Friction>(entity).coefficient;
+        float decay = 1.0f - coeff * dt;
+        if (decay < 0.0f)
+            decay = 0.0f;
+        v.vel *= decay;
     }
 }
 

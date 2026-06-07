@@ -9,7 +9,7 @@
 // the same architecture for now; add bswap if cross-platform is needed later).
 
 // Bump whenever the packet layout changes in a breaking way.
-constexpr uint16_t kProtocolVersion = 4;
+constexpr uint16_t kProtocolVersion = 5;
 
 enum class MessageType : uint8_t {
     Snapshot = 0x01,           // server → client, unreliable
@@ -52,6 +52,11 @@ struct ProjectileSnapshot {
     float yaw;        // Z-axis rotation (radians); used by lightning bolt mesh
 };
 
+struct RockSnapshot {
+    uint32_t netId;
+    float x, y, z;
+};
+
 // Fixed-size header; followed by entityCount EntitySnapshots then
 // projectileCount ProjectileSnapshots in the raw packet buffer.
 struct SnapshotHeader {
@@ -60,6 +65,7 @@ struct SnapshotHeader {
     float lavaRadius;
     uint8_t entityCount;
     uint8_t projectileCount;
+    uint8_t rockCount;
 };
 
 namespace InputFlags {

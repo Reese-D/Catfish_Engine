@@ -63,18 +63,36 @@ void updateProjectiles(entt::registry &registry, float dt) {
             continue;
         }
 
+        auto massOf = [&](entt::entity e) {
+            return registry.all_of<Components::Mass>(e) ? registry.get<Components::Mass>(e).value : 1.0f;
+        };
+        // Physics centre of a target entity, accounting for any Collider offset.
+        auto collisionCenter = [&](entt::entity e) -> glm::vec2 {
+            const auto &tr = registry.get<Components::Transform>(e);
+            glm::vec2 c{tr.position.x, tr.position.y};
+            if (registry.all_of<Components::Collider>(e))
+                c += registry.get<Components::Collider>(e).offset;
+            return c;
+        };
+        // Combined hit threshold: projectile radius + target's collider radius (0 for units).
+        auto hitThreshold = [&](entt::entity target) -> float {
+            if (registry.all_of<Components::Collider>(target))
+                return proj.hitRadius + registry.get<Components::Collider>(target).radius;
+            return proj.hitRadius;
+        };
+
         if (registry.all_of<Components::GravityWell>(projEntity)) {
             auto &gw = registry.get<Components::GravityWell>(projEntity);
             if (gw.activationTimer < gw.activationDelay) {
                 gw.activationTimer += dt;
             } else {
-                for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
-                    const auto &ut = registry.get<Components::Transform>(unitEntity);
-                    glm::vec2 toWell{t.position.x - ut.position.x, t.position.y - ut.position.y};
+                for (auto unitEntity : registry.view<Components::Transform, Components::Velocity>()) {
+                    glm::vec2 center = collisionCenter(unitEntity);
+                    glm::vec2 toWell{t.position.x - center.x, t.position.y - center.y};
                     float dist = glm::length(toWell);
                     if (dist < 0.1f || dist > gw.pullRadius)
                         continue;
-                    float accelMag = gw.pullStrength / (dist * dist);
+                    float accelMag = gw.pullStrength / (dist * dist * massOf(unitEntity));
                     registry.get<Components::Velocity>(unitEntity).vel += glm::normalize(toWell) * (accelMag * dt);
                 }
             }
@@ -87,32 +105,36 @@ void updateProjectiles(entt::registry &registry, float dt) {
                 // no hit detection while charging
             } else {
                 bool hit = false;
-                for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
+                for (auto unitEntity : registry.view<Components::Transform, Components::Velocity>()) {
                     if (hit)
                         break;
-                    const auto &ut = registry.get<Components::Transform>(unitEntity);
-                    float dx = t.position.x - ut.position.x;
-                    float dy = t.position.y - ut.position.y;
-                    if (dx * dx + dy * dy > proj.hitRadius * proj.hitRadius)
+                    glm::vec2 center = collisionCenter(unitEntity);
+                    float dx = t.position.x - center.x;
+                    float dy = t.position.y - center.y;
+                    float threshold = hitThreshold(unitEntity);
+                    if (dx * dx + dy * dy > threshold * threshold)
                         continue;
-                    registry.get<Components::Velocity>(unitEntity).vel += glm::vec2(lb.boltDir.x, lb.boltDir.y) * proj.knockbackForce;
+                    registry.get<Components::Velocity>(unitEntity).vel +=
+                        glm::vec2(lb.boltDir.x, lb.boltDir.y) * (proj.knockbackForce / massOf(unitEntity));
                     toDestroy.push_back(projEntity);
                     hit = true;
                 }
             }
         } else {
             bool hit = false;
-            for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
+            for (auto unitEntity : registry.view<Components::Transform, Components::Velocity>()) {
                 if (hit)
                     break;
-                const auto &ut = registry.get<Components::Transform>(unitEntity);
-                float dx = t.position.x - ut.position.x;
-                float dy = t.position.y - ut.position.y;
-                if (dx * dx + dy * dy > proj.hitRadius * proj.hitRadius)
+                glm::vec2 center = collisionCenter(unitEntity);
+                float dx = t.position.x - center.x;
+                float dy = t.position.y - center.y;
+                float threshold = hitThreshold(unitEntity);
+                if (dx * dx + dy * dy > threshold * threshold)
                     continue;
 
                 glm::vec3 d = glm::length(proj.velocity) > 0.001f ? glm::normalize(proj.velocity) : glm::vec3{1, 0, 0};
-                registry.get<Components::Velocity>(unitEntity).vel += glm::vec2(d.x, d.y) * proj.knockbackForce;
+                registry.get<Components::Velocity>(unitEntity).vel +=
+                    glm::vec2(d.x, d.y) * (proj.knockbackForce / massOf(unitEntity));
 
                 toDestroy.push_back(projEntity);
                 hit = true;

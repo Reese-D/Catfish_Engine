@@ -29,8 +29,8 @@ CLIENT_INC = $(SHARED_INC) \
   -Ithird_party/imgui \
   -Ithird_party/imgui/backends
 
-BASEFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb
-CFLAGS    = -O2 -Ithird_party/enet/include
+BASEFLAGS = -std=c++23 -Wall -Wextra -O0 -ggdb -MMD -MP
+CFLAGS    = -O2 -Ithird_party/enet/include -MMD -MP
 
 # ---- ENet C sources (shared by both binaries) --------------------------------
 
@@ -171,8 +171,8 @@ $(ENET_OBJS): %.o: %.c
 # ---- Phony targets -----------------------------------------------------------
 
 clean:
-	rm -f $(SHARED_OBJS) $(SERVER_OBJS) $(CLIENT_OBJS) $(ENET_OBJS) \
-	      libcatfish_shared.a catfish_server catfish_client \
+	find src third_party/enet -name '*.o' -o -name '*.d' | xargs rm -f
+	rm -f libcatfish_shared.a catfish_server catfish_client \
 	      $(VERT_SPV) $(FRAG_SPV) $(PROJECTILE_VERT_SPV) $(PROJECTILE_FRAG_SPV)
 
 # Project sources only (no third_party) — used by tidy and format
@@ -211,5 +211,7 @@ local-install: catfish_server catfish_client
 
 local-uninstall:
 	rm -f ./bin/catfish_server ./bin/catfish_client
+
+-include $(SHARED_OBJS:.o=.d) $(SERVER_OBJS:.o=.d) $(CLIENT_OBJS:.o=.d) $(ENET_OBJS:.o=.d)
 
 .PHONY: all clean tidy tidy-fix format uml diagrams shaders local-install local-uninstall

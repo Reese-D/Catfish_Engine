@@ -11,7 +11,9 @@
 
 namespace Game {
 
-void RtsGameServer::initLogic() {}
+void RtsGameServer::initLogic() {
+    spawnRock({0.0f, 5.0f, 0.0f});
+}
 
 void RtsGameServer::update(float dt) {
     if (m_networkManager) {
@@ -40,6 +42,7 @@ void RtsGameServer::update(float dt) {
     Systems::updateProjectiles(m_registry, dt);
     Systems::applyThrust(m_registry, dt);
     Systems::applyVelocity(m_registry, dt);
+    Systems::applyFriction(m_registry, dt);
     Systems::applySeparation(m_registry);
     Systems::clampToBounds(m_registry, {WorldBounds::kMin, WorldBounds::kMin}, {WorldBounds::kMax, WorldBounds::kMax});
 
