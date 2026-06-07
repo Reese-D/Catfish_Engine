@@ -25,28 +25,29 @@ jobs:
         run: |
           sudo apt-get install -y \
             clang-18 \
+            meson \
+            ninja-build \
             vulkan-headers \
             libvulkan-dev \
             libglfw3-dev \
             libsimdjson-dev \
             libglm-dev
 
-      - name: Mark compiled shaders as up-to-date
-        run: touch shaders/vert.spv shaders/frag.spv
-
       - name: Build
-        run: make catfish_client catfish_server CXX=clang++-18 CC=clang-18
+        run: |
+          CC=clang-18 CXX=clang++-18 meson setup build --buildtype=release
+          ninja -C build
 
       - name: Package tarball
         run: |
           DEST=catfish-engine-${{ github.ref_name }}-linux-x86_64
           mkdir -p "$DEST/shaders" "$DEST/models" "$DEST/lib"
-          cp catfish_client catfish_server "$DEST/"
+          cp build/catfish_client build/catfish_server "$DEST/"
           cp shaders/vert.spv shaders/frag.spv "$DEST/shaders/"
           cp models/goblin.glb "$DEST/models/"
 
           # Bundle runtime shared libs — exclude Vulkan (GPU driver) and kernel/libc
-          ldd catfish_client | awk '{print $3}' | grep '^/' \
+          ldd build/catfish_client | awk '{print $3}' | grep '^/' \
             | grep -Ev 'libvulkan|libc\.|libm\.|libdl\.|libpthread\.|librt\.|libutil\.|linux-vdso|ld-linux' \
             | xargs -I{} cp -L {} "$DEST/lib/"
 
