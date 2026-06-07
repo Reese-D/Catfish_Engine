@@ -78,6 +78,28 @@ void updateProjectiles(entt::registry &registry, float dt) {
                     registry.get<Components::Velocity>(unitEntity).vel += glm::normalize(toWell) * (accelMag * dt);
                 }
             }
+        } else if (registry.all_of<Components::LightningBolt>(projEntity)) {
+            auto &lb = registry.get<Components::LightningBolt>(projEntity);
+            if (lb.chargeTimer < lb.chargeDelay) {
+                lb.chargeTimer += dt;
+                if (lb.chargeTimer >= lb.chargeDelay)
+                    proj.velocity = lb.boltDir * lb.speed;
+                // no hit detection while charging
+            } else {
+                bool hit = false;
+                for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {
+                    if (hit)
+                        break;
+                    const auto &ut = registry.get<Components::Transform>(unitEntity);
+                    float dx = t.position.x - ut.position.x;
+                    float dy = t.position.y - ut.position.y;
+                    if (dx * dx + dy * dy > proj.hitRadius * proj.hitRadius)
+                        continue;
+                    registry.get<Components::Velocity>(unitEntity).vel += glm::vec2(lb.boltDir.x, lb.boltDir.y) * proj.knockbackForce;
+                    toDestroy.push_back(projEntity);
+                    hit = true;
+                }
+            }
         } else {
             bool hit = false;
             for (auto unitEntity : registry.view<Components::Transform, Components::MovementSpeed, Components::Velocity>()) {

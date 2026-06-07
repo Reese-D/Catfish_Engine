@@ -114,9 +114,45 @@ float4 gravityWell(float2 uv, float t) {
     return col;
 }
 
+// ---- Lightning bolt: jagged white/blue streak on an elongated quad -----------
+// uv.x = cross-axis [0,1], uv.y = along-axis [0,1]
+
+float4 lightning(float2 uv, float t) {
+    // Jagged bolt centerline — layered sin waves of increasing frequency
+    float jag = 0.08 * sin(uv.y * 14.0 + t * 22.0)
+              + 0.04 * sin(uv.y * 29.0 - t * 35.0)
+              + 0.02 * sin(uv.y * 55.0 + t * 18.0);
+    float center = 0.5 + jag;
+    float du = abs(uv.x - center);
+
+    // Core and glow bands
+    float core = max(0.0, 1.0 - du * 18.0);
+    float glow = max(0.0, 1.0 - du *  6.0);
+
+    // Secondary branch — offset from main bolt
+    float branchJag = jag * 0.6 + 0.05 * sin(uv.y * 22.0 + t * 19.0 + 1.7);
+    float branchDu = abs(uv.x - 0.5 - branchJag);
+    float branch = max(0.0, 0.5 * (1.0 - branchDu * 22.0));
+
+    // Fade at the tip ends so the bolt doesn't hard-clip
+    float endFade = smoothstep(0.0, 0.08, uv.y) * (1.0 - smoothstep(0.92, 1.0, uv.y));
+
+    float3 col = float3(1.0, 1.0, 1.0) * core
+               + float3(0.45, 0.65, 1.0) * glow * 0.7
+               + float3(0.35, 0.55, 1.0) * branch;
+
+    float alpha = (glow + branch * 0.6) * endFade;
+
+    // High-frequency flicker
+    float flicker = 0.75 + 0.25 * sin(t * 50.0 + uv.y * 5.0);
+    return float4(col * flicker, alpha * flicker);
+}
+
 [shader("fragment")]
 float4 fragmentMain([[vk::location(0)]] float2 uv) : SV_Target {
     if (push.shaderType == 0u)
         return fireball(uv, push.time);
-    return gravityWell(uv, push.time);
+    if (push.shaderType == 1u)
+        return gravityWell(uv, push.time);
+    return lightning(uv, push.time);
 }

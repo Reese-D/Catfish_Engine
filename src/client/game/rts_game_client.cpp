@@ -36,6 +36,7 @@ void RtsGameClient::initGraphics(const VulkanHelpers::ResourceContext &ctx) {
     m_terrain = std::make_shared<VulkanHelpers::Terrain>(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_projectileModel = Systems::createProjectileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_gravityWellModel = Systems::createGravityWellModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
+    m_lightningModel = Systems::createLightningModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_lavaTileModel = Systems::createLavaTileModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_hudResources = VulkanHelpers::createHudResources(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
     m_selectionRingModel = VulkanHelpers::createSelectionRingModel(ctx.device, ctx.physicalDevice, ctx.commandPool, ctx.graphicsQueue, ctx.textureLayout);
@@ -146,8 +147,8 @@ VulkanHelpers::FrameOutput RtsGameClient::update(float dt, vk::Extent2D extent) 
     Systems::appendLavaDrawCalls(m_lavaZone, out.draws, *m_lavaTileModel);
     Systems::appendSelectionRings(m_registry, out.draws, *m_selectionRingModel, fog);
     Systems::appendHealthBars(m_registry, out.draws, m_hudResources, fog);
-    if (m_projectileModel && m_gravityWellModel)
-        Systems::appendProjectileDrawCalls(m_registry, out.projectileDraws, *m_projectileModel, *m_gravityWellModel, m_elapsedTime);
+    if (m_projectileModel && m_gravityWellModel && m_lightningModel)
+        Systems::appendProjectileDrawCalls(m_registry, out.projectileDraws, *m_projectileModel, *m_gravityWellModel, *m_lightningModel, m_elapsedTime);
 
     if (m_menuSystem)
         m_menuSystem->drawOverlay(dt);
@@ -253,10 +254,13 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
             auto e = m_registry.create();
             m_registry.emplace<Components::NetworkId>(e, Components::NetworkId{ps.netId});
             m_netIdToEntity[ps.netId] = e;
+            glm::quat rot = ps.type == 2
+                                ? glm::angleAxis(ps.yaw, glm::vec3{0.0f, 0.0f, 1.0f})
+                                : glm::quat{1, 0, 0, 0};
             m_registry.emplace<Components::Transform>(
                 e, Components::Transform{
                        .position = {ps.x, ps.y, ps.z},
-                       .rotation = glm::quat{1, 0, 0, 0},
+                       .rotation = rot,
                        .scale = {1, 1, 1},
                    }
             );
@@ -268,8 +272,13 @@ void RtsGameClient::clientApplySnapshot(const uint8_t *data, std::size_t size) {
             );
             if (ps.type == 1)
                 m_registry.emplace<Components::GravityWell>(e);
+            else if (ps.type == 2)
+                m_registry.emplace<Components::LightningBolt>(e);
         } else {
-            m_registry.get<Components::Transform>(it->second).position = {ps.x, ps.y, ps.z};
+            auto &tr = m_registry.get<Components::Transform>(it->second);
+            tr.position = {ps.x, ps.y, ps.z};
+            if (ps.type == 2)
+                tr.rotation = glm::angleAxis(ps.yaw, glm::vec3{0.0f, 0.0f, 1.0f});
             m_registry.get<Components::Projectile>(it->second).velocity = {ps.vx, ps.vy, ps.vz};
         }
     }
@@ -288,14 +297,17 @@ void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
     bool rightDown = m_window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     bool qDown = m_window->isKeyPressed(GLFW_KEY_Q);
     bool eDown = m_window->isKeyPressed(GLFW_KEY_E);
+    bool rDown = m_window->isKeyPressed(GLFW_KEY_R);
     bool rightJust = rightDown && !m_prevMouseRight;
     bool qJust = qDown && !m_prevKeyQ;
     bool eJust = eDown && !m_prevKeyE;
+    bool rJust = rDown && !m_prevKeyR;
     m_prevMouseRight = rightDown;
     m_prevKeyQ = qDown;
     m_prevKeyE = eDown;
+    m_prevKeyR = rDown;
 
-    if (!rightJust && !qJust && !eJust)
+    if (!rightJust && !qJust && !eJust && !rJust)
         return;
 
     const Components::Camera *cam = nullptr;
@@ -324,8 +336,8 @@ void RtsGameClient::clientCaptureAndSendInput(vk::Extent2D extent) {
     glm::vec3 ground = glm::vec3(nearW) + t * dir;
 
     bool hasMoveOrder = rightJust;
-    bool fireAbility = qJust || eJust;
-    uint8_t abilitySlot = eJust ? 1 : 0;
+    bool fireAbility = qJust || eJust || rJust;
+    uint8_t abilitySlot = rJust ? 2 : eJust ? 1 : 0;
     glm::vec3 moveTarget = rightJust ? ground : glm::vec3{};
     glm::vec3 abilityTarget = fireAbility ? ground : glm::vec3{};
 

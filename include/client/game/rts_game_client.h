@@ -35,6 +35,7 @@ class RtsGameClient : public RtsGameBase, public VulkanHelpers::IGame {
     std::shared_ptr<VulkanHelpers::Model> m_selectionRingModel;
     std::shared_ptr<VulkanHelpers::Model> m_projectileModel;
     std::shared_ptr<VulkanHelpers::Model> m_gravityWellModel;
+    std::shared_ptr<VulkanHelpers::Model> m_lightningModel;
     std::shared_ptr<VulkanHelpers::Model> m_lavaTileModel;
 
     float m_elapsedTime{0.0f};
@@ -44,6 +45,7 @@ class RtsGameClient : public RtsGameBase, public VulkanHelpers::IGame {
     bool m_prevMouseRight{false};
     bool m_prevKeyQ{false};
     bool m_prevKeyE{false};
+    bool m_prevKeyR{false};
     bool m_prevKeyF{false};
 };
 

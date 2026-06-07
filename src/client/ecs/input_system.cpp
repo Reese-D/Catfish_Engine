@@ -52,6 +52,15 @@ void updateCameraInput(entt::registry &registry, VulkanHelpers::Window &window, 
         cam.position += pan;
         cam.target += pan;
 
+        // Keep target inside the map so the camera never looks off the terrain edge.
+        glm::vec3 clampedTarget{
+            std::clamp(cam.target.x, WorldBounds::kMin, WorldBounds::kMax),
+            std::clamp(cam.target.y, WorldBounds::kMin, WorldBounds::kMax),
+            cam.target.z,
+        };
+        cam.position += clampedTarget - cam.target;
+        cam.target = clampedTarget;
+
         // Zoom — move position along the arm toward/away from target
         float scroll = window.consumeScrollDelta();
         if (std::abs(scroll) > 0.0f) {

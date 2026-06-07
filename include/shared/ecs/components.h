@@ -70,6 +70,7 @@ struct MovementSpeed {
 enum class AbilityId : uint8_t {
     Projectile = 0,
     GravityWell = 1,
+    Lightning = 2,
 };
 
 struct AbilitySlot {
@@ -89,6 +90,16 @@ struct AbilitySlot {
 
 struct AbilitySet {
     std::vector<AbilitySlot> slots;
+};
+
+// Component placed on lightning-bolt projectile entities.
+// During charge (chargeTimer < chargeDelay) the velocity is zero; once the
+// delay elapses the projectile is released at full speed toward boltDir.
+struct LightningBolt {
+    float chargeDelay{0.20f};
+    float chargeTimer{0.0f};
+    glm::vec3 boltDir{0.0f, 1.0f, 0.0f}; // unit vector toward target
+    float speed{28.0f};
 };
 
 // Tag component placed on gravity-well projectile entities.

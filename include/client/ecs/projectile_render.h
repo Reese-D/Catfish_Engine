@@ -25,10 +25,16 @@ std::shared_ptr<VulkanHelpers::Model> createGravityWellModel(
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
+// Narrow rectangular quad for the lightning bolt (1.0 long × 0.15 wide, long axis in X).
+std::shared_ptr<VulkanHelpers::Model> createLightningModel(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout
+);
+
 // Collects ProjectileDrawCalls for all Projectile entities in the registry.
 void appendProjectileDrawCalls(
-    entt::registry &registry, std::vector<VulkanHelpers::ProjectileDrawCall> &draws, const VulkanHelpers::Model &fireballModel, const VulkanHelpers::Model &gravityWellModel,
-    float time
+    entt::registry &registry, std::vector<VulkanHelpers::ProjectileDrawCall> &draws, const VulkanHelpers::Model &fireballModel,
+    const VulkanHelpers::Model &gravityWellModel, const VulkanHelpers::Model &lightningModel, float time
 );
 
 } // namespace Systems

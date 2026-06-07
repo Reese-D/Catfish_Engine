@@ -209,8 +209,8 @@ void Renderer::recordCommandBuffer(
             m_commandBuffer->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, **projectilePipeline->getPipelineLayout(), 1, {draw.materialSet}, {});
 
             ProjectilePushData pushData{draw.transform, draw.time, draw.shaderType};
-            m_commandBuffer->pushConstants(
-                **projectilePipeline->getPipelineLayout(), vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(ProjectilePushData), &pushData
+            m_commandBuffer->pushConstants<ProjectilePushData>(
+                **projectilePipeline->getPipelineLayout(), vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, pushData
             );
 
             m_commandBuffer->bindVertexBuffers(0, {**draw.model->getVertexBuffer().getBuffer()}, {vk::DeviceSize{0}});

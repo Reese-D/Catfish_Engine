@@ -1,6 +1,7 @@
 #include "fog_system.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include <glm/glm.hpp>
 #include <imgui.h>
@@ -11,11 +12,16 @@ namespace Systems {
 
 namespace {
 
+constexpr float kSentinel = -9999.0f;
+
 ImVec2 worldToScreen(glm::vec3 worldPos, const Components::Camera &cam, vk::Extent2D extent) {
     glm::vec4 clip = cam.proj * cam.view * glm::vec4(worldPos, 1.0f);
     if (clip.w <= 0.0f)
-        return {-9999.0f, -9999.0f};
+        return {kSentinel, kSentinel};
     glm::vec3 ndc = glm::vec3(clip) / clip.w;
+    // Skip near-horizon cells whose NDC coords blow up (perspective singularity).
+    if (std::abs(ndc.x) > 8.0f || std::abs(ndc.y) > 8.0f)
+        return {kSentinel, kSentinel};
     return {
         (ndc.x + 1.0f) * 0.5f * static_cast<float>(extent.width),
         (ndc.y + 1.0f) * 0.5f * static_cast<float>(extent.height),
@@ -55,6 +61,10 @@ void drawFogOverlay(const FogOfWar &fog, entt::registry &registry, vk::Extent2D 
             ImVec2 s1 = worldToScreen({wMax.x, wMin.y, 0.0f}, *cam, extent);
             ImVec2 s2 = worldToScreen({wMax.x, wMax.y, 0.0f}, *cam, extent);
             ImVec2 s3 = worldToScreen({wMin.x, wMax.y, 0.0f}, *cam, extent);
+
+            // Skip if any corner hit a projection singularity (near-horizon cell).
+            if (s0.x == kSentinel || s1.x == kSentinel || s2.x == kSentinel || s3.x == kSentinel)
+                continue;
 
             float minX = std::min({s0.x, s1.x, s2.x, s3.x});
             float maxX = std::max({s0.x, s1.x, s2.x, s3.x});

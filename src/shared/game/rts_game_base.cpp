@@ -3,6 +3,8 @@
 #include <array>
 #include <iostream>
 
+#include <cmath>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -80,6 +82,8 @@ entt::entity RtsGameBase::spawnUnit(glm::vec3 position, Components::FactionId fa
                .slots = {
                    Components::AbilitySlot{Components::AbilityId::Projectile, 1.5f, 1.5f, 8.0f, 12.0f},
                    Components::AbilitySlot{Components::AbilityId::GravityWell, 4.0f, 4.0f, 2.0f, 0.0f, 15.0f, 5.0f, 0.5f},
+                   // Lightning: cooldown=3s, projectileSpeed unused, knockback=6, activationDelay=0.2s charge
+                   Components::AbilitySlot{Components::AbilityId::Lightning, 3.0f, 3.0f, 0.0f, 6.0f, 0.0f, 0.0f, 0.2f},
                }
            }
     );
@@ -200,13 +204,15 @@ void RtsGameBase::serverSendSnapshot() {
         ProjectileSnapshot ps{};
         ps.netId = n.id;
         ps.faction = static_cast<uint8_t>(p.ownerFaction);
-        ps.type = m_registry.all_of<Components::GravityWell>(e) ? 1u : 0u;
+        ps.type = m_registry.all_of<Components::GravityWell>(e) ? 1u : m_registry.all_of<Components::LightningBolt>(e) ? 2u : 0u;
         ps.x = t.position.x;
         ps.y = t.position.y;
         ps.z = t.position.z;
         ps.vx = p.velocity.x;
         ps.vy = p.velocity.y;
         ps.vz = p.velocity.z;
+        // Encode the Z-axis yaw from the quaternion (used to orient the lightning mesh on the client)
+        ps.yaw = 2.0f * std::atan2(t.rotation.z, t.rotation.w);
         projectiles.push_back(ps);
     }
 
@@ -260,19 +266,44 @@ void RtsGameBase::serverHandleInput(const uint8_t *data, std::size_t size, ENetP
         if (len < 0.001f)
             return;
 
-        glm::vec3 velocity = (delta / len) * slot.projectileSpeed;
-        auto proj = Systems::spawnProjectile(m_registry, t.position, velocity, f.id, slot.knockbackForce);
+        glm::vec3 dir = delta / len;
 
-        if (slot.id == Components::AbilityId::GravityWell) {
-            m_registry.emplace<Components::GravityWell>(
-                proj, Components::GravityWell{
-                          .pullStrength = slot.pullStrength,
-                          .pullRadius = slot.pullRadius,
-                          .activationDelay = slot.activationDelay,
+        entt::entity proj;
+        if (slot.id == Components::AbilityId::Lightning) {
+            constexpr float kMaxRange = 8.0f;
+            constexpr float kSpeed = 28.0f;
+            glm::vec3 boltDir = dir;
+            // Cap the effective range via lifetime; charge delay is slot.activationDelay
+            float lifetime = slot.activationDelay + kMaxRange / kSpeed;
+            proj = Systems::spawnProjectile(m_registry, t.position, boltDir, f.id, slot.knockbackForce, 0.12f, lifetime);
+            // Velocity starts at zero during the charge phase
+            m_registry.get<Components::Projectile>(proj).velocity = {0.0f, 0.0f, 0.0f};
+            // Orient quad X-axis (long axis) toward target: atan2(y, x) is standard angle from +X
+            float angle = std::atan2(boltDir.y, boltDir.x);
+            m_registry.get<Components::Transform>(proj).rotation = glm::angleAxis(angle, glm::vec3{0.0f, 0.0f, 1.0f});
+            m_registry.emplace<Components::LightningBolt>(
+                proj, Components::LightningBolt{
+                          .chargeDelay = slot.activationDelay,
+                          .chargeTimer = 0.0f,
+                          .boltDir = boltDir,
+                          .speed = kSpeed,
                       }
             );
-            m_registry.get<Components::Projectile>(proj).lifetime = 5.0f;
-            m_registry.get<Components::Projectile>(proj).hitRadius = 0.6f;
+        } else {
+            glm::vec3 velocity = dir * slot.projectileSpeed;
+            proj = Systems::spawnProjectile(m_registry, t.position, velocity, f.id, slot.knockbackForce);
+
+            if (slot.id == Components::AbilityId::GravityWell) {
+                m_registry.emplace<Components::GravityWell>(
+                    proj, Components::GravityWell{
+                              .pullStrength = slot.pullStrength,
+                              .pullRadius = slot.pullRadius,
+                              .activationDelay = slot.activationDelay,
+                          }
+                );
+                m_registry.get<Components::Projectile>(proj).lifetime = 5.0f;
+                m_registry.get<Components::Projectile>(proj).hitRadius = 0.6f;
+            }
         }
 
         auto netId = m_nextNetworkId++;
