@@ -9,7 +9,7 @@
 // the same architecture for now; add bswap if cross-platform is needed later).
 
 // Bump whenever the packet layout changes in a breaking way.
-constexpr uint16_t kProtocolVersion = 5;
+constexpr uint16_t kProtocolVersion = 6;
 
 enum class MessageType : uint8_t {
     Snapshot = 0x01,           // server → client, unreliable
@@ -46,10 +46,12 @@ struct EntitySnapshot {
 struct ProjectileSnapshot {
     uint32_t netId;
     uint8_t faction;  // owner faction
-    uint8_t type;     // 0=fireball, 1=gravityWell, 2=lightning
+    uint8_t type;     // 0=fireball, 1=gravityWell, 2=lightning, 3=chain
     float x, y, z;
     float vx, vy, vz;
-    float yaw;        // Z-axis rotation (radians); used by lightning bolt mesh
+    float yaw;              // Z-axis rotation (radians); used by lightning bolt mesh
+    uint32_t chainAnchorNetId{0}; // type==3 only: net ID of the caster
+    uint32_t chainHitNetId{0};    // type==3 only: net ID of the latched target
 };
 
 struct RockSnapshot {

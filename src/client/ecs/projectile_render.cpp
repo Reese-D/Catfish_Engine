@@ -116,23 +116,75 @@ std::shared_ptr<VulkanHelpers::Model> createLightningModel(
     return makeQuadModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, 0.5f, 0.075f, px);
 }
 
+std::shared_ptr<VulkanHelpers::Model> createChainModel(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout
+) {
+    // 1-unit long × 0.1-unit wide; X-scaled at draw time to span between endpoints.
+    std::array<unsigned char, 4> px = {255, 255, 255, 255};
+    return makeQuadModel(device, physicalDevice, commandPool, graphicsQueue, textureLayout, 0.5f, 0.05f, px);
+}
+
 void appendProjectileDrawCalls(
     entt::registry &registry, std::vector<VulkanHelpers::ProjectileDrawCall> &draws, const VulkanHelpers::Model &fireballModel,
-    const VulkanHelpers::Model &gravityWellModel, const VulkanHelpers::Model &lightningModel, float time
+    const VulkanHelpers::Model &gravityWellModel, const VulkanHelpers::Model &lightningModel,
+    const VulkanHelpers::Model &chainModel, float time
 ) {
+    auto findByNetId = [&](uint32_t netId) -> entt::entity {
+        for (auto e : registry.view<Components::NetworkId>()) {
+            if (registry.get<Components::NetworkId>(e).id == netId)
+                return e;
+        }
+        return entt::null;
+    };
+
     for (auto entity : registry.view<Components::Transform, Components::Projectile>()) {
         const auto &t = registry.get<Components::Transform>(entity);
-        bool isGravityWell = registry.all_of<Components::GravityWell>(entity);
-        bool isLightning = registry.all_of<Components::LightningBolt>(entity);
 
-        const VulkanHelpers::Model &model = isGravityWell ? gravityWellModel : isLightning ? lightningModel : fireballModel;
+        if (registry.all_of<Components::ChainLink>(entity)) {
+            const auto &cl = registry.get<Components::ChainLink>(entity);
+            auto anchorEnt = findByNetId(cl.anchorNetId);
+            auto hitEnt    = findByNetId(cl.hitNetId);
+            if (anchorEnt == entt::null || hitEnt == entt::null)
+                continue;
+            glm::vec3 posA = registry.get<Components::Transform>(anchorEnt).position;
+            glm::vec3 posB = registry.get<Components::Transform>(hitEnt).position;
+            glm::vec2 delta{posB.x - posA.x, posB.y - posA.y};
+            float len = glm::length(delta);
+            if (len < 0.01f)
+                continue;
+            float angle = std::atan2(delta.y, delta.x);
+            glm::vec3 mid{(posA.x + posB.x) * 0.5f, (posA.y + posB.y) * 0.5f, 0.05f};
+            glm::mat4 mm = glm::translate(glm::mat4(1.0f), mid);
+            mm *= glm::rotate(glm::mat4(1.0f), angle, glm::vec3{0.0f, 0.0f, 1.0f});
+            mm  = glm::scale(mm, glm::vec3{len, 1.0f, 1.0f});
+            draws.push_back(VulkanHelpers::ProjectileDrawCall{
+                .model = &chainModel,
+                .materialSet = chainModel.getMaterial().getDescriptorSet(),
+                .transform = mm,
+                .time = time,
+                .shaderType = 4u,
+            });
+            continue;
+        }
+
+        bool isGravityWell  = registry.all_of<Components::GravityWell>(entity);
+        bool isLightning    = registry.all_of<Components::LightningBolt>(entity);
+        bool isChainFlying  = registry.all_of<Components::ChainProjectile>(entity);
+
+        const VulkanHelpers::Model &model = isGravityWell ? gravityWellModel
+                                          : isLightning   ? lightningModel
+                                          : fireballModel;
 
         glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), t.position);
         if (isLightning)
             modelMatrix *= glm::mat4_cast(t.rotation);
         modelMatrix = glm::scale(modelMatrix, t.scale);
 
-        uint32_t shaderType = isGravityWell ? 1u : isLightning ? 2u : 0u;
+        uint32_t shaderType = isGravityWell ? 1u
+                            : isLightning   ? 2u
+                            : isChainFlying ? 3u
+                            : 0u;
         draws.push_back(VulkanHelpers::ProjectileDrawCall{
             .model = &model,
             .materialSet = model.getMaterial().getDescriptorSet(),

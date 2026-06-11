@@ -46,7 +46,47 @@ void updateProjectiles(entt::registry &registry, float dt) {
 
     std::vector<entt::entity> toDestroy;
 
+    // ---- Chain link tick: apply mutual pull, expire after duration ------------
+    for (auto e : registry.view<Components::ChainLink>()) {
+        auto &cl = registry.get<Components::ChainLink>(e);
+        cl.timer += dt;
+        if (cl.timer >= cl.duration || !registry.valid(cl.anchorEntity) || !registry.valid(cl.hitEntity)) {
+            toDestroy.push_back(e);
+            continue;
+        }
+        auto &ta = registry.get<Components::Transform>(cl.anchorEntity);
+        auto &th = registry.get<Components::Transform>(cl.hitEntity);
+        glm::vec2 toHit{th.position.x - ta.position.x, th.position.y - ta.position.y};
+        float dist = glm::length(toHit);
+        if (dist > 0.01f) {
+            glm::vec2 dir = toHit / dist;
+            auto massOf = [&](entt::entity ent) {
+                return registry.all_of<Components::Mass>(ent) ? registry.get<Components::Mass>(ent).value : 1.0f;
+            };
+            if (registry.all_of<Components::Velocity>(cl.anchorEntity))
+                registry.get<Components::Velocity>(cl.anchorEntity).vel += dir * (cl.pullStrength / massOf(cl.anchorEntity) * dt);
+            if (registry.all_of<Components::Velocity>(cl.hitEntity))
+                registry.get<Components::Velocity>(cl.hitEntity).vel += -dir * (cl.pullStrength / massOf(cl.hitEntity) * dt);
+        }
+        // Keep chain entity at midpoint for snapshot position
+        registry.get<Components::Transform>(e).position = {
+            (ta.position.x + th.position.x) * 0.5f,
+            (ta.position.y + th.position.y) * 0.5f,
+            0.05f,
+        };
+    }
+
+    // ---- Struct to defer chain latching until after the main loop ------------
+    struct LatchOp {
+        entt::entity projEntity;
+        entt::entity hitEntity;
+    };
+    std::vector<LatchOp> toLatch;
+
     for (auto projEntity : registry.view<Components::Projectile, Components::Transform>()) {
+        if (registry.all_of<Components::ChainLink>(projEntity))
+            continue; // handled above
+
         auto &proj = registry.get<Components::Projectile>(projEntity);
         auto &t = registry.get<Components::Transform>(projEntity);
 
@@ -81,7 +121,21 @@ void updateProjectiles(entt::registry &registry, float dt) {
             return proj.hitRadius;
         };
 
-        if (registry.all_of<Components::GravityWell>(projEntity)) {
+        if (registry.all_of<Components::ChainProjectile>(projEntity)) {
+            auto &cp = registry.get<Components::ChainProjectile>(projEntity);
+            for (auto unitEntity : registry.view<Components::Transform, Components::Velocity>()) {
+                if (unitEntity == projEntity || unitEntity == cp.casterEntity)
+                    continue;
+                glm::vec2 center = collisionCenter(unitEntity);
+                float dx = t.position.x - center.x;
+                float dy = t.position.y - center.y;
+                float threshold = hitThreshold(unitEntity);
+                if (dx * dx + dy * dy > threshold * threshold)
+                    continue;
+                toLatch.push_back({projEntity, unitEntity});
+                break;
+            }
+        } else if (registry.all_of<Components::GravityWell>(projEntity)) {
             auto &gw = registry.get<Components::GravityWell>(projEntity);
             if (gw.activationTimer < gw.activationDelay) {
                 gw.activationTimer += dt;
@@ -140,6 +194,30 @@ void updateProjectiles(entt::registry &registry, float dt) {
                 hit = true;
             }
         }
+    }
+
+    // ---- Apply chain latches ------------------------------------------------
+    for (auto &op : toLatch) {
+        if (!registry.valid(op.projEntity) || !registry.valid(op.hitEntity))
+            continue;
+        auto &proj = registry.get<Components::Projectile>(op.projEntity);
+        auto &cp   = registry.get<Components::ChainProjectile>(op.projEntity);
+        proj.velocity = {0.0f, 0.0f, 0.0f};
+        uint32_t anchorNetId = registry.all_of<Components::NetworkId>(cp.casterEntity)
+                                   ? registry.get<Components::NetworkId>(cp.casterEntity).id : 0u;
+        uint32_t hitNetId    = registry.all_of<Components::NetworkId>(op.hitEntity)
+                                   ? registry.get<Components::NetworkId>(op.hitEntity).id : 0u;
+        registry.emplace<Components::ChainLink>(
+            op.projEntity, Components::ChainLink{
+                               .anchorEntity = cp.casterEntity,
+                               .hitEntity    = op.hitEntity,
+                               .anchorNetId  = anchorNetId,
+                               .hitNetId     = hitNetId,
+                               .pullStrength = cp.pullStrength,
+                               .duration     = cp.pullDuration,
+                           }
+        );
+        registry.remove<Components::ChainProjectile>(op.projEntity);
     }
 
     for (auto e : toDestroy) {

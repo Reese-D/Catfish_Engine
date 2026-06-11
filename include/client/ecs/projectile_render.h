@@ -31,10 +31,17 @@ std::shared_ptr<VulkanHelpers::Model> createLightningModel(
     const vk::raii::DescriptorSetLayout &textureLayout
 );
 
+// Unit-length quad (1.0 long × 0.1 wide) used as the chain tether template; stretched at draw time.
+std::shared_ptr<VulkanHelpers::Model> createChainModel(
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &physicalDevice, const vk::raii::CommandPool &commandPool, const vk::raii::Queue &graphicsQueue,
+    const vk::raii::DescriptorSetLayout &textureLayout
+);
+
 // Collects ProjectileDrawCalls for all Projectile entities in the registry.
 void appendProjectileDrawCalls(
     entt::registry &registry, std::vector<VulkanHelpers::ProjectileDrawCall> &draws, const VulkanHelpers::Model &fireballModel,
-    const VulkanHelpers::Model &gravityWellModel, const VulkanHelpers::Model &lightningModel, float time
+    const VulkanHelpers::Model &gravityWellModel, const VulkanHelpers::Model &lightningModel,
+    const VulkanHelpers::Model &chainModel, float time
 );
 
 } // namespace Systems

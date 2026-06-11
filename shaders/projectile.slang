@@ -13,7 +13,7 @@ Sampler2D texSampler;
 struct PushConstants {
     float4x4 model;
     float time;
-    uint shaderType; // 0 = fireball, 1 = gravity well
+    uint shaderType; // 0=fireball 1=gravityWell 2=lightning 3=chainBall 4=chainTether
 };
 
 [[vk::push_constant]]
@@ -148,11 +148,41 @@ float4 lightning(float2 uv, float t) {
     return float4(col * flicker, alpha * flicker);
 }
 
+// ---- Chain ball: green glowing disc (flying phase) --------------------------
+
+float4 chainBall(float2 uv, float t) {
+    float2 c = uv - 0.5;
+    float d = length(c) * 2.0;
+    if (d >= 1.0) return float4(0.0, 0.0, 0.0, 0.0);
+    float glow = max(0.0, 1.0 - d);
+    float pulse = 0.8 + 0.2 * sin(t * 8.0);
+    float3 color = float3(0.15, 1.0, 0.45);
+    return float4(color * glow * pulse, glow);
+}
+
+// ---- Chain tether: thin green energy rope stretched between two entities ----
+// uv.x = cross-axis [0,1], uv.y = along-axis [0,1]
+
+float4 chainTether(float2 uv, float t) {
+    float du = abs(uv.x - 0.5);
+    float core = max(0.0, 1.0 - du * 16.0);
+    float glow = max(0.0, 1.0 - du * 7.0) * 0.45;
+    float link = pow(0.5 + 0.5 * sin(uv.y * 20.0 - t * 5.0), 2.0);
+    float3 color = float3(0.15, 1.0, 0.45);
+    float intensity = core * (0.5 + 0.5 * link) + glow * 0.4;
+    float alpha = clamp(core + glow, 0.0, 1.0);
+    return float4(color * intensity, alpha);
+}
+
 [shader("fragment")]
 float4 fragmentMain([[vk::location(0)]] float2 uv) : SV_Target {
     if (push.shaderType == 0u)
         return fireball(uv, push.time);
     if (push.shaderType == 1u)
         return gravityWell(uv, push.time);
-    return lightning(uv, push.time);
+    if (push.shaderType == 2u)
+        return lightning(uv, push.time);
+    if (push.shaderType == 3u)
+        return chainBall(uv, push.time);
+    return chainTether(uv, push.time);
 }

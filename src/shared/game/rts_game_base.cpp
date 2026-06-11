@@ -84,6 +84,8 @@ entt::entity RtsGameBase::spawnUnit(glm::vec3 position, Components::FactionId fa
                    Components::AbilitySlot{Components::AbilityId::GravityWell, 4.0f, 4.0f, 2.0f, 0.0f, 15.0f, 5.0f, 0.5f},
                    // Lightning: cooldown=3s, projectileSpeed unused, knockback=6, activationDelay=0.2s charge
                    Components::AbilitySlot{Components::AbilityId::Lightning, 3.0f, 3.0f, 0.0f, 6.0f, 0.0f, 0.0f, 0.2f},
+                   // Chain: cooldown=10s, speed=10, pull strength stored in pullStrength, duration in activationDelay (repurposed)
+                   Components::AbilitySlot{Components::AbilityId::Chain, 10.0f, 10.0f, 10.0f, 0.0f, 8.0f, 3.0f, 0.0f},
                }
            }
     );
@@ -227,15 +229,23 @@ void RtsGameBase::serverSendSnapshot() {
         ProjectileSnapshot ps{};
         ps.netId = n.id;
         ps.faction = static_cast<uint8_t>(p.ownerFaction);
-        ps.type = m_registry.all_of<Components::GravityWell>(e) ? 1u : m_registry.all_of<Components::LightningBolt>(e) ? 2u : 0u;
+        bool isChain = m_registry.all_of<Components::ChainLink>(e) || m_registry.all_of<Components::ChainProjectile>(e);
+        ps.type = isChain ? 3u
+                : m_registry.all_of<Components::GravityWell>(e) ? 1u
+                : m_registry.all_of<Components::LightningBolt>(e) ? 2u
+                : 0u;
         ps.x = t.position.x;
         ps.y = t.position.y;
         ps.z = t.position.z;
         ps.vx = p.velocity.x;
         ps.vy = p.velocity.y;
         ps.vz = p.velocity.z;
-        // Encode the Z-axis yaw from the quaternion (used to orient the lightning mesh on the client)
         ps.yaw = 2.0f * std::atan2(t.rotation.z, t.rotation.w);
+        if (m_registry.all_of<Components::ChainLink>(e)) {
+            const auto &cl = m_registry.get<Components::ChainLink>(e);
+            ps.chainAnchorNetId = cl.anchorNetId;
+            ps.chainHitNetId    = cl.hitNetId;
+        }
         projectiles.push_back(ps);
     }
 
@@ -306,7 +316,18 @@ void RtsGameBase::serverHandleInput(const uint8_t *data, std::size_t size, ENetP
         glm::vec3 dir = delta / len;
 
         entt::entity proj;
-        if (slot.id == Components::AbilityId::Lightning) {
+        if (slot.id == Components::AbilityId::Chain) {
+            glm::vec3 velocity = dir * slot.projectileSpeed;
+            proj = Systems::spawnProjectile(m_registry, t.position, velocity, f.id, 0.0f, 0.3f, 6.0f);
+            // pullStrength and pullRadius fields reused for chain pull force and duration
+            m_registry.emplace<Components::ChainProjectile>(
+                proj, Components::ChainProjectile{
+                          .casterEntity = clientEntity,
+                          .pullStrength = slot.pullStrength,
+                          .pullDuration = slot.pullRadius,
+                      }
+            );
+        } else if (slot.id == Components::AbilityId::Lightning) {
             constexpr float kMaxRange = 8.0f;
             constexpr float kSpeed = 28.0f;
             glm::vec3 boltDir = dir;

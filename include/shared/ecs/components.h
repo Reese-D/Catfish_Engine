@@ -8,6 +8,8 @@
 #include <memory>
 #include <vector>
 
+#include <entt/entt.hpp>
+
 #include "orders.h"
 
 namespace WorldBounds {
@@ -71,6 +73,7 @@ enum class AbilityId : uint8_t {
     Projectile = 0,
     GravityWell = 1,
     Lightning = 2,
+    Chain = 3,
 };
 
 struct AbilitySlot {
@@ -128,6 +131,27 @@ struct Mass {
 
 struct Friction {
     float coefficient{0.0f}; // velocity decay per second; 0 = frictionless
+};
+
+// Tag placed on a chain projectile while it is in flight (before latching).
+// Stores the caster so we don't accidentally latch onto them.
+struct ChainProjectile {
+    entt::entity casterEntity{entt::null};
+    float pullStrength{8.0f};
+    float pullDuration{3.0f};
+};
+
+// Placed on a chain entity once it has latched onto a target.
+// anchorEntity/hitEntity are valid on the server; entt::null on the client.
+// anchorNetId/hitNetId are valid everywhere.
+struct ChainLink {
+    entt::entity anchorEntity{entt::null};
+    entt::entity hitEntity{entt::null};
+    uint32_t anchorNetId{0};
+    uint32_t hitNetId{0};
+    float pullStrength{8.0f};
+    float duration{3.0f};
+    float timer{0.0f};
 };
 
 struct Rock {}; // tag: static terrain piece with physics
