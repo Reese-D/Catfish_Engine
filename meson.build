@@ -8,6 +8,8 @@ project('catfish-engine', ['cpp', 'c'],
 )
 
 cpp      = meson.get_compiler('cpp')
+cc       = meson.get_compiler('c')
+host_os  = host_machine.system()
 glm_args = ['-DGLM_FORCE_RADIANS', '-DGLM_FORCE_DEPTH_ZERO_TO_ONE']
 
 # ── System dependencies ───────────────────────────────────────────────────────
@@ -24,6 +26,14 @@ endif
 
 enet_inc = include_directories('third_party/enet/include')
 
+if host_os == 'windows'
+  enet_platform_src = 'third_party/enet/win32.c'
+  enet_extra_deps   = [cc.find_library('ws2_32'), cc.find_library('winmm')]
+else
+  enet_platform_src = 'third_party/enet/unix.c'
+  enet_extra_deps   = []
+endif
+
 enet_lib = static_library('enet',
   sources : [
     'third_party/enet/callbacks.c',
@@ -33,15 +43,16 @@ enet_lib = static_library('enet',
     'third_party/enet/packet.c',
     'third_party/enet/peer.c',
     'third_party/enet/protocol.c',
-    'third_party/enet/unix.c',
+    enet_platform_src,
   ],
   include_directories : enet_inc,
-  c_args : ['-O2'],
+  c_args : cc.get_supported_arguments(['-O2']),
 )
 
 enet_dep = declare_dependency(
-  link_with : enet_lib,
+  link_with    : enet_lib,
   include_directories : enet_inc,
+  dependencies : enet_extra_deps,
 )
 
 # ── Third-party: imgui (vendored C++ source) ──────────────────────────────────
@@ -66,17 +77,16 @@ imgui_dep = declare_dependency(
   include_directories : imgui_inc,
 )
 
-# ── Third-party: fastgltf (pre-built static library) ──────────────────────────
+# ── Third-party: fastgltf (cmake subproject, built from source) ───────────────
 
-fastgltf_lib = cpp.find_library('fastgltf',
-  dirs : [meson.project_source_root() / 'third_party/fastgltf'],
-  static : true,
-)
-
-fastgltf_dep = declare_dependency(
-  dependencies : fastgltf_lib,
-  include_directories : include_directories('third_party/fastgltf/include'),
-)
+cmake        = import('cmake')
+fastgltf_opt = cmake.subproject_options()
+fastgltf_opt.add_cmake_defines({
+  'FASTGLTF_BUILD_TESTS'    : 'OFF',
+  'FASTGLTF_BUILD_EXAMPLES' : 'OFF',
+})
+fastgltf_proj = cmake.subproject('fastgltf', options : fastgltf_opt)
+fastgltf_dep  = fastgltf_proj.dependency('fastgltf')
 
 # ── Third-party: header-only (EnTT, stb_image, GLM) ──────────────────────────
 

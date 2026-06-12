@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Add LunarG Vulkan SDK apt repo
         run: |
@@ -43,8 +45,9 @@ jobs:
           DEST=catfish-engine-${{ github.ref_name }}-linux-x86_64
           mkdir -p "$DEST/shaders" "$DEST/models" "$DEST/lib"
           cp build/catfish_client build/catfish_server "$DEST/"
-          cp shaders/vert.spv shaders/frag.spv "$DEST/shaders/"
-          cp models/goblin.glb "$DEST/models/"
+          cp shaders/vert.spv shaders/frag.spv \
+             shaders/projectile_vert.spv shaders/projectile_frag.spv "$DEST/shaders/"
+          cp models/goblin.glb models/boulder.glb "$DEST/models/"
 
           # Bundle runtime shared libs — exclude Vulkan (GPU driver) and kernel/libc
           ldd build/catfish_client | awk '{print $3}' | grep '^/' \
@@ -66,3 +69,67 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: catfish-engine-${{ github.ref_name }}-linux-x86_64.tar.gz
+
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-vulkan-headers
+            mingw-w64-x86_64-vulkan-loader
+            mingw-w64-x86_64-glfw
+            mingw-w64-x86_64-glm
+            mingw-w64-x86_64-simdjson
+
+      - name: Build
+        run: |
+          meson setup build --buildtype=release
+          ninja -C build
+
+      - name: Package zip
+        run: |
+          DEST="catfish-engine-${{ github.ref_name }}-windows-x86_64"
+          mkdir -p "$DEST/shaders" "$DEST/models"
+
+          cp build/catfish_client.exe build/catfish_server.exe "$DEST/"
+          cp shaders/vert.spv shaders/frag.spv \
+             shaders/projectile_vert.spv shaders/projectile_frag.spv "$DEST/shaders/"
+          cp models/goblin.glb models/boulder.glb "$DEST/models/"
+
+          # Bundle MinGW runtime + dependency DLLs; exclude the Vulkan loader since
+          # users already have vulkan-1.dll through their GPU drivers (same as Linux).
+          ldd build/catfish_client.exe \
+            | awk '{print $3}' \
+            | grep -i '/mingw64/' \
+            | grep -iv 'vulkan-1' \
+            | xargs -I{} cp -L {} "$DEST/"
+
+          # Batch launcher: sets CWD to the game folder regardless of how it's invoked.
+          printf '@echo off\r\ncd /d "%%~dp0"\r\nstart "" "%%~dp0catfish_client.exe" %%*\r\n' \
+            > "$DEST/catfish_client.bat"
+
+          "/c/Program Files/7-Zip/7z.exe" a "${DEST}.zip" "$DEST"
+
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: catfish-engine-${{ github.ref_name }}-windows-x86_64.zip
